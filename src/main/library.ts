@@ -5,6 +5,7 @@ import { copyFile, mkdir, readdir, rename, rm, rmdir, stat, writeFile } from "no
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import type { Book, Collection } from "../shared/types";
 import { READABLE } from "../shared/types";
+import { personNames } from "../shared/names";
 
 type Data = { version: 1; books: Book[]; collections: Collection[] };
 
@@ -120,6 +121,15 @@ export class Library {
     if (data) {
       for (const book of data.books) this.books.set(book.id, book);
       this.collections = data.collections ?? [];
+      // Books added before names were turned round, put right once, folders and all.
+      const turned = data.books.filter((book) => {
+        const names = personNames(book.authors);
+        if (names.join("\n") === book.authors.join("\n")) return false;
+        book.authors = names;
+        return true;
+      });
+      for (const book of turned) await this.place(book).catch(() => {});
+      if (turned.length) this.save();
       // A fresh backup once a day, from a file that just loaded cleanly.
       const age = existsSync(backup) ? Date.now() - statSync(backup).mtimeMs : Infinity;
       if (age > 86_400_000 && existsSync(path)) await copyFile(path, backup).catch(() => {});
@@ -291,6 +301,8 @@ export class Library {
     // The day a book is finished is kept, for the year's count.
     if (rest.status === "finished" && book.status !== "finished") rest.finishedAt ??= Date.now();
     if (rest.status && rest.status !== "finished") rest.finishedAt = undefined;
+    // Names turned round, wherever they came from: "Flanagan, John" is John Flanagan.
+    if (rest.authors) rest.authors = personNames(rest.authors);
     Object.assign(book, rest, { modified: Date.now() });
     if (relocate) await this.place(book).catch(() => {});
     this.save();

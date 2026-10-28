@@ -197,3 +197,42 @@ describe("file names", () => {
     expect(safeName("Conrad")).toBe("Conrad");
   });
 });
+
+describe("authors' names", () => {
+  it("are turned round when a book's details come in", async () => {
+    const lib = await new Library(root).open();
+    const [path] = await files(1);
+    const { book } = await lib.importFile(path);
+    const named = await lib.update(book.id, { title: "Halt's Peril", authors: ["Flanagan, John"] }, true);
+    expect(named.authors).toEqual(["John Flanagan"]);
+    expect(named.dir.startsWith("John Flanagan/")).toBe(true);
+    await lib.flush();
+  });
+
+  it("are put right in a library saved before, folders and all", async () => {
+    // A library from before names were turned round, with its book in "Flanagan, John".
+    const lib = await new Library(root).open();
+    const [path] = await files(1);
+    const { book } = await lib.importFile(path);
+    await lib.update(book.id, { title: "Halt's Peril" }, true);
+    await lib.flush();
+    const db = join(root, "library.json");
+    const data = JSON.parse(readFileSync(db, "utf8"));
+    const old = data.books[0];
+    await mkdir(join(root, "Flanagan, John"), { recursive: true });
+    const { rename } = await import("node:fs/promises");
+    await rename(join(root, old.dir), join(root, "Flanagan, John", basename(old.dir)));
+    old.dir = `Flanagan, John/${basename(old.dir)}`;
+    old.authors = ["Flanagan, John"];
+    await writeFile(db, JSON.stringify(data));
+
+    const again = await new Library(root).open();
+    const fixed = again.get(old.id);
+    expect(fixed.authors).toEqual(["John Flanagan"]);
+    expect(fixed.dir.startsWith("John Flanagan/")).toBe(true);
+    expect(existsSync(again.filePath(fixed))).toBe(true);
+    expect(existsSync(join(root, "Flanagan, John"))).toBe(false);
+    await again.flush();
+  });
+});
+
