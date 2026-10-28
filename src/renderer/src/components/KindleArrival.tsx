@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { kindleById } from "../../../shared/kindles";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useMotionValue, useVelocity } from "framer-motion";
+import { FINISHES, kindleById } from "../../../shared/kindles";
+import { Aura, AURA_PALETTES, type AuraColors } from "@/components/fragms/aura";
 import { EASE } from "@/components/ui";
 import { useStore } from "@/lib/store";
+import { isMac } from "@/lib/api";
 import { bytes } from "@/lib/util";
 import { Kindle3D } from "./Kindle3D";
 
@@ -10,6 +12,23 @@ const done = () => useStore.setState({ kindleArrived: null });
 
 /** How long the welcome stays before the Kindle settles into the side panel. */
 const STAY = 3200;
+
+/** A colour mixed toward white, so a dark finish still glows. */
+function lift(hex: string, amount: number) {
+  const n = Number.parseInt(hex.slice(1), 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * amount).toString(16).padStart(2, "0");
+  return `#${mix((n >> 16) & 255)}${mix((n >> 8) & 255)}${mix(n & 255)}`;
+}
+
+/** Plain black, grey and white Kindles glow in the aurora; coloured ones in their own colour, with it. */
+function glowFor(finish?: string): AuraColors {
+  const hex = FINISHES[finish ?? ""]?.hex;
+  const [r, g, b] = hex ? [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)) : [0, 0, 0];
+  const colourful = hex && Math.max(r, g, b) - Math.min(r, g, b) > 28;
+  if (!colourful) return AURA_PALETTES.aurora;
+  const [, purple, , gold] = AURA_PALETTES.aurora;
+  return [lift(hex, 0.25), purple, lift(hex, 0.5), gold];
+}
 
 /**
  * A Kindle being plugged in gets the whole window: the library steps back,
@@ -24,6 +43,24 @@ export function KindleArrival() {
   const books = useStore((s) => s.books);
   const panel = useStore((s) => s.settings.inspector);
   const [plugged, setPlugged] = useState(false);
+
+  // The edge of the window answers the Kindle: its speed as it rises, and
+  // every pulse it gives, the plug going in, the screen waking, a tap.
+  const y = useMotionValue(380);
+  const speed = useVelocity(y);
+  const pulse = useRef({ strength: 0, at: 0 });
+  const onPulse = useCallback((strength: number) => {
+    const now = performance.now();
+    const left = pulse.current.strength * Math.exp(-(now - pulse.current.at) / 520);
+    pulse.current = { strength: Math.min(1, Math.max(left, strength)), at: now };
+  }, []);
+  const level = useCallback(() => {
+    const now = performance.now();
+    const moving = Math.min(0.55, Math.abs(speed.get()) / 2400);
+    const struck = pulse.current.strength * Math.exp(-(now - pulse.current.at) / 520);
+    const waiting = 0.16 + 0.05 * Math.sin(now / 520);
+    return Math.min(1, Math.max(moving, struck, waiting));
+  }, [speed]);
 
   const drive = port?.drives[0];
   const model = kindleById(kindle.model ?? drive?.model ?? port?.usb.find((k) => k.model)?.model) ?? kindleById("pw5")!;
@@ -62,14 +99,8 @@ export function KindleArrival() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.45, delay: 0.25 } }}
         >
-          {/* A glow rising from below, where the cable comes from. */}
-          <motion.div
-            className="pointer-events-none absolute left-1/2 -bottom-[45%] size-[1000px] -translate-x-1/2 rounded-full"
-            style={{ background: "radial-gradient(closest-side, color-mix(in oklab, var(--accent) 30%, transparent), transparent)" }}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.4, ease: EASE }}
-          />
+          {/* Light along the window's edges, answering the Kindle. */}
+          <Aura fixed level={level} palette={glowFor(kindle.finish)} intensity={1.15} radius={isMac ? 12 : 8} />
           {/* A ring going out from it the moment the plug goes in. */}
           {plugged && (
             <motion.span
@@ -85,9 +116,11 @@ export function KindleArrival() {
             animate={{ y: 0, rotateX: 0, opacity: 1, scale: 1 }}
             exit={{ ...away, opacity: 0, transition: { duration: 0.65, ease: EASE } }}
             transition={{ type: "spring", stiffness: 80, damping: 15 }}
-            style={{ transformPerspective: 1200 }}
+            style={{ transformPerspective: 1200, y }}
+            // Clicks on the Kindle are its own, a tap that wakes the screen, not a way out.
+            onClick={(e) => e.stopPropagation()}
           >
-            <Kindle3D model={model} finish={kindle.finish} book={plugged ? reading : undefined} height={300} cable={plugged ? "plugged" : "unplugged"} />
+            <Kindle3D model={model} finish={kindle.finish} book={plugged ? reading : undefined} height={300} cable={plugged ? "plugged" : "unplugged"} onPulse={onPulse} />
           </motion.div>
           <motion.div
             className="-mt-6 flex flex-col items-center text-center"

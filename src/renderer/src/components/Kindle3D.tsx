@@ -238,6 +238,7 @@ export function Kindle3D({
   cable,
   glow,
   activity,
+  onPulse,
 }: {
   model: KindleModel;
   finish?: string;
@@ -251,6 +252,8 @@ export function Kindle3D({
   glow?: boolean;
   /** A book on its way, for the screen and the cable to show. */
   activity?: KindleActivity | null;
+  /** Told how strongly it just reacted, 0 to 1: the plug going in, the screen waking, a book landing. */
+  onPulse?: (strength: number) => void;
 }) {
   const still = useReducedMotion();
   const [W, H, D] = model.size;
@@ -270,12 +273,24 @@ export function Kindle3D({
   const mm0 = (v: number) => v * s;
   useEffect(() => {
     if (still || !activity) return;
-    if (activity.state === "done") react.start({ y: [0, -16, 0, -5, 0], rotateZ: [0, -2.5, 2, 0, 0], transition: { duration: 0.9, ease: "easeOut" } });
-    if (activity.state === "failed") react.start({ x: [0, -9, 9, -7, 7, -3, 0], transition: { duration: 0.55 } });
+    if (activity.state === "done") {
+      react.start({ y: [0, -16, 0, -5, 0], rotateZ: [0, -2.5, 2, 0, 0], transition: { duration: 0.9, ease: "easeOut" } });
+      onPulse?.(0.85);
+    }
+    if (activity.state === "failed") {
+      react.start({ x: [0, -9, 9, -7, 7, -3, 0], transition: { duration: 0.55 } });
+      onPulse?.(0.6);
+    }
   }, [activity?.state]); // eslint-disable-line react-hooks/exhaustive-deps
   const wasPlugged = useRef(cable === "plugged");
   useEffect(() => {
-    if (cable === "plugged" && !wasPlugged.current && !still) react.start({ y: [0, mm0(2), 0], transition: { duration: 0.35, delay: 0.12 } });
+    if (cable === "plugged" && !wasPlugged.current) {
+      if (!still) react.start({ y: [0, mm0(2), 0], transition: { duration: 0.35, delay: 0.12 } });
+      // The jolt of the plug seating, a moment after it starts moving in.
+      const seat = setTimeout(() => onPulse?.(1), 120);
+      wasPlugged.current = true;
+      return () => clearTimeout(seat);
+    }
     wasPlugged.current = cable === "plugged";
   }, [cable]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -283,6 +298,10 @@ export function Kindle3D({
   const [taps, setTaps] = useState(0);
   const page = `${book?.id ?? "page"}:${taps}`;
   const firstPage = useRef(page);
+  // Each refresh of the screen is a small flash of light.
+  useEffect(() => {
+    if (page !== firstPage.current) onPulse?.(0.55);
+  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
   const tap = () => {
     setTaps((t) => t + 1);
     if (!still) react.start({ scale: [1, 0.97, 1], transition: { duration: 0.3 } });
