@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Book, BootState, Collection, Settings } from "../../../shared/types";
+import type { Book, BootState, Collection, KindleDevice, KindleOnUsb, Settings } from "../../../shared/types";
 import type { PointMood } from "@/components/fragms/points-data";
 import { toast } from "@/components/ui";
 import { api } from "./api";
@@ -52,9 +52,15 @@ type State = {
   carrying: string[] | null;
   /** What the Kindle is busy with, so its 3D model can show it. */
   kindleActivity: KindleActivity | null;
+  /** Kindles on USB and the ones that open as a drive, once first looked for. */
+  kindlePort: KindlePort | null;
+  /** When a Kindle was last plugged in, for the welcome it gets. */
+  kindleArrived: number | null;
   /** The welcome is showing. */
   onboarding: boolean;
 };
+
+export type KindlePort = { usb: KindleOnUsb[]; drives: KindleDevice[] };
 
 export type KindleActivity = { via: "cable" | "email"; bookId: string; state: "arriving" | "working" | "done" | "failed"; progress: number };
 
@@ -79,6 +85,8 @@ export const useStore = create<State>(() => ({
   dragging: false,
   carrying: null,
   kindleActivity: null,
+  kindlePort: null,
+  kindleArrived: null,
   onboarding: false,
 }));
 

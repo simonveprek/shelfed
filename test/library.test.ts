@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -82,6 +82,36 @@ describe("importing books", () => {
     expect(readFileSync(lib.filePath(books[1]), "utf8")).toBe("contents of book 1");
   });
 
+  it("stores folders with forward slashes, so a library moves between Mac and PC", async () => {
+    const lib = await new Library(root).open();
+    const [path] = await files(1);
+    const { book } = await lib.importFile(path);
+    expect(book.dir).toMatch(/^Incoming\/[^\\]+$/);
+    const placed = await lib.update(book.id, { title: "T", authors: ["A"] }, true);
+    expect(placed.dir).toMatch(/^A\/T \(\w{4}\)$/);
+  });
+
+  it("passes over folders it isn't allowed to read", async () => {
+    const lib = await new Library(root).open();
+    await files(1);
+    const locked = join(source, "System Volume Information");
+    await mkdir(locked);
+    await writeFile(join(locked, "hidden.epub"), "x");
+    expect((await lib.collect([source])).map((p) => basename(p))).toEqual(["book 0.epub"]);
+  });
+
+  it("tidies away folders left with only system files in them", async () => {
+    const lib = await new Library(root).open();
+    const [path] = await files(1);
+    const { book } = await lib.importFile(path);
+    await lib.update(book.id, { title: "T", authors: ["First"] }, true);
+    await writeFile(join(root, "First", "Thumbs.db"), "x");
+    await writeFile(join(root, "First", "desktop.ini"), "x");
+    await lib.update(book.id, { authors: ["Second"] }, true);
+    expect(existsSync(join(root, "First"))).toBe(false);
+    expect(existsSync(lib.filePath(lib.get(book.id)))).toBe(true);
+  });
+
   it("only takes files it can read", async () => {
     const lib = await new Library(root).open();
     await files(2, "epub");
@@ -151,5 +181,17 @@ describe("file names", () => {
     expect(safeName("Trailing dots... ")).toBe("Trailing dots");
     expect(safeName("   ")).toBe("Unknown");
     expect(safeName("x".repeat(200), 80)).toHaveLength(80);
+  });
+
+  it("never end in a dot or space, even when cut short", () => {
+    expect(safeName("A".repeat(9) + ". Next", 10)).toBe("AAAAAAAAA");
+    expect(safeName("Title ...", 7)).toBe("Title");
+  });
+
+  it("step around the names Windows keeps for devices", () => {
+    expect(safeName("Con")).toBe("Con_");
+    expect(safeName("aux.epub")).toBe("aux.epub_");
+    expect(safeName("COM1")).toBe("COM1_");
+    expect(safeName("Conrad")).toBe("Conrad");
   });
 });

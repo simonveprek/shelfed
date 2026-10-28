@@ -16,7 +16,7 @@
 :root {
   --font-geist-sans: "Geist";
   --font-geist-mono: "Geist Mono";
-  --font-serif: "Iowan Old Style", "Charter", "New York", Georgia, serif;
+  --font-serif: "Iowan Old Style", "Charter", "New York", "Sitka Text", Cambria, Georgia, serif;
   --shadow-book: 0 1px 1px rgb(60 44 22 / 0.08), 0 8px 18px -8px rgb(60 44 22 / 0.35);
   --shadow-book-hover: 0 2px 2px rgb(60 44 22 / 0.08), 0 20px 34px -14px rgb(60 44 22 / 0.45);
 }
@@ -59,6 +59,17 @@ textarea,
   overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
+}
+
+/* Windows draws its own scrollbars, light unless told the page is dark. */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+.win * {
+  scrollbar-width: thin;
 }
 
 .serif {

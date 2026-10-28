@@ -12,9 +12,11 @@ export function findCalibre(custom?: string): string | null {
     custom,
     "/Applications/calibre.app/Contents/MacOS/ebook-convert",
     join(process.env.HOME ?? "", "Applications/calibre.app/Contents/MacOS/ebook-convert"),
-    "C:\\Program Files\\Calibre2\\ebook-convert.exe",
-    "C:\\Program Files (x86)\\Calibre2\\ebook-convert.exe",
-    join(process.env.LOCALAPPDATA ?? "", "Programs\\Calibre2\\ebook-convert.exe"),
+    // Program Files, wherever Windows put it, and per-user installs.
+    ...[process.env.ProgramW6432, process.env.ProgramFiles, process.env["ProgramFiles(x86)"]]
+      .filter(Boolean)
+      .map((dir) => join(dir!, "Calibre2", "ebook-convert.exe")),
+    join(process.env.LOCALAPPDATA ?? "", "Programs", "Calibre2", "ebook-convert.exe"),
     "/usr/bin/ebook-convert",
     "/opt/calibre/ebook-convert",
   ].filter(Boolean) as string[];
@@ -44,7 +46,7 @@ export function calibreConvert(
     child.on("error", reject);
     child.on("close", (code) => {
       if (code === 0 && existsSync(output)) resolve();
-      else reject(new Error(tail.trim().split("\n").slice(-3).join(" ") || `Calibre stopped with code ${code}`));
+      else reject(new Error(tail.trim().split(/\r?\n/).slice(-3).join(" ") || `Calibre stopped with code ${code}`));
     });
   });
 }
@@ -78,7 +80,8 @@ export async function htmlToPdf(html: string, page: string): Promise<Uint8Array>
     return new Uint8Array(pdf);
   } finally {
     win.destroy();
-    await rm(dir, { recursive: true, force: true });
+    // Windows may still hold the file a moment after printing; the PDF is made either way.
+    await rm(dir, { recursive: true, force: true, maxRetries: 5 }).catch(() => {});
   }
 }
 

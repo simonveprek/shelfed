@@ -7,9 +7,15 @@ directories:
 files:
   - out/**
   - package.json
+extraFiles:
+  - LICENSE
+  - LICENSE-FRAGMS-PERSONAL.md
+  - THIRD_PARTY_NOTICES.md
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 fileAssociations:
-  - ext: [epub, mobi, azw3, azw, fb2, cbz, pdf]
+  - ext: [epub, mobi, azw3, azw, prc, fb2, fbz, cbz, pdf]
     name: E-book
+    description: E-book
     role: Viewer
 mac:
   category: public.app-category.books
@@ -19,10 +25,19 @@ mac:
   darkModeSupport: true
   icon: build/icon.png
 win:
-  target:
-    - target: nsis
-      arch: [x64, arm64]
+  # The release builds x64 and arm64 one at a time, so each installer holds only its own app.
+  target: nsis
   icon: build/icon.png
 nsis:
   oneClick: false
+  perMachine: false
   allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Shelf
+  license: LICENSE
+publish:
+  provider: github
+  owner: simonveprek
+  repo: shelf
+  releaseType: draft

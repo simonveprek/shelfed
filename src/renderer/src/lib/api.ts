@@ -24,5 +24,7 @@ export const on = (channel: string, listener: (...args: any[]) => void) => windo
 
 export const isMac = window.shelf.platform === "darwin";
 export const isWin = window.shelf.platform === "win32";
-export const mod = isMac ? "⌘" : "Ctrl ";
+export const mod = isMac ? "⌘" : "Ctrl+";
+/** Shift in a shortcut, the way each system writes it. */
+export const shift = isMac ? "⇧" : "Shift+";
 export const revealLabel = isMac ? "Show in Finder" : isWin ? "Show in Explorer" : "Show in Folder";

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Mail01Icon, MailSend01Icon, Tablet01Icon, TabletConnectedUsbIcon } from "@hugeicons/core-free-icons";
 import type { Book, KindleDevice } from "../../../shared/types";
 import { kindleById } from "../../../shared/kindles";
-import { useKindlesOnUsb } from "@/lib/kindle";
 import { Kindle3D } from "./Kindle3D";
 import { KINDLE_LIMIT } from "../../../shared/types";
 import {
@@ -53,7 +52,6 @@ export function SendDialog({ ids }: { ids: string[] }) {
   const [device, setDevice] = useState("");
   const [sending, setSending] = useState(false);
   const ready = Boolean(kindle.to && kindle.from && kindle.host && kindle.hasPassword);
-  useKindlesOnUsb();
   const model = kindleById(kindle.model);
   const activity = useStore((s) => s.kindleActivity);
 

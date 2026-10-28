@@ -61,10 +61,13 @@ export function setSettings(patch: Partial<Settings>): Settings {
   };
   const data = JSON.stringify(current, null, 2);
   // Writes queue up and land whole, so a crash never leaves half a file.
-  writing = writing.then(async () => {
-    await writeFile(file() + ".tmp", data);
-    await rename(file() + ".tmp", file());
-  });
+  writing = writing
+    .then(async () => {
+      await writeFile(file() + ".tmp", data);
+      await rename(file() + ".tmp", file());
+    })
+    // One failed write must not stop every write after it.
+    .catch((error) => console.error("Could not save settings", error));
   return current;
 }
 

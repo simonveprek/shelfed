@@ -29,7 +29,7 @@ const PAPERS: Record<ReaderPrefs["theme"], { bg: string; fg: string; link: strin
 
 const FONTS = {
   publisher: "",
-  serif: '"Iowan Old Style", "Charter", "Literata", Georgia, serif',
+  serif: '"Iowan Old Style", "Charter", "Literata", "Sitka Text", Cambria, Georgia, serif',
   sans: '"Geist", -apple-system, "Segoe UI", system-ui, sans-serif',
 };
 

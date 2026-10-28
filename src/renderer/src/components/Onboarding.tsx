@@ -3,7 +3,7 @@ import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Button, cx, EASE } from "@/components/ui";
 import { Point } from "@/components/fragms/points";
 import { pickAndImport } from "@/lib/actions";
-import { isMac } from "@/lib/api";
+import { isMac, isWin } from "@/lib/api";
 import { setSetting, useStore } from "@/lib/store";
 
 /*
@@ -321,7 +321,7 @@ export function Onboarding() {
           onClick={() => step < last && next()}
         >
           {/* The window can still be moved by its top. */}
-          <div className={cx("drag flex h-14 shrink-0 items-center justify-end px-5", isMac && "pl-20")}>
+          <div className={cx("drag flex h-14 shrink-0 items-center justify-end px-5", isMac && "pl-20", isWin && "pr-[150px]")}>
             {step < last && (
               <button
                 className="text-label text-muted transition-colors duration-150 hover:text-foreground"

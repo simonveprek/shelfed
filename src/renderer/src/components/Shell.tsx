@@ -13,7 +13,7 @@ import {
 } from "@/components/ui";
 import { Point } from "@/components/fragms/points";
 import { addToCollection, deleteCollection, pickAndImport } from "@/lib/actions";
-import { isMac, isWin, mod } from "@/lib/api";
+import { isMac, isWin, mod, shift } from "@/lib/api";
 import { newCollection } from "@/lib/commands";
 import { BOOK_MIME } from "@/lib/select";
 import { patchBooks, setSetting, useStore, type Browse, type Section } from "@/lib/store";
@@ -438,7 +438,7 @@ export function Header() {
       >
         <MenuLabel>Add to your library</MenuLabel>
         <MenuItem icon={FileAddIcon} shortcut={`${mod}O`} onSelect={() => pickAndImport(false)}>Books</MenuItem>
-        <MenuItem icon={FolderAddIcon} shortcut={`${mod}⇧O`} onSelect={() => pickAndImport(true)}>A folder of books</MenuItem>
+        <MenuItem icon={FolderAddIcon} shortcut={`${mod}${shift}O`} onSelect={() => pickAndImport(true)}>A folder of books</MenuItem>
         <MenuSeparator />
         <MenuItem icon={Settings01Icon} onSelect={() => useStore.setState({ dialog: { kind: "settings" } })}>Settings</MenuItem>
       </Menu>

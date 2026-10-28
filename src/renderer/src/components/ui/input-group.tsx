@@ -1,4 +1,5 @@
 "use client";
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
 
 import { useImperativeHandle, useRef, type ComponentProps, type MouseEvent } from "react";
 import { cx } from "./cx";

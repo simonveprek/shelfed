@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
-import { ThemeProvider, Toaster, toast } from "@/components/ui";
+import { EASE, ThemeProvider, Toaster, toast } from "@/components/ui";
 import { importPaths } from "@/lib/actions";
 import { api, isMac, isWin, on } from "@/lib/api";
 import { runCommand } from "@/lib/commands";
@@ -15,6 +16,8 @@ import { DropZone, Jobs, Palette } from "@/components/Overlays";
 import { Reader, saveProgress } from "@/reader/Reader";
 import { Onboarding } from "@/components/Onboarding";
 import { ClippingsDialog } from "@/components/Clippings";
+import { KindleArrival } from "@/components/KindleArrival";
+import { useKindleWatch } from "@/lib/kindle";
 
 /** Keeps the window's own colour in step with light and dark. */
 function Appearance() {
@@ -50,10 +53,29 @@ function Dialogs() {
   }
 }
 
+/** Looks out for Kindles for the whole app, once it has its settings. */
+function KindleWatch() {
+  useKindleWatch();
+  return null;
+}
+
 function Library() {
   const inspector = useStore((s) => s.settings.inspector);
+  // The library steps back while a Kindle that was just plugged in says hello.
+  const welcoming = useStore((s) => Boolean(s.kindleArrived && !s.reading && !s.onboarding && !s.dialog));
   return (
-    <div className="flex h-full">
+    <motion.div
+      className="flex h-full"
+      style={{ transformOrigin: "50% 65%" }}
+      initial={false}
+      animate={
+        welcoming
+          ? { scale: 0.94, filter: "blur(6px) brightness(0.72)", borderRadius: 18 }
+          : // Back to no filter at all after, which would otherwise pin fixed things inside to this box.
+            { scale: 1, filter: "blur(0px) brightness(1)", borderRadius: 0, transitionEnd: { filter: "none" } }
+      }
+      transition={{ duration: 0.7, ease: EASE }}
+    >
       <AppSidebar />
       <main className="flex min-w-0 flex-1 flex-col">
         <Header />
@@ -64,7 +86,7 @@ function Library() {
           {inspector && <Inspector />}
         </div>
       </main>
-    </div>
+    </motion.div>
   );
 }
 
@@ -117,7 +139,9 @@ export function App() {
       <Appearance />
       {ready && (
         <>
+          <KindleWatch />
           <Library />
+          <KindleArrival />
           <Reader />
           <Dialogs />
           <Palette />

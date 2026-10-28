@@ -1,3 +1,4 @@
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
 import type { CSSProperties } from "react";
 import { cx } from "./cx";
 

@@ -22,3 +22,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # Packs the app without an installer, to catch packaging problems on each system.
+      - if: runner.os != 'Linux'
+        run: npx electron-builder --dir --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false

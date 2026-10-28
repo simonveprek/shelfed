@@ -6,7 +6,7 @@ import {
 } from "@/components/ui";
 import { api, isMac } from "@/lib/api";
 import { hydrate, setSetting, useStore } from "@/lib/store";
-import { useKindlesOnUsb } from "@/lib/kindle";
+import { useKindlePort } from "@/lib/kindle";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
 import { ColourPicker } from "./Colours";
 import { Kindle3D } from "./Kindle3D";
@@ -67,7 +67,7 @@ function General() {
 function YourKindle() {
   const kindle = useStore((s) => s.settings.kindle);
   const books = useStore((s) => s.books);
-  const found = useKindlesOnUsb();
+  const found = useKindlePort()?.usb ?? null;
   const model = kindleById(kindle.model);
   const finish = model && kindle.finish && model.finishes.includes(kindle.finish) ? kindle.finish : model?.finishes[0];
   const reading = books.filter((b) => b.status === "reading").sort((a, b) => (b.opened ?? 0) - (a.opened ?? 0))[0];

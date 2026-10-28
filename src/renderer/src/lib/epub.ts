@@ -159,13 +159,13 @@ export function buildHtml(content: Content, forPrint = false) {
   const chapters = content.chapters.map((c) => `<section class="chapter">${inline(c.xhtml)}</section>`).join("\n");
   const look = forPrint
     ? `html { font-size: 11.5pt; }
-body { margin: 0; font-family: "Iowan Old Style", Charter, Georgia, "Times New Roman", serif; color: #111; }
+body { margin: 0; font-family: "Iowan Old Style", Charter, "Sitka Text", Cambria, Georgia, "Times New Roman", serif; color: #111; }
 .chapter { break-before: page; }
 .cover-page { break-after: page; height: 100vh; display: flex; align-items: center; justify-content: center; }
 .cover-page img { max-height: 100%; max-width: 100%; }
 .title-page { break-after: page; padding-top: 30vh; text-align: center; }
 img { break-inside: avoid; }`
-    : `body { max-width: 42em; margin: 3em auto; padding: 0 1.4em; font-family: "Iowan Old Style", Georgia, serif; font-size: 1.15rem; }
+    : `body { max-width: 42em; margin: 3em auto; padding: 0 1.4em; font-family: "Iowan Old Style", "Sitka Text", Cambria, Georgia, serif; font-size: 1.15rem; }
 .cover-page img { display: block; max-width: 60%; margin: 0 auto 3em; }
 .chapter { margin-bottom: 3em; }`;
   return `<!doctype html>

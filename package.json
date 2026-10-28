@@ -1,10 +1,27 @@
 {
   "name": "shelf",
   "productName": "Shelf",
-  "version": "1.0.0",
-  "description": "A fast, quiet home for your books.",
+  "version": "0.1.0",
+  "description": "A fast, quiet home for your books. Read, organise, convert and send them to your Kindle, on macOS and Windows.",
   "author": "Šimon Vepřek",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://github.com/simonveprek/shelf#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/simonveprek/shelf.git"
+  },
+  "bugs": {
+    "url": "https://github.com/simonveprek/shelf/issues"
+  },
+  "keywords": [
+    "ebook",
+    "library",
+    "kindle",
+    "epub",
+    "reader",
+    "calibre",
+    "electron"
+  ],
   "main": "./out/main/index.js",
   "type": "module",
   "scripts": {

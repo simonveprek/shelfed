@@ -3,13 +3,13 @@ import {
   type MenuItemConstructorOptions,
 } from "electron";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, writeFile } from "node:fs/promises";
+import { extname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { Book, BootState, Collection, MetadataCandidate, Settings } from "../shared/types";
-import { KINDLE_EMAIL } from "../shared/types";
+import { KINDLE_EMAIL, READABLE } from "../shared/types";
 import { calibreConvert, docxToHtml, findCalibre, htmlToPdf, tempPath } from "./convert";
-import { copyToDevice, findDevices, kindlesOnUsb, readClippings, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
+import { copyToDevice, findDevices, kindlePort, kindlesOnUsb, readClippings, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks } from "./catalogues";
@@ -29,12 +29,20 @@ protocol.registerSchemesAsPrivileged([
 // A separate profile for development and tests, so they never touch a real library.
 if (process.env.SHELF_USERDATA) app.setPath("userData", process.env.SHELF_USERDATA);
 
-if (!app.requestSingleInstanceLock()) app.quit();
+// A second copy hands its files to the first and leaves at once. quit() would
+// let it carry on starting up, opening the same library alongside.
+const primary = app.requestSingleInstanceLock();
+if (!primary) app.exit(0);
+
+// Windows groups the window with a pinned taskbar icon by this id.
+if (process.platform === "win32") app.setAppUserModelId("cz.simonveprek.shelf");
 
 let win: BrowserWindow | null = null;
 let library: Library;
 /** Files the system asked us to open before the window was ready. */
 const queued: string[] = [];
+/** True once the window's page can take files. */
+let listening = false;
 
 /* ------------------------------------------------------------------------ */
 /* Window                                                                    */
@@ -72,8 +80,8 @@ function createWindow() {
           titleBarStyle: "hidden" as const,
           titleBarOverlay: { color: dark ? PAPER.dark : PAPER.light, symbolColor: dark ? PAPER.inkDark : PAPER.inkLight, height: 64 },
         }),
-    // Windows and Linux show this in the title bar and task bar. macOS takes the app icon.
-    ...(isMac ? {} : { icon: join(here, "../../build/icon.png") }),
+    // While developing, Windows and Linux show this in the title bar and task bar. Built, the app's own icon is used.
+    ...(isMac || app.isPackaged ? {} : { icon: join(here, "../../build/icon.png") }),
     webPreferences: {
       preload: join(here, "../preload/index.cjs"),
       sandbox: true,
@@ -114,7 +122,8 @@ function createWindow() {
 
 /**
  * For development. Runs the steps in the SHELF_SHOT file, a JSON list of
- * [javascript, wait in ms, picture path], saving a picture after each.
+ * [javascript, wait in ms, picture path], saving a picture after each, or
+ * recording frames for the wait when the path is a folder ending in a slash.
  */
 function shoot(target: BrowserWindow) {
   target.webContents.on("console-message", (event) => console.log("[page]", event.message));
@@ -130,6 +139,18 @@ function shoot(target: BrowserWindow) {
         } else if (js) console.log("[eval]", String(await target.webContents.executeJavaScript(js, true)).slice(0, 2000));
       } catch (error) {
         console.log("[eval failed]", js, error);
+      }
+      // A path ending in a slash records frames into that folder for the wait, for GIFs.
+      if (name?.endsWith("/")) {
+        await mkdir(name, { recursive: true });
+        const start = Date.now();
+        let frame = 0;
+        while (Date.now() - start < wait) {
+          const image = await target.webContents.capturePage();
+          await writeFile(join(name, `f${String(frame++).padStart(4, "0")}.png`), image.resize({ width: Math.round(image.getSize().width / 2) }).toPNG());
+        }
+        console.log("[recorded]", JSON.stringify({ frames: frame, ms: Date.now() - start }));
+        continue;
       }
       await new Promise((r) => setTimeout(r, wait));
       if (name) await writeFile(name, (await target.webContents.capturePage()).toPNG());
@@ -252,10 +273,16 @@ const api = {
   smtpPreset: (email: string) => SMTP_PRESETS[email.split("@")[1]?.toLowerCase() ?? ""] ?? null,
 
   async pickCalibre() {
-    const res = await dialog.showOpenDialog(win!, { title: "Find Calibre", properties: ["openFile"] });
+    const res = await dialog.showOpenDialog(win!, {
+      title: "Find Calibre",
+      properties: ["openFile"],
+      ...(process.platform === "win32" ? { filters: [{ name: "Programs", extensions: ["exe"] }] } : {}),
+    });
     let path = res.filePaths[0];
     if (!path) return null;
     if (path.endsWith(".app")) path = join(path, "Contents/MacOS/ebook-convert");
+    // Picking calibre.exe itself means the converter next to it, not the app.
+    if (/calibre(-portable)?\.exe$/i.test(path)) path = join(path, "..", "ebook-convert.exe");
     setSettings({ calibrePath: path });
     return findCalibre(path);
   },
@@ -283,6 +310,7 @@ const api = {
   },
 
   devices: () => findDevices(),
+  kindlePort: () => kindlePort(),
   kindles: () => kindlesOnUsb(),
 
   async copyToDevice(id: string, ext: string, device: string) {
@@ -329,6 +357,7 @@ const api = {
   },
 
   ready() {
+    listening = true;
     const files = queued.splice(0);
     if (files.length) send("open-files", files);
   },
@@ -398,8 +427,9 @@ function buildMenu() {
         { type: "separator" },
         { label: "Find", accelerator: "CmdOrCtrl+F", click: cmd("find") },
         { type: "separator" },
-        { label: "Toggle Sidebar", accelerator: "CmdOrCtrl+Alt+S", click: cmd("toggle-sidebar") },
-        { label: "Toggle Details", accelerator: "CmdOrCtrl+Alt+I", click: cmd("toggle-inspector") },
+        // Ctrl+Alt is AltGr on Windows, where it types letters like ś and đ.
+        { label: "Toggle Sidebar", accelerator: isMac ? "Cmd+Alt+S" : "Ctrl+Shift+S", click: cmd("toggle-sidebar") },
+        { label: "Toggle Details", accelerator: isMac ? "Cmd+Alt+I" : "Ctrl+Shift+I", click: cmd("toggle-inspector") },
         { type: "separator" },
         { label: "Bigger Covers", accelerator: "CmdOrCtrl+=", click: cmd("zoom-in") },
         { label: "Smaller Covers", accelerator: "CmdOrCtrl+-", click: cmd("zoom-out") },
@@ -417,7 +447,8 @@ function buildMenu() {
         { label: "Edit Details…", accelerator: "CmdOrCtrl+E", click: cmd("edit") },
         { type: "separator" },
         { label: "Favorite", accelerator: "CmdOrCtrl+L", click: cmd("favorite") },
-        { label: "Remove from Library…", accelerator: "CmdOrCtrl+Backspace", click: cmd("remove") },
+        // Ctrl+Backspace deletes a word in a text field on Windows; Delete does this there.
+        { label: "Remove from Library…", accelerator: isMac ? "Cmd+Backspace" : "Delete", registerAccelerator: isMac, click: cmd("remove") },
       ],
     },
     { role: "windowMenu" },
@@ -429,17 +460,23 @@ function buildMenu() {
 /* Life cycle                                                                */
 /* ------------------------------------------------------------------------ */
 
-const isBook = (arg: string) => /\.(epub|mobi|azw3?|pdf|fb2|fbz|cbz|txt|md|docx|html?)$/i.test(arg);
+const isBook = (arg: string) => !arg.startsWith("-") && READABLE.includes(extname(arg).slice(1).toLowerCase());
+
+/** Opens books the system handed over, now or once the window can take them. */
+function openFiles(files: string[]) {
+  if (!files.length) return;
+  if (win && library && listening) send("open-files", files);
+  else queued.push(...files);
+}
 
 app.on("open-file", (event, path) => {
   event.preventDefault();
-  if (win && library) send("open-files", [path]);
-  else queued.push(path);
+  openFiles([path]);
 });
 
-app.on("second-instance", (_event, argv) => {
-  const files = argv.filter(isBook);
-  if (files.length) send("open-files", files);
+app.on("second-instance", (_event, argv, workingDirectory) => {
+  // Explorer may pass paths relative to where it started the second copy.
+  openFiles(argv.slice(1).filter(isBook).map((file) => resolve(workingDirectory, file)));
   if (win) {
     if (win.isMinimized()) win.restore();
     win.focus();
@@ -461,6 +498,7 @@ app.on("web-contents-created", (_event, contents) => {
 });
 
 app.whenReady().then(async () => {
+  if (!primary) return;
   session.defaultSession.setPermissionRequestHandler((_wc, _permission, done) => done(false));
   queued.push(...process.argv.slice(1).filter(isBook));
   // While developing, the dock shows Shelf's icon instead of Electron's.
@@ -471,6 +509,8 @@ app.whenReady().then(async () => {
   buildMenu();
   createWindow();
   if (!isMac) win?.setMenuBarVisibility(false);
+  // Windows shuts down and logs off without before-quit, so the library is saved here too.
+  win?.on("session-end", () => library?.flushNow());
   app.on("activate", () => {
     if (!BrowserWindow.getAllWindows().length) createWindow();
   });

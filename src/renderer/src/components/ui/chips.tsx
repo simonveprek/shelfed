@@ -1,4 +1,5 @@
 "use client";
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
 
 import type { ComponentProps, ReactNode } from "react";
 import { SquareLock02Icon } from "@hugeicons/core-free-icons";

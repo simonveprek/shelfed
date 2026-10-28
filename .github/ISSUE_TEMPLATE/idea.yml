@@ -1,0 +1,11 @@
+name: An idea
+description: Something Shelf could do.
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What you'd like, and the reading it would help with.
+    validations:
+      required: true

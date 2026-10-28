@@ -1,4 +1,5 @@
 "use client";
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
 
 import { ThemeProvider as NextThemes } from "next-themes";
 import type { ComponentProps } from "react";

@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readdir, readFile, stat, statfs } from "node:fs/promises";
+import { access, copyFile, mkdir, readdir, readFile, stat, statfs } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -51,72 +51,109 @@ export async function sendToKindle(settings: KindleSettings, file: string, name:
   });
 }
 
-/**
- * A Kindle shows up as a drive with a documents folder and a system folder.
- * On macOS it mounts under /Volumes, on Windows as a drive letter.
- */
-export async function findDevices(): Promise<KindleDevice[]> {
-  const roots: string[] = [];
-  if (process.platform === "darwin") {
-    const names = await readdir("/Volumes").catch(() => [] as string[]);
-    roots.push(...names.map((n) => join("/Volumes", n)));
-  } else if (process.platform === "win32") {
-    for (const letter of "DEFGHIJKLMNOPQRSTUVWXYZ") roots.push(`${letter}:\\`);
-  } else {
-    const user = process.env.USER ?? "";
-    for (const base of [`/media/${user}`, `/run/media/${user}`]) {
-      const names = await readdir(base).catch(() => [] as string[]);
-      roots.push(...names.map((n) => join(base, n)));
-    }
-  }
-  const found: KindleDevice[] = [];
-  const usb = await kindlesOnUsb();
-  for (const root of roots) {
-    if (!existsSync(join(root, "documents"))) continue;
-    if (!existsSync(join(root, "system")) && !/kindle/i.test(basename(root))) continue;
-    const fs = await statfs(root).catch(() => null);
-    found.push({
-      name: process.platform === "win32" ? `Kindle (${root.replace(/\\$/, "")})` : basename(root),
-      path: root,
-      free: fs ? fs.bavail * fs.bsize : 0,
-      // Which drive is which Kindle can't be told apart, so a model is only named when there is one.
-      model: usb.length === 1 ? usb[0].model : undefined,
-    });
-  }
-  return found;
+/** Whether a path exists, giving up rather than hanging on a drive that won't answer. */
+function exists(path: string, ms = 1500): Promise<boolean> {
+  return Promise.race([
+    access(path).then(
+      () => true,
+      () => false,
+    ),
+    new Promise<boolean>((r) => setTimeout(() => r(false), ms)),
+  ]);
 }
 
 const run = promisify(execFile);
 const AMAZON = 0x1949;
 
-/** Serial numbers of the Kindles on the USB bus, read from the system's device list. */
-async function usbSerials(): Promise<string[]> {
+/** What the system says is plugged in: Kindle serials, and on Windows the removable drive letters. */
+type Bus = { serials: string[]; drives?: string[] };
+
+/**
+ * Asks the system once for everything a look needs. On Windows that is one
+ * PowerShell, for the Kindle serials and the removable drives together, so
+ * nothing has to try every drive letter.
+ */
+async function readBus(): Promise<Bus> {
   if (process.platform === "darwin") {
     const { stdout } = await run("/usr/sbin/ioreg", ["-p", "IOUSB", "-l", "-w0"], { timeout: 4000, maxBuffer: 8 << 20 });
-    return stdout
+    const serials = stdout
       .split("+-o ")
       .filter((block) => new RegExp(`"idVendor" = ${AMAZON}\\b`).test(block))
       .map((block) => block.match(/"(?:USB Serial Number|kUSBSerialNumberString)" = "([^"]+)"/)?.[1] ?? "")
       .filter(Boolean);
+    return { serials };
   }
   if (process.platform === "win32") {
-    const { stdout } = await run(
-      "powershell.exe",
-      ["-NoProfile", "-NonInteractive", "-Command", "Get-PnpDevice -PresentOnly -InstanceId 'USB\\VID_1949*' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty InstanceId"],
-      { timeout: 8000, windowsHide: true },
-    );
-    // USB\VID_1949&PID_0004\G0XXXXXXXXXXXXXX. Composite parts carry a made-up id with & in it.
-    return stdout.split(/\r?\n/).map((line) => line.trim().split("\\").pop() ?? "").filter((id) => id && !id.includes("&"));
+    const script = [
+      "$s = Get-PnpDevice -PresentOnly -InstanceId 'USB\\VID_1949*' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty InstanceId",
+      "$d = Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=2' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty DeviceID",
+      "'S=' + ($s -join '|')",
+      "'D=' + ($d -join '|')",
+    ].join("; ");
+    const { stdout } = await run("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], { timeout: 8000, windowsHide: true });
+    const line = (key: string) => (stdout.split(/\r?\n/).find((l) => l.startsWith(`${key}=`)) ?? "").slice(2).split("|").filter(Boolean);
+    return {
+      // USB\VID_1949&PID_0004\G0XXXXXXXXXXXXXX. Composite parts carry a made-up id with & in it.
+      serials: line("S").map((id) => id.trim().split("\\").pop() ?? "").filter((id) => id && !id.includes("&")),
+      drives: line("D").map((letter) => `${letter.trim()}\\`),
+    };
   }
   const base = "/sys/bus/usb/devices";
-  const out: string[] = [];
+  const serials: string[] = [];
   for (const name of await readdir(base).catch(() => [] as string[])) {
     const vendor = await readFile(join(base, name, "idVendor"), "utf8").catch(() => "");
     if (parseInt(vendor, 16) !== AMAZON) continue;
     const serial = (await readFile(join(base, name, "serial"), "utf8").catch(() => "")).trim();
-    if (serial) out.push(serial);
+    if (serial) serials.push(serial);
   }
+  return { serials };
+}
+
+const toKindles = (serials: string[]): KindleOnUsb[] => [...new Set(serials)].map((serial) => ({ serial, model: kindleFromSerial(serial)?.id }));
+
+/** Folders a Kindle could be mounted at. */
+async function mountPoints(bus: Bus): Promise<string[]> {
+  if (process.platform === "darwin") return (await readdir("/Volumes").catch(() => [] as string[])).map((n) => join("/Volumes", n));
+  if (process.platform === "win32") {
+    if (bus.drives) return bus.drives;
+    // Without PowerShell, every letter, each given a moment and no more.
+    return [..."DEFGHIJKLMNOPQRSTUVWXYZ"].map((letter) => `${letter}:\\`);
+  }
+  const user = process.env.USER ?? "";
+  const out: string[] = [];
+  for (const base of [`/media/${user}`, `/run/media/${user}`]) out.push(...(await readdir(base).catch(() => [] as string[])).map((n) => join(base, n)));
   return out;
+}
+
+/**
+ * A Kindle shows up as a drive with a documents folder and a system folder.
+ * On macOS it mounts under /Volumes, on Windows as a removable drive.
+ */
+async function drivesOn(bus: Bus): Promise<KindleDevice[]> {
+  const usb = toKindles(bus.serials);
+  const roots = await mountPoints(bus);
+  const found = await Promise.all(
+    roots.map(async (root): Promise<KindleDevice | null> => {
+      if (!(await exists(join(root, "documents")))) return null;
+      if (!(await exists(join(root, "system"))) && !/kindle/i.test(basename(root))) return null;
+      const fs = await statfs(root).catch(() => null);
+      return {
+        name: process.platform === "win32" ? `Kindle (${root.replace(/\\$/, "")})` : basename(root),
+        path: root,
+        free: fs ? fs.bavail * fs.bsize : 0,
+        // Which drive is which Kindle can't be told apart, so a model is only named when there is one.
+        model: usb.length === 1 ? usb[0].model : undefined,
+      };
+    }),
+  );
+  return found.filter((d): d is KindleDevice => d !== null);
+}
+
+const safeBus = () => readBus().catch((): Bus => ({ serials: [] }));
+
+/** Kindles that open as a drive, so books can be copied straight on. */
+export async function findDevices(): Promise<KindleDevice[]> {
+  return drivesOn(await safeBus());
 }
 
 /**
@@ -124,8 +161,21 @@ async function usbSerials(): Promise<string[]> {
  * don't show up as a drive, but they are still on the bus.
  */
 export async function kindlesOnUsb(): Promise<KindleOnUsb[]> {
-  const serials = await usbSerials().catch(() => [] as string[]);
-  return [...new Set(serials)].map((serial) => ({ serial, model: kindleFromSerial(serial)?.id }));
+  return toKindles((await safeBus()).serials);
+}
+
+let looking: Promise<{ usb: KindleOnUsb[]; drives: KindleDevice[] }> | null = null;
+
+/**
+ * Everything about the Kindles plugged in, from one look at the system. Asked
+ * again while a look is still going, it shares that look rather than start another.
+ */
+export function kindlePort() {
+  looking ??= (async () => {
+    const bus = await safeBus();
+    return { usb: toKindles(bus.serials), drives: await drivesOn(bus) };
+  })().finally(() => (looking = null));
+  return looking;
 }
 
 /** The clippings file every Kindle keeps, from each one plugged in. */

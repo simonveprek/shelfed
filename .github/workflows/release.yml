@@ -1,0 +1,35 @@
+name: Release
+
+# Push a tag like v0.2.0 to build installers into a draft release.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macOS, os: macos-latest, args: --mac --arm64 --x64 }
+          - { name: Windows x64, os: windows-latest, args: --win --x64 }
+          - { name: Windows arm64, os: windows-latest, args: --win --arm64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npx electron-builder ${{ matrix.args }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Unsigned for now. Add CSC_LINK and CSC_KEY_PASSWORD secrets to sign.
+          CSC_IDENTITY_AUTO_DISCOVERY: false

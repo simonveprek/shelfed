@@ -1,4 +1,5 @@
 "use client";
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
 
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { animate, AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";

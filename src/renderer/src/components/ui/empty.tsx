@@ -1,3 +1,4 @@
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
 import type { ReactNode } from "react";
 import { cx } from "./cx";
 import { Icon, type IconLike } from "./icon";

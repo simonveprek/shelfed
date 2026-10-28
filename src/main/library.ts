@@ -1,8 +1,8 @@
 import { shell } from "electron";
 import { createHash, randomBytes } from "node:crypto";
-import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { copyFile, mkdir, readdir, rename, rm, rmdir, stat, writeFile } from "node:fs/promises";
-import { basename, dirname, extname, join, sep } from "node:path";
+import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import type { Book, Collection } from "../shared/types";
 import { READABLE } from "../shared/types";
 
@@ -14,15 +14,26 @@ const BACKUP = "library.backup.json";
 
 export const newId = (n = 10) => randomBytes(n).toString("base64url").replace(/[-_]/g, "x").slice(0, n);
 
+/** Names Windows keeps for devices, which no file or folder may have, with or without an extension. */
+const RESERVED = /^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i;
+
 /** Keeps names safe on every file system Windows and macOS have. */
 export function safeName(name: string, max = 80) {
   const clean = name
     .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "")
     .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max)
+    // Windows can't open a name ending in a dot or a space, even one cut short here.
     .replace(/[. ]+$/, "")
     .trim();
-  return (clean || "Unknown").slice(0, max).trim();
+  const named = clean || "Unknown";
+  return RESERVED.test(named) ? `${named}_` : named;
 }
+
+/** Windows paths stop working past 260 characters in many places, so names there are kept shorter. */
+const SHORT = process.platform === "win32";
+const LIMIT = SHORT ? { author: 40, title: 50, file: 60 } : { author: 60, title: 70, file: 110 };
 
 function hashFile(path: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -39,23 +50,36 @@ const titleFromFile = (path: string) =>
   basename(path, extname(path)).replace(/_+/g, " ").replace(/\s+/g, " ").trim();
 
 /**
- * Runs a step that needs a folder to exist, again if a tidy elsewhere took
- * that folder away at the same moment. Imports run side by side, and one
- * book leaving a folder can empty it just as another arrives.
+ * Runs a file step again when it fails for a moment. Imports run side by
+ * side, and one book leaving a folder can empty it just as another arrives.
+ * On Windows, antivirus, search indexing, OneDrive or a preview often hold
+ * a file for a moment, and a rename then fails until they let go.
  */
 async function withFolder<T>(step: () => Promise<T>): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await step();
     } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code ?? "";
       // macOS reports a folder that vanished halfway through mkdir as ENOTDIR.
-      const code = (error as NodeJS.ErrnoException).code;
-      if ((code !== "ENOENT" && code !== "ENOTDIR") || attempt >= 5) throw error;
+      const vanished = code === "ENOENT" || code === "ENOTDIR";
+      const locked = code === "EPERM" || code === "EACCES" || code === "EBUSY";
+      if ((!vanished && !locked) || attempt >= 6) throw error;
+      if (locked) await new Promise((r) => setTimeout(r, 40 * 2 ** attempt));
     }
   }
 }
 
-const baseName = (book: Book) => safeName(`${book.title}${book.authors[0] ? ` - ${book.authors[0]}` : ""}`, 110);
+/** A path inside the library as it's stored, with forward slashes on every system, so a library moves between Mac and PC. */
+const stored = (...parts: string[]) => parts.join("/");
+
+/** System files that keep a folder from looking empty. */
+const LITTER = [".DS_Store", "Thumbs.db", "desktop.ini"];
+
+/** Folders that are never books, or that Windows won't let anyone read. */
+const SKIP = /^(\$RECYCLE\.BIN|System Volume Information|My Music|My Pictures|My Videos)$/i;
+
+const baseName = (book: Book) => safeName(`${book.title}${book.authors[0] ? ` - ${book.authors[0]}` : ""}`, LIMIT.file);
 
 export class Library {
   root: string;
@@ -70,7 +94,8 @@ export class Library {
   private saving = Promise.resolve();
 
   constructor(root: string) {
-    this.root = root;
+    // One spelling of the folder, so checks on what's inside it hold on every system.
+    this.root = resolve(root);
   }
 
   async open() {
@@ -127,7 +152,7 @@ export class Library {
     this.saving = this.saving
       .then(async () => {
         await writeFile(path + ".tmp", json);
-        await rename(path + ".tmp", path);
+        await withFolder(() => rename(path + ".tmp", path));
       })
       .catch((error) => {
         // The library in memory stays whole and the next change tries again.
@@ -135,6 +160,19 @@ export class Library {
         this.onSaveError?.(error);
       });
     return this.saving;
+  }
+
+  /** Saves at once and waits for nothing, for when Windows is shutting down. */
+  flushNow() {
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+    this.saveTimer = null;
+    const path = join(this.root, DB);
+    try {
+      writeFileSync(path + ".tmp", JSON.stringify({ version: 1, books: this.list(), collections: this.collections } satisfies Data));
+      renameSync(path + ".tmp", path);
+    } catch (error) {
+      console.error("Could not save the library", error);
+    }
   }
 
   bookDir(book: Book) {
@@ -154,8 +192,9 @@ export class Library {
       const info = await stat(path).catch(() => null);
       if (!info) return;
       if (info.isDirectory()) {
-        if (depth > 8 || basename(path).startsWith(".")) return;
-        for (const name of await readdir(path)) await walk(join(path, name), depth + 1);
+        if (depth > 8 || basename(path).startsWith(".") || SKIP.test(basename(path))) return;
+        // A folder that can't be read is passed over, not a reason to stop.
+        for (const name of await readdir(path).catch(() => [] as string[])) await walk(join(path, name), depth + 1);
       } else {
         const ext = extname(path).slice(1).toLowerCase();
         if (READABLE.includes(ext) && !basename(path).startsWith("._")) out.push(path);
@@ -190,8 +229,8 @@ export class Library {
     const ext = raw === "htm" ? "html" : raw === "markdown" ? "md" : raw;
     const id = newId();
     const title = titleFromFile(src);
-    const dir = join("Incoming", id);
-    const file = `${safeName(title)}.${ext}`;
+    const dir = stored("Incoming", id);
+    const file = `${safeName(title, LIMIT.file)}.${ext}`;
     await withFolder(async () => {
       await mkdir(join(this.root, dir), { recursive: true });
       await copyFile(src, join(this.root, dir, file));
@@ -209,8 +248,8 @@ export class Library {
 
   /** Moves a book's folder and files to match its author and title. */
   async place(book: Book) {
-    const author = safeName(book.authors[0] || "Unknown Author", 60);
-    const wanted = join(author, `${safeName(book.title || "Untitled", 70)} (${book.id.slice(0, 4)})`);
+    const author = safeName(book.authors[0] || "Unknown Author", LIMIT.author);
+    const wanted = stored(author, `${safeName(book.title || "Untitled", LIMIT.title)} (${book.id.slice(0, 4)})`);
     if (wanted !== book.dir) {
       const to = join(this.root, wanted);
       if (!existsSync(to)) {
@@ -227,7 +266,7 @@ export class Library {
       const name = `${baseName(book)}.${format.ext}`;
       const dir = this.bookDir(book);
       if (format.file !== name && !existsSync(join(dir, name))) {
-        await rename(join(dir, format.file), join(dir, name)).catch(() => {});
+        await withFolder(() => rename(join(dir, format.file), join(dir, name))).catch(() => {});
         if (existsSync(join(dir, name))) format.file = name;
       }
     }
@@ -240,8 +279,9 @@ export class Library {
    * arriving in between is always kept.
    */
   private async tidy(dir: string) {
-    if (dir === this.root || !dir.startsWith(this.root + sep)) return;
-    await rm(join(dir, ".DS_Store"), { force: true }).catch(() => {});
+    const inside = relative(this.root, dir);
+    if (!inside || inside.startsWith("..") || isAbsolute(inside)) return;
+    for (const litter of LITTER) await rm(join(dir, litter), { force: true }).catch(() => {});
     await rmdir(dir).catch(() => {});
   }
 
@@ -290,7 +330,7 @@ export class Library {
     const format = book.formats.find((f) => f.ext === ext);
     if (!format) return book;
     const path = join(this.bookDir(book), format.file);
-    await shell.trashItem(path).catch(() => rm(path, { force: true }));
+    await shell.trashItem(path).catch(() => rm(path, { force: true, maxRetries: 5 }));
     book.formats = book.formats.filter((f) => f.ext !== ext);
     this.save();
     return book;
@@ -305,7 +345,7 @@ export class Library {
       await this.addFormat(into, format.ext, join(this.bookDir(source), format.file));
     }
     // Only once every file is safely copied does the old folder go, and to the Trash.
-    await shell.trashItem(this.bookDir(source)).catch(() => rm(this.bookDir(source), { recursive: true, force: true }));
+    await shell.trashItem(this.bookDir(source)).catch(() => rm(this.bookDir(source), { recursive: true, force: true, maxRetries: 5 }));
     await this.tidy(dirname(this.bookDir(source)));
     this.books.delete(from);
     this.save();
@@ -316,7 +356,7 @@ export class Library {
   remove(ids: string[], undoFor = 12_000) {
     for (const id of ids) {
       if (!this.books.has(id)) continue;
-      this.pending.set(id, setTimeout(() => this.purge(id), undoFor));
+      this.pending.set(id, setTimeout(() => this.purge(id).catch((error) => console.error("Could not remove a book", error)), undoFor));
     }
     this.save();
   }
@@ -336,7 +376,7 @@ export class Library {
     if (!book) return;
     this.books.delete(id);
     const dir = this.bookDir(book);
-    await shell.trashItem(dir).catch(() => rm(dir, { recursive: true, force: true }));
+    await shell.trashItem(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }).catch((error) => console.error("Could not remove", dir, error)));
     await this.tidy(dirname(dir));
     this.save();
   }

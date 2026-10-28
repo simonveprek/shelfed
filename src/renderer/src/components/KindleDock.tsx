@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useRef, useState, type DragEvent } from "react";
 import { motion } from "framer-motion";
-import type { KindleDevice } from "../../../shared/types";
 import { kindleById } from "../../../shared/kindles";
 import { sendByCable } from "@/lib/actions";
-import { api } from "@/lib/api";
-import { useKindlesOnUsb } from "@/lib/kindle";
+import { useKindlePort } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
 import { useStore } from "@/lib/store";
 import { bytes } from "@/lib/util";
@@ -12,26 +10,6 @@ import { EASE, Panel } from "@/components/ui";
 import { Portal } from "@/components/ui/portal";
 import { Cover } from "./Cover";
 import { Kindle3D } from "./Kindle3D";
-
-/** Kindles that open as a drive, so books can be copied straight on. */
-function useDrives() {
-  const [drives, setDrives] = useState<KindleDevice[]>([]);
-  useEffect(() => {
-    let alive = true;
-    const look = () =>
-      api
-        .devices()
-        .then((d) => alive && setDrives(d))
-        .catch(() => {});
-    look();
-    const timer = setInterval(look, 3000);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-    };
-  }, []);
-  return drives;
-}
 
 /** True when there's a Kindle to show: one you've picked, or one plugged in. */
 export function useHasKindle() {
@@ -46,8 +24,9 @@ export function KindleDock() {
   const kindle = useStore((s) => s.settings.kindle);
   const carrying = useStore((s) => s.carrying);
   const books = useStore((s) => s.books);
-  const usb = useKindlesOnUsb();
-  const drives = useDrives();
+  const port = useKindlePort();
+  const usb = port?.usb;
+  const drives = port?.drives ?? [];
   const [over, setOver] = useState(false);
   const [dropped, setDropped] = useState<string | null>(null);
   const activity = useStore((s) => s.kindleActivity);

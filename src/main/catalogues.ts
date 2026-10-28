@@ -87,5 +87,5 @@ export async function forgetDownload(path: string) {
   const dir = dirname(path);
   // Only ever a folder this file made for a download.
   if (dirname(dir) !== tmpdir() || !basename(dir).startsWith("shelf-")) return;
-  await rm(dir, { recursive: true, force: true });
+  await rm(dir, { recursive: true, force: true, maxRetries: 5 }).catch(() => {});
 }
