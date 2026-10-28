@@ -70,11 +70,12 @@ export function DropZone() {
     const over = (e: DragEvent) => hasFiles(e) && e.preventDefault();
     const drop = (e: DragEvent) => {
       if (!hasFiles(e)) return;
+      // A picture dropped on the cover in the details panel is handled there.
+      const taken = e.defaultPrevented;
       e.preventDefault();
       depth.current = 0;
       useStore.setState({ dragging: false });
-      // A picture dropped on the cover in the details panel is handled there.
-      if (e.defaultPrevented && (e.target as HTMLElement).closest("aside")) return;
+      if (taken) return;
       const paths = [...(e.dataTransfer?.files ?? [])].map((f) => window.shelf.pathForFile(f)).filter(Boolean);
       if (paths.length) importPaths(paths);
     };

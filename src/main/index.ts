@@ -107,12 +107,21 @@ function createWindow() {
     if (/^https:\/\//.test(url)) shell.openExternal(url);
     return { action: "deny" };
   });
+  // Only Shelf itself loads in the window. Any other file, dropped where nothing
+  // takes it, would replace the whole app.
+  const home = process.env.ELECTRON_RENDERER_URL ?? pathToFileURL(join(here, "../renderer/index.html")).href;
   win.webContents.on("will-navigate", (event, url) => {
-    if (!url.startsWith(process.env.ELECTRON_RENDERER_URL ?? "file:")) {
-      event.preventDefault();
-      if (/^https?:/.test(url)) shell.openExternal(url);
-    }
+    if (url.startsWith(home)) return;
+    event.preventDefault();
+    if (/^https?:/.test(url)) shell.openExternal(url);
   });
+  // If the page's process dies, bring it back rather than leave an empty window.
+  win.webContents.on("render-process-gone", (_event, details) => {
+    if (details.reason !== "clean-exit") win?.webContents.reload();
+  });
+  // In development, the page's errors show in the terminal too.
+  if (!app.isPackaged && !process.env.SHELF_SHOT)
+    win.webContents.on("console-message", (event) => event.level === "error" && console.log("[page error]", event.message));
 
   if (process.env.SHELF_SHOT) shoot(win);
   if (process.env.ELECTRON_RENDERER_URL) win.loadURL(process.env.ELECTRON_RENDERER_URL);

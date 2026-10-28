@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { Component, useEffect, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
-import { EASE, ThemeProvider, Toaster, toast } from "@/components/ui";
+import { Button, EASE, ThemeProvider, Toaster, toast } from "@/components/ui";
 import { importPaths } from "@/lib/actions";
 import { api, isMac, isWin, on } from "@/lib/api";
 import { runCommand } from "@/lib/commands";
@@ -57,6 +57,32 @@ function Dialogs() {
 function KindleWatch() {
   useKindleWatch();
   return null;
+}
+
+/** If a screen breaks, say so and offer a way back, rather than leave the window empty. */
+class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error) {
+    console.error("Shelf hit an error:", error);
+  }
+  render() {
+    const { error } = this.state;
+    if (!error) return this.props.children;
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+        <p className="text-heading">Something went wrong</p>
+        <p className="mt-2 max-w-[440px] text-label text-muted">Your books are safe. Shelf hit an error drawing this screen.</p>
+        <pre className="selectable mt-4 max-w-[560px] rounded-[10px] bg-well px-3 py-2 text-left text-caption whitespace-pre-wrap text-muted">{error.message}</pre>
+        <div className="mt-5 flex gap-2">
+          <Button variant="primary" onClick={() => this.setState({ error: null })}>Try again</Button>
+          <Button onClick={() => location.reload()}>Reload</Button>
+        </div>
+      </div>
+    );
+  }
 }
 
 function Library() {
@@ -138,7 +164,7 @@ export function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <Appearance />
       {ready && (
-        <>
+        <Mend>
           <KindleWatch />
           <Library />
           <KindleArrival />
@@ -149,7 +175,7 @@ export function App() {
           <Jobs />
           <DropZone />
           <Onboarding />
-        </>
+        </Mend>
       )}
       <Toaster />
     </ThemeProvider>
