@@ -133,3 +133,16 @@ test("an app icon can be chosen, and stays chosen", async ({ shelf }) => {
   await shelf.page.getByRole("dialog").getByRole("button", { name: "Appearance", exact: true }).click();
   await expect(shelf.page.getByRole("button", { name: "Lux" })).toHaveAttribute("aria-pressed", "true");
 });
+
+test("makes Kindle, Word and FB2 files with nothing else installed", async ({ shelf }) => {
+  const { page } = shelf;
+  await shelf.add();
+  for (const [label, ext] of [["AZW3", "AZW3"], ["Word", "DOCX"], ["FB2", "FB2"]]) {
+    await card(page, "Salt and Ink").click({ button: "right" });
+    await page.getByRole("menuitem", { name: "Convert" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByText(label, { exact: true }).click();
+    await dialog.getByRole("button", { name: `Make ${label}` }).click();
+    await expect(page.getByText(`Salt and Ink is now ${ext} too`)).toBeVisible({ timeout: 20_000 });
+  }
+});

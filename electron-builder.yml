@@ -7,6 +7,10 @@ directories:
 files:
   - out/**
   - package.json
+# The AZW3 converter, built from tools/azw3, read from process.resourcesPath.
+extraResources:
+  - from: resources/azw3.wasm
+    to: azw3.wasm
 extraFiles:
   - LICENSE
   - LICENSE-FRAGMS-PERSONAL.md

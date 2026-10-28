@@ -3,7 +3,9 @@ import { KINDLE_EMAIL, KINDLE_LIMIT, KINDLE_USB } from "../../../shared/types";
 import { toast } from "@/components/ui";
 import { api } from "./api";
 import { extractContent, parseBook, saveCover } from "./books";
+import { buildDocx } from "./docx";
 import { buildEpub, buildHtml, buildText } from "./epub";
+import { buildFb2 } from "./fb2";
 import {
   bookById, drop, failed, flashMood, patchBooks, saveCollections, startJob, upsert, useStore, type JobHandle,
 } from "./store";
@@ -114,21 +116,18 @@ export function openReader(id: string, ext?: string) {
 /* Converting                                                                */
 /* ------------------------------------------------------------------------ */
 
-export type Target = { ext: string; label: string; note: string; via: "shelf" | "calibre" | null };
+export type Target = { ext: string; label: string; note: string; possible: boolean };
 
-const BUILT_IN = ["epub", "pdf", "txt", "html"];
-const CALIBRE_ONLY = ["azw3", "mobi", "docx", "rtf", "fb2"];
+const TARGETS = ["epub", "azw3", "pdf", "docx", "txt", "html", "fb2"];
 const SOURCE_ORDER = ["epub", "azw3", "mobi", "azw", "kf8", "fb2", "fbz", "docx", "html", "md", "txt", "cbz", "pdf", "prc"];
 const LABELS: Record<string, [string, string]> = {
   epub: ["EPUB", "Reads everywhere. Best for Kindle by email"],
   pdf: ["PDF", "Fixed pages, laid out for print"],
   azw3: ["AZW3", "Kindle's own format, for copying by cable"],
-  mobi: ["MOBI", "For older Kindles"],
   txt: ["Plain text", "Only the words"],
   html: ["Web page", "One file any browser opens"],
   docx: ["Word", "To edit in Word or Pages"],
-  rtf: ["RTF", "Rich text for older editors"],
-  fb2: ["FB2", "FictionBook"],
+  fb2: ["FB2", "FictionBook, for readers that like it"],
 };
 
 export const canRead = (ext: string) => FOLIATE.includes(ext) || TEXTUAL.includes(ext) || ext === "pdf";
@@ -138,35 +137,28 @@ export function sourceFor(book: Book, to: string) {
   return SOURCE_ORDER.find((ext) => ext !== to && book.formats.some((f) => f.ext === ext)) ?? book.formats[0]?.ext;
 }
 
-export function targetsFor(book: Book, calibre: string | null): Target[] {
-  return [...BUILT_IN, ...CALIBRE_ONLY].map((ext) => {
+/** Every format Shelf can make, and whether it can make it from this book. */
+export function targetsFor(book: Book): Target[] {
+  return TARGETS.map((ext) => {
     const from = sourceFor(book, ext);
-    let via: Target["via"] = null;
-    if (BUILT_IN.includes(ext) && from && canRead(from)) via = from === "pdf" && ext === "epub" && calibre ? "calibre" : "shelf";
-    else if (calibre && from) via = "calibre";
-    return { ext, label: LABELS[ext][0], note: LABELS[ext][1], via };
+    return { ext, label: LABELS[ext][0], note: LABELS[ext][1], possible: Boolean(from && canRead(from)) };
   });
 }
 
 /** Makes a new format of a book and adds it beside the others. */
-export async function convert(id: string, to: string, outer?: JobHandle, via?: "shelf" | "calibre"): Promise<Book> {
-  const book = bookById(id)!;
+export async function convert(id: string, to: string, outer?: JobHandle): Promise<Book> {
+  let book = bookById(id)!;
   const from = sourceFor(book, to);
-  const route = via ?? targetsFor(book, get().calibre).find((t) => t.ext === to)?.via;
-  if (!route) throw new Error(`Making ${to.toUpperCase()} needs Calibre. Install it from calibre-ebook.com and Shelf finds it.`);
+  if (!targetsFor(book).find((t) => t.ext === to)?.possible) throw new Error(`Shelf can't read this book's files to make ${to.toUpperCase()} from them.`);
   const job = outer ?? startJob(`${book.title} to ${to.toUpperCase()}`);
   set({ mood: "thinking" });
   try {
     let saved: Book;
-    if (route === "calibre") {
-      const off = window.shelf.on("progress", (jobId: string, share: number, line: string) => {
-        if (jobId === job.id) job.update({ progress: share, detail: line });
-      });
-      try {
-        saved = await api.calibreConvert(job.id, id, from, to);
-      } finally {
-        off();
-      }
+    if (to === "azw3") {
+      // A Kindle file is made from the EPUB, so that comes first.
+      if (!book.formats.some((f) => f.ext === "epub")) book = await convert(id, "epub", job);
+      job.update({ detail: "Making the Kindle file", progress: 0.9 });
+      saved = await api.makeAzw3(id);
     } else {
       job.update({ detail: `Reading the ${from.toUpperCase()}` });
       const content = await extractContent(book, from, (share) => job.update({ progress: share * 0.8 }));
@@ -176,6 +168,8 @@ export async function convert(id: string, to: string, outer?: JobHandle, via?: "
       if (to === "epub") saved = await api.addFormat(id, "epub", buildEpub(content));
       else if (to === "pdf") saved = await api.pdfFormat(id, buildHtml(content, true));
       else if (to === "txt") saved = await api.addFormat(id, "txt", new TextEncoder().encode(buildText(content)));
+      else if (to === "docx") saved = await api.addFormat(id, "docx", buildDocx(content));
+      else if (to === "fb2") saved = await api.addFormat(id, "fb2", buildFb2(content));
       else saved = await api.addFormat(id, "html", new TextEncoder().encode(buildHtml(content)));
     }
     upsert(saved);
@@ -226,10 +220,13 @@ export function emailPlan(book: Book): { ext: string; convert: boolean } {
   return { ext: "epub", convert: true };
 }
 
-export function usbPlan(book: Book, calibre: string | null): { ext: string; convert: boolean } | null {
+/** Which file goes to Kindle by cable: its own Kindle file, or an AZW3 made for it. */
+export function usbPlan(book: Book): { ext: string; convert: boolean } | null {
   const own = KINDLE_USB.map((ext) => book.formats.find((f) => f.ext === ext)).find(Boolean);
   if (own && own.ext !== "pdf") return { ext: own.ext, convert: false };
-  if (calibre) return { ext: "azw3", convert: true };
+  // A PDF with nothing better goes as it is, since its pages wouldn't reflow anyway.
+  if (own && !book.formats.some((f) => FOLIATE.includes(f.ext) || TEXTUAL.includes(f.ext))) return { ext: own.ext, convert: false };
+  if (targetsFor(book).find((t) => t.ext === "azw3")?.possible) return { ext: "azw3", convert: true };
   if (own) return { ext: own.ext, convert: false };
   return null;
 }
@@ -284,7 +281,6 @@ export async function sendByEmail(ids: string[]) {
 
 export async function sendByCable(ids: string[], device: string) {
   const books = ids.map(bookById).filter(Boolean) as Book[];
-  const calibre = get().calibre;
   const job = startJob(books.length === 1 ? `Copying ${books[0].title}` : `Copying ${books.length} books`);
   const kindle = kindleBusy("cable", books[0]?.id ?? "");
   let failures = 0;
@@ -294,11 +290,11 @@ export async function sendByCable(ids: string[], device: string) {
     job.update({ progress: i / books.length, detail: book.title });
     kindle.progress(i / books.length);
     try {
-      const plan = usbPlan(book, calibre);
-      if (!plan) throw new Error("A Kindle needs AZW3, MOBI or PDF by cable. Install Calibre to make them");
+      const plan = usbPlan(book);
+      if (!plan) throw new Error("Shelf can't read this book's files to make a Kindle file from them");
       if (plan.convert) {
         const inner = { ...job, update: (p: { detail?: string }) => p.detail && job.update({ detail: p.detail }) } as JobHandle;
-        book = await convert(book.id, plan.ext, inner, "calibre");
+        book = await convert(book.id, plan.ext, inner);
       }
       await api.copyToDevice(book.id, plan.ext, device);
     } catch (error) {

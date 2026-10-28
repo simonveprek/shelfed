@@ -9,7 +9,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import log from "electron-log/main";
 import type { Book, BootState, Collection, MetadataCandidate, Settings } from "../shared/types";
 import { KINDLE_EMAIL, READABLE } from "../shared/types";
-import { calibreConvert, docxToHtml, findCalibre, htmlToPdf, tempPath } from "./convert";
+import { epubToAzw3 } from "./azw3";
+import { docxToHtml, htmlToPdf } from "./convert";
 import { copyToDevice, findDevices, kindlePort, kindlesOnUsb, readClippings, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
@@ -238,7 +239,6 @@ const boot = (): BootState => ({
   collections: library.collections,
   settings: getSettings(),
   platform: process.platform,
-  calibre: findCalibre(getSettings().calibrePath),
   version: app.getVersion(),
 });
 
@@ -311,28 +311,13 @@ const api = {
   verifyMail: () => verifyMail(getSettings().kindle),
   smtpPreset: (email: string) => SMTP_PRESETS[email.split("@")[1]?.toLowerCase() ?? ""] ?? null,
 
-  async pickCalibre() {
-    const res = await dialog.showOpenDialog(win!, {
-      title: "Find Calibre",
-      properties: ["openFile"],
-      ...(process.platform === "win32" ? { filters: [{ name: "Programs", extensions: ["exe"] }] } : {}),
-    });
-    let path = res.filePaths[0];
-    if (!path) return null;
-    if (path.endsWith(".app")) path = join(path, "Contents/MacOS/ebook-convert");
-    // Picking calibre.exe itself means the converter next to it, not the app.
-    if (/calibre(-portable)?\.exe$/i.test(path)) path = join(path, "..", "ebook-convert.exe");
-    setSettings({ calibrePath: path });
-    return findCalibre(path);
-  },
-
-  async calibreConvert(job: string, id: string, from: string, to: string) {
-    const bin = findCalibre(getSettings().calibrePath);
-    if (!bin) throw new Error("Calibre is not installed.");
+  /** A Kindle AZW3 made from the book's EPUB, which has to be there first. */
+  async makeAzw3(id: string) {
     const book = library.get(id);
-    const out = await tempPath(`book.${to}`);
-    await calibreConvert(bin, library.filePath(book, from), out, (share, line) => send("progress", job, share, line));
-    return library.addFormat(id, to, out);
+    // The converter sits beside the app once installed, in resources/ while developing.
+    const wasm = app.isPackaged ? join(process.resourcesPath, "azw3.wasm") : join(here, "../../resources/azw3.wasm");
+    const data = await epubToAzw3(wasm, library.filePath(book, "epub"), book.title, book.authors.join(" & "));
+    return library.addFormat(id, "azw3", data);
   },
 
   async pdfFormat(id: string, html: string) {

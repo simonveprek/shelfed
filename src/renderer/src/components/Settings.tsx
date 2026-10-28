@@ -504,36 +504,13 @@ function SendingSection() {
 const PAPER = { A5: [148, 210], A4: [210, 297], Letter: [216, 279], Kindle: [90, 122] } as const;
 
 function ConvertingSection() {
-  const calibre = useStore((s) => s.calibre);
   const page = useStore((s) => s.settings.pdfPage);
   return (
     <>
       <Title title="Converting">
-        Built in, with nothing to install: EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, web pages and text become EPUB, PDF, plain text or a web page.
+        All built in, with nothing to install. Shelf reads EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, web pages and text, and makes EPUB, AZW3 for
+        Kindle, PDF, Word, FB2, plain text and web pages.
       </Title>
-      <Group>
-        <Row
-          label={<span className="flex items-center gap-2">Calibre {calibre && <Badge tone="success">Found</Badge>}</span>}
-          hint={calibre ? <span className="break-all">{calibre}</span> : "Optional. With it, Shelf also makes AZW3, MOBI and Word, and Kindle files for the cable."}
-          wrap
-        >
-          {!calibre && (
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => api.openExternal("https://calibre-ebook.com/download")}>Get Calibre</Button>
-              <Button
-                size="sm"
-                onClick={async () => {
-                  const found = await api.pickCalibre();
-                  useStore.setState({ calibre: found });
-                  if (!found) toast.error("That is not Calibre's converter");
-                }}
-              >
-                Find it…
-              </Button>
-            </div>
-          )}
-        </Row>
-      </Group>
       <Group label="PDF pages">
         <div className="grid grid-cols-4 gap-3 p-4">
           {(Object.keys(PAPER) as Array<keyof typeof PAPER>).map((id) => {

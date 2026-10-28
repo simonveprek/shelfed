@@ -35,7 +35,6 @@ type State = {
   collections: Collection[];
   settings: Settings;
   platform: string;
-  calibre: string | null;
   version: string;
   section: Section;
   query: string;
@@ -74,7 +73,6 @@ export const useStore = create<State>(() => ({
   collections: [],
   settings: null as unknown as Settings,
   platform: window.shelf.platform,
-  calibre: null,
   version: "",
   section: { kind: "all" },
   query: "",
@@ -106,7 +104,6 @@ export function hydrate(state: BootState) {
     books: state.books,
     collections: state.collections,
     settings: state.settings,
-    calibre: state.calibre,
     version: state.version,
     selection: [],
     onboarding: !state.settings.onboarded,

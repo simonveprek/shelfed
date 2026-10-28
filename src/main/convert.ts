@@ -1,55 +1,8 @@
 import { BrowserWindow } from "electron";
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-
-/** Where Calibre's converter usually lives, so it is found without asking. */
-export function findCalibre(custom?: string): string | null {
-  const candidates = [
-    custom,
-    "/Applications/calibre.app/Contents/MacOS/ebook-convert",
-    join(process.env.HOME ?? "", "Applications/calibre.app/Contents/MacOS/ebook-convert"),
-    // Program Files, wherever Windows put it, and per-user installs.
-    ...[process.env.ProgramW6432, process.env.ProgramFiles, process.env["ProgramFiles(x86)"]]
-      .filter(Boolean)
-      .map((dir) => join(dir!, "Calibre2", "ebook-convert.exe")),
-    join(process.env.LOCALAPPDATA ?? "", "Programs", "Calibre2", "ebook-convert.exe"),
-    "/usr/bin/ebook-convert",
-    "/opt/calibre/ebook-convert",
-  ].filter(Boolean) as string[];
-  return candidates.find((path) => existsSync(path)) ?? null;
-}
-
-/** Runs Calibre's ebook-convert, reporting its percentages as it goes. */
-export function calibreConvert(
-  bin: string,
-  input: string,
-  output: string,
-  onProgress: (share: number, line: string) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(bin, [input, output], { windowsHide: true });
-    let tail = "";
-    const read = (chunk: Buffer) => {
-      const text = chunk.toString();
-      tail = (tail + text).slice(-2000);
-      for (const line of text.split(/\r?\n/)) {
-        const match = line.match(/^(\d+)%\s+(.*)$/);
-        if (match) onProgress(Number(match[1]) / 100, match[2]);
-      }
-    };
-    child.stdout.on("data", read);
-    child.stderr.on("data", read);
-    child.on("error", reject);
-    child.on("close", (code) => {
-      if (code === 0 && existsSync(output)) resolve();
-      else reject(new Error(tail.trim().split(/\r?\n/).slice(-3).join(" ") || `Calibre stopped with code ${code}`));
-    });
-  });
-}
 
 // Inches. The Kindle size is a Paperwhite's screen, so pages fill it.
 const PAGES: Record<string, { pageSize: Electron.PrintToPDFOptions["pageSize"]; margin: number }> = {
@@ -90,9 +43,4 @@ export async function docxToHtml(path: string): Promise<string> {
   const mammoth = await import("mammoth");
   const result = await mammoth.convertToHtml({ buffer: await readFile(path) });
   return result.value;
-}
-
-export async function tempPath(name: string) {
-  const dir = await mkdtemp(join(tmpdir(), "shelf-"));
-  return join(dir, name);
 }

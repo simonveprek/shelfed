@@ -16,7 +16,6 @@ export function defaults(): Settings {
     sortDir: "desc",
     inspector: true,
     sidebar: true,
-    calibrePath: "",
     pdfPage: "A5",
     kindle: { to: "", from: "", host: "", port: 465, secure: true, user: "", hasPassword: false, format: "epub" },
     reader: { theme: "light", font: "publisher", size: 18, spacing: 1.5, width: 680, flow: "paginated", justify: true },

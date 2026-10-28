@@ -23,7 +23,7 @@
 
 - **Reads everything.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens where you stopped.
 - **Keeps your library as plain files.** One folder per author in `Documents/Shelf Library`, readable without the app.
-- **Converts.** To EPUB, PDF, text or a web page with nothing else installed. With [Calibre](https://calibre-ebook.com) it also makes AZW3, MOBI and Word.
+- **Converts.** To EPUB, AZW3 for Kindle, PDF, Word, FB2, text or a web page, all built in, with nothing else to install.
 - **Sends to your Kindle.** By email from your own mail account, or by cable.
 - **Finds details.** Descriptions, publishers and better covers from Open Library and Google Books.
 - **Brings back your Kindle highlights**, from `My Clippings.txt`.
@@ -91,13 +91,14 @@ If Shelf goes wrong, Settings → About Shelf → Log shows its log file, and a 
 
 | Path | What it is |
 | --- | --- |
-| `src/main` | The library on disk, Kindle by mail and cable, Calibre, PDF printing, book details |
+| `src/main` | The library on disk, Kindle by mail and cable, AZW3, PDF printing, book details |
 | `src/renderer/src/components` | Shelf's screens |
 | `src/renderer/src/components/ui` | The Fragms Personal kit (see Licence) |
 | `src/renderer/src/components/fragms` | Fragms components |
 | `src/renderer/src/reader` | The reader, on foliate-js and PDF.js |
 | `src/renderer/src/lib` | State, importing, converting, sending and suggestions |
 | `src/shared` | Types and the list of Kindles |
+| `tools/azw3` | The EPUB to AZW3 converter, in Go, built to `resources/azw3.wasm` |
 | `test` | Tests, with Vitest |
 | `e2e` | App tests, with Playwright |
 | `site` | The website |

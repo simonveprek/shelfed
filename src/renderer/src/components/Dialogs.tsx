@@ -46,7 +46,6 @@ function BookRows({ books, side }: { books: Book[]; side: (b: Book) => React.Rea
 export function SendDialog({ ids }: { ids: string[] }) {
   const books = useBooks(ids);
   const kindle = useStore((s) => s.settings.kindle);
-  const calibre = useStore((s) => s.calibre);
   const [mode, setMode] = useState<"email" | "cable">("email");
   const [devices, setDevices] = useState<KindleDevice[] | null>(null);
   const [device, setDevice] = useState("");
@@ -76,7 +75,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
   const plans = books.map((book) => ({ book, plan: emailPlan(book), size: book.formats.find((f) => f.ext === emailPlan(book).ext)?.size ?? 0 }));
   const largest = Math.max(0, ...plans.map((p) => p.size));
   const tooBig = largest > KINDLE_LIMIT;
-  const cablePlans = books.map((b) => usbPlan(b, calibre));
+  const cablePlans = books.map((b) => usbPlan(b));
 
   return (
     <Dialog open onClose={close} label="Send to Kindle" className="sm:max-w-[520px]">
@@ -153,9 +152,9 @@ export function SendDialog({ ids }: { ids: string[] }) {
               />
               <p className="text-label text-muted">
                 {cablePlans.some((p) => !p)
-                  ? "Some of these need Calibre to become AZW3 first. Install Calibre and Shelf uses it on its own."
+                  ? "Shelf can't read some of these to make Kindle files from them."
                   : cablePlans.some((p) => p?.convert)
-                    ? "Books without a Kindle format are made into AZW3 with Calibre first."
+                    ? "Books without a Kindle file get an AZW3 made first. Eject the Kindle before you unplug it."
                     : "Copies the Kindle files straight to the device. Eject it before you unplug it."}
               </p>
             </>
@@ -203,11 +202,10 @@ export function SendDialog({ ids }: { ids: string[] }) {
 
 export function ConvertDialog({ ids }: { ids: string[] }) {
   const books = useBooks(ids);
-  const calibre = useStore((s) => s.calibre);
   const pdfPage = useStore((s) => s.settings.pdfPage);
   const first = books[0];
-  const targets = first ? targetsFor(first, calibre) : [];
-  const [to, setTo] = useState(() => targets.find((t) => t.via && !first?.formats.some((f) => f.ext === t.ext))?.ext ?? "epub");
+  const targets = first ? targetsFor(first) : [];
+  const [to, setTo] = useState(() => targets.find((t) => t.possible && !first?.formats.some((f) => f.ext === t.ext))?.ext ?? "epub");
   if (!first) return null;
   const target = targets.find((t) => t.ext === to);
 
@@ -229,8 +227,8 @@ export function ConvertDialog({ ids }: { ids: string[] }) {
             label: t.label,
             description: t.note,
             // A format the books already have stays as it is. Remove it first to remake it.
-            disabled: !t.via || books.every((b) => b.formats.some((f) => f.ext === t.ext)),
-            meta: books.every((b) => b.formats.some((f) => f.ext === t.ext)) ? <Badge tone="success">Have it</Badge> : t.via === "calibre" ? <Badge>Calibre</Badge> : !t.via ? <Badge>Needs Calibre</Badge> : undefined,
+            disabled: !t.possible || books.every((b) => b.formats.some((f) => f.ext === t.ext)),
+            meta: books.every((b) => b.formats.some((f) => f.ext === t.ext)) ? <Badge tone="success">Have it</Badge> : undefined,
           }))}
         />
         {to === "pdf" && (
@@ -244,18 +242,12 @@ export function ConvertDialog({ ids }: { ids: string[] }) {
             />
           </Field>
         )}
-        {!calibre && (
-          <Alert title="More formats with Calibre">
-            EPUB, PDF, text and web pages are built in. For AZW3, MOBI and Word, install the free Calibre and Shelf uses it on its own.
-          </Alert>
-        )}
       </div>
       <DialogFooter>
-        {!calibre && <Button variant="ghost" className="sm:mr-auto" onClick={() => api.openExternal("https://calibre-ebook.com/download")} arrow>Get Calibre</Button>}
         <Button variant="ghost" onClick={close}>Cancel</Button>
         <Button
           variant="primary"
-          disabled={!target?.via}
+          disabled={!target?.possible}
           onClick={() => {
             convertMany(ids, to);
             close();

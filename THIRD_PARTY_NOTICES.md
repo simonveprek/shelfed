@@ -9,7 +9,12 @@ texts ship inside the app with each package.
 | [React](https://github.com/facebook/react) | MIT | The interface |
 | [foliate-js](https://github.com/johnfactotum/foliate-js) | MIT | Reading EPUB, MOBI, AZW3, FB2 and comics |
 | [PDF.js](https://github.com/mozilla/pdf.js) | Apache 2.0 | Reading PDF |
-| [fflate](https://github.com/101arrowz/fflate) | MIT | Making EPUBs |
+| [fflate](https://github.com/101arrowz/fflate) | MIT | Making EPUBs, Word files |
+| [leotaku/mobi](https://github.com/leotaku/mobi) | MIT | Writing Kindle AZW3 files |
+| [seapy/kindle-cli](https://github.com/seapy/kindle-cli) | MIT | Turning EPUB into AZW3, in `tools/azw3` |
+| [Go](https://go.dev) and golang.org/x/image, net and text | BSD 3-Clause | The AZW3 converter, built to WebAssembly |
+| [electron-updater](https://github.com/electron-userland/electron-builder) | MIT | Updates |
+| [electron-log](https://github.com/megahertz/electron-log) | MIT | The log file |
 | [Mammoth](https://github.com/mwilliamson/mammoth.js) | BSD 2-Clause | Reading Word files |
 | [Nodemailer](https://github.com/nodemailer/nodemailer) | MIT-0 | Sending to Kindle by email |
 | [Motion](https://github.com/motiondivision/motion) | MIT | Animation |
@@ -19,9 +24,6 @@ texts ship inside the app with each package.
 | [Geist](https://github.com/vercel/geist-font) | SIL Open Font License 1.1 | Type |
 | [next-themes](https://github.com/pacocoursey/next-themes) | MIT | Light and dark |
 | [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) | MIT | Styles |
-
-[Calibre](https://calibre-ebook.com) (GPL v3) is not part of Shelf. When it is
-installed, Shelf runs its `ebook-convert` tool as a separate program.
 
 Free books come from [Standard Ebooks](https://standardebooks.org) and
 [Project Gutenberg](https://www.gutenberg.org); book details from

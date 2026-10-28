@@ -158,7 +158,6 @@ export type Settings = {
   sortDir: "asc" | "desc";
   inspector: boolean;
   sidebar: boolean;
-  calibrePath: string;
   pdfPage: "A5" | "A4" | "Letter" | "Kindle";
   kindle: KindleSettings;
   reader: ReaderPrefs;
@@ -188,7 +187,6 @@ export type BootState = {
   collections: Collection[];
   settings: Settings;
   platform: NodeJS.Platform;
-  calibre: string | null;
   version: string;
 };
 
