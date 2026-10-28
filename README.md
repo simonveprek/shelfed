@@ -63,6 +63,8 @@ The builds aren't signed yet:
 - **macOS:** the first time, right-click Shelf in Applications and choose **Open**. If macOS says the app is damaged, run `xattr -cr /Applications/Shelf.app` once.
 - **Windows:** if SmartScreen says it protected your PC, choose **More info**, then **Run anyway**.
 
+Shelf looks for new versions on GitHub every few hours, and you can turn that off in Settings → About Shelf. On Windows an update downloads quietly and goes in the next time Shelf starts. On macOS and Linux Shelf tells you a new version is out and links to it, since an app that isn't signed can't replace itself on a Mac.
+
 ## Build it
 
 You need [Node.js](https://nodejs.org) 22 or newer.
@@ -76,11 +78,16 @@ npm run dev
 | --- | --- |
 | `npm run dev` | Runs Shelf, reloading as you edit |
 | `npm test` | Runs the tests |
+| `npm run test:app` | Builds Shelf and clicks through it with Playwright |
 | `npm run check` | Typechecks, then runs the tests |
 | `npm run dist:mac` | Makes the macOS installer in `dist` |
 | `npm run dist:win` | Makes the Windows installer in `dist` |
 
-The tests cover the library on disk under hundreds of imports at once, Kindle highlights, recommendations, the book sanitiser, EPUB making and Kindle recognition. CI runs them, and packs the app, on macOS, Windows and Linux. Pushing a tag like `v0.2.0` builds installers into a draft release.
+The tests cover the library on disk under hundreds of imports at once, Kindle highlights, recommendations, the book sanitiser, EPUB making and Kindle recognition. The app tests start Shelf on an empty library of made-up books and use it: adding books, the right-click menu, every view and place, search, reading, removing and undoing, settings and restarting. Any error the page throws fails them. CI runs both, and packs the app, on macOS, Windows and Linux.
+
+Pushing a tag like `v0.2.0` builds installers into a draft release. Updates only see a release once it's published, and only while the repository is public.
+
+If Shelf goes wrong, Settings → About Shelf → Log shows its log file, and a screen that breaks offers **Copy details** for a bug report.
 
 | Path | What it is |
 | --- | --- |
@@ -92,6 +99,7 @@ The tests cover the library on disk under hundreds of imports at once, Kindle hi
 | `src/renderer/src/lib` | State, importing, converting, sending and suggestions |
 | `src/shared` | Types and the list of Kindles |
 | `test` | Tests, with Vitest |
+| `e2e` | App tests, with Playwright |
 | `site` | The website |
 
 ## Privacy

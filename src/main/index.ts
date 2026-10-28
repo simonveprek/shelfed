@@ -6,6 +6,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import log from "electron-log/main";
 import type { Book, BootState, Collection, MetadataCandidate, Settings } from "../shared/types";
 import { KINDLE_EMAIL, READABLE } from "../shared/types";
 import { calibreConvert, docxToHtml, findCalibre, htmlToPdf, tempPath } from "./convert";
@@ -14,6 +15,7 @@ import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks } from "./catalogues";
 import { getSettings, setSettings, setSmtpPassword } from "./settings";
+import { checkForUpdates, installUpdate, updateState, watchUpdates } from "./updates";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const isMac = process.platform === "darwin";
@@ -28,6 +30,12 @@ protocol.registerSchemesAsPrivileged([
 
 // A separate profile for development and tests, so they never touch a real library.
 if (process.env.SHELF_USERDATA) app.setPath("userData", process.env.SHELF_USERDATA);
+
+// A log of what went wrong, for bug reports. Settings, About Shelf, Show the log.
+log.transports.file.level = "info";
+log.transports.console.level = false;
+log.errorHandler.startCatching({ showDialog: false });
+log.info(`Shelf ${app.getVersion()} on ${process.platform} ${process.arch}`);
 
 // A second copy hands its files to the first and leaves at once. quit() would
 // let it carry on starting up, opening the same library alongside.
@@ -117,11 +125,15 @@ function createWindow() {
   });
   // If the page's process dies, bring it back rather than leave an empty window.
   win.webContents.on("render-process-gone", (_event, details) => {
+    log.error("Page process gone", details);
     if (details.reason !== "clean-exit") win?.webContents.reload();
   });
-  // In development, the page's errors show in the terminal too.
-  if (!app.isPackaged && !process.env.SHELF_SHOT)
-    win.webContents.on("console-message", (event) => event.level === "error" && console.log("[page error]", event.message));
+  // The page's errors go in the log, and in development to the terminal too.
+  win.webContents.on("console-message", (event) => {
+    if (event.level !== "error") return;
+    log.error("[page]", event.message);
+    if (!app.isPackaged && !process.env.SHELF_SHOT) console.log("[page error]", event.message);
+  });
 
   if (process.env.SHELF_SHOT) shoot(win);
   if (process.env.ELECTRON_RENDERER_URL) win.loadURL(process.env.ELECTRON_RENDERER_URL);
@@ -365,6 +377,13 @@ const api = {
     if (!isMac) win.setTitleBarOverlay({ color: bg, symbolColor: ink ?? (dark ? PAPER.inkDark : PAPER.inkLight), height: 64 });
   },
 
+  updateState: () => updateState(),
+  checkForUpdates: () => checkForUpdates(),
+  /** Restarts into a downloaded update, or opens the page of one to download. */
+  installUpdate: () => installUpdate(),
+  /** The log file, in Finder or Explorer. */
+  showLog: () => shell.showItemInFolder(log.transports.file.getFile().path),
+
   ready() {
     listening = true;
     const files = queued.splice(0);
@@ -517,6 +536,7 @@ app.whenReady().then(async () => {
   serve();
   buildMenu();
   createWindow();
+  watchUpdates((state) => send("update", state), () => getSettings().updates !== false);
   if (!isMac) win?.setMenuBarVisibility(false);
   // Windows shuts down and logs off without before-quit, so the library is saved here too.
   win?.on("session-end", () => library?.flushNow());

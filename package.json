@@ -33,15 +33,19 @@
     "dist:win": "electron-vite build && electron-builder --win",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:app": "electron-vite build && playwright test",
     "check": "npm run typecheck && npm test"
   },
   "dependencies": {
+    "electron-log": "^5.4.4",
+    "electron-updater": "^6.8.11",
     "mammoth": "^1.13.0",
     "nodemailer": "^10.2.1"
   },
   "devDependencies": {
     "@hugeicons/core-free-icons": "^4.3.5",
     "@hugeicons/react": "^1.1.10",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-virtual": "^3.14.23",
     "@types/node": "^26.6.5",

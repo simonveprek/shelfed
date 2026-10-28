@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { Button, EASE, ThemeProvider, Toaster, toast } from "@/components/ui";
 import { importPaths } from "@/lib/actions";
+import type { UpdateState } from "../../shared/types";
 import { api, isMac, isWin, on } from "@/lib/api";
 import { runCommand } from "@/lib/commands";
 import { hydrate, persist, useStore } from "@/lib/store";
@@ -59,6 +60,25 @@ function KindleWatch() {
   return null;
 }
 
+/** A new version, said once when it's ready or out. */
+function announce(update: UpdateState) {
+  const before = useStore.getState().update;
+  useStore.setState({ update });
+  if (before.state === update.state) return;
+  if (update.state === "ready")
+    toast(`Shelf ${update.version} is ready`, {
+      description: "It goes in when Shelf next starts.",
+      duration: 15_000,
+      action: { label: "Restart now", onClick: () => api.installUpdate() },
+    });
+  if (update.state === "available")
+    toast(`Shelf ${update.version} is out`, {
+      description: "Download it from GitHub.",
+      duration: 15_000,
+      action: { label: "Download", onClick: () => api.installUpdate() },
+    });
+}
+
 /** If a screen breaks, say so and offer a way back, rather than leave the window empty. */
 class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -79,6 +99,15 @@ class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
         <div className="mt-5 flex gap-2">
           <Button variant="primary" onClick={() => this.setState({ error: null })}>Try again</Button>
           <Button onClick={() => location.reload()}>Reload</Button>
+          <Button
+            onClick={() => {
+              const { version, platform } = useStore.getState();
+              navigator.clipboard.writeText(`Shelf ${version} on ${platform}\n\n${error.stack ?? error.message}`);
+              toast.success("Copied, ready to paste into a bug report");
+            }}
+          >
+            Copy details
+          </Button>
         </div>
       </div>
     );
@@ -131,7 +160,9 @@ export function App() {
       on("command", runCommand),
       on("open-files", (paths: string[]) => importPaths(paths, paths.length === 1)),
       on("save-failed", () => toast.error("Shelf could not save your library", { description: "Your changes are kept and it will try again. Check the disk has room." })),
+      on("update", announce),
     ];
+    api.updateState().then((update) => useStore.setState({ update }));
     const key = (e: KeyboardEvent) => {
       const s = useStore.getState();
       const tag = (e.target as HTMLElement).tagName;

@@ -22,6 +22,17 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # Drives the built app: adding books, menus, views, the reader, settings.
+      # Linux runners have no screen, so it gets a virtual one.
+      - name: App tests
+        run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum ' || '' }}npx playwright test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-tests-${{ matrix.os }}
+          path: |
+            playwright-report
+            test-results
       # Packs the app without an installer, to catch packaging problems on each system.
       - if: runner.os != 'Linux'
         run: npx electron-builder --dir --publish never

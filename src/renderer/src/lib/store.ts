@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Book, BootState, Collection, KindleDevice, KindleOnUsb, Settings } from "../../../shared/types";
+import type { Book, BootState, Collection, KindleDevice, KindleOnUsb, Settings, UpdateState } from "../../../shared/types";
 import type { PointMood } from "@/components/fragms/points-data";
 import { toast } from "@/components/ui";
 import { api } from "./api";
@@ -58,6 +58,8 @@ type State = {
   kindleArrived: number | null;
   /** The welcome is showing. */
   onboarding: boolean;
+  /** Where finding a new version of Shelf has got to. */
+  update: UpdateState;
 };
 
 export type SettingsSection = "library" | "appearance" | "reading" | "kindle" | "sending" | "converting" | "about";
@@ -90,6 +92,7 @@ export const useStore = create<State>(() => ({
   kindlePort: null,
   kindleArrived: null,
   onboarding: false,
+  update: { state: "idle" },
 }));
 
 const set = useStore.setState;

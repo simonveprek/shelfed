@@ -14,6 +14,7 @@ import { useKindlePort } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
+import type { UpdateState } from "../../../shared/types";
 import { ColourPicker } from "./Colours";
 import { Kindle3D } from "./Kindle3D";
 import { Mark } from "./Logo";
@@ -527,8 +528,36 @@ function ConvertingSection() {
 /* About                                                                     */
 /* ------------------------------------------------------------------------ */
 
+/** Where finding a new version has got to, and the button for the next step. */
+function Updates() {
+  const update = useStore((s) => s.update);
+  const check = () => api.checkForUpdates();
+  const line: Record<UpdateState["state"], ReactNode> = {
+    idle: null,
+    checking: "Looking for a new version…",
+    none: "This is the latest version.",
+    downloading: update.state === "downloading" && `Downloading ${update.version}, ${Math.round(update.progress * 100)}%`,
+    ready: update.state === "ready" && `Shelf ${update.version} is ready to go in.`,
+    available: update.state === "available" && `Shelf ${update.version} is out.`,
+    failed: update.state === "failed" && update.error,
+  };
+  return (
+    <div className="mt-4 flex flex-col items-center gap-2.5">
+      {line[update.state] && <p className="text-caption text-muted">{line[update.state]}</p>}
+      {update.state === "ready" ? (
+        <Button size="sm" variant="primary" onClick={() => api.installUpdate()}>Restart to update</Button>
+      ) : update.state === "available" ? (
+        <Button size="sm" variant="primary" onClick={() => api.installUpdate()}>Download</Button>
+      ) : (
+        <Button size="sm" disabled={update.state === "checking" || update.state === "downloading"} onClick={check}>Check for updates</Button>
+      )}
+    </div>
+  );
+}
+
 function AboutSection() {
   const version = useStore((s) => s.version);
+  const updates = useStore((s) => s.settings.updates !== false);
   const books = useStore((s) => s.books.length);
   return (
     <div className="flex flex-col items-center pt-6 text-center">
@@ -537,6 +566,7 @@ function AboutSection() {
       </span>
       <h2 className="mt-5 text-[26px] font-medium tracking-[-0.02em]">Shelf</h2>
       <p className="mt-1 text-label text-muted">Version {version}</p>
+      <Updates />
       <p className="serif mt-5 max-w-[30ch] text-[17px] leading-snug">A quiet home for your books.</p>
       {books > 0 && <p className="mt-2 text-caption text-muted">Keeping {plural(books, "book")} for you.</p>}
       <div className="mt-7 flex flex-wrap justify-center gap-2">
@@ -544,7 +574,22 @@ function AboutSection() {
         <Button size="sm" icon={GithubIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelf")}>Source</Button>
         <Button size="sm" icon={LicenseIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelf/blob/main/LICENSE")}>Licence</Button>
       </div>
-      <p className="mt-10 text-caption text-muted">
+      <div className="mt-8 w-full max-w-[460px] text-left">
+        <Group>
+          <div className="px-4 py-1">
+            <SwitchRow
+              label="Look for updates"
+              hint="Checks GitHub now and then for a new version."
+              checked={updates}
+              onChange={(on) => setSetting({ updates: on })}
+            />
+          </div>
+          <Row label="Log" hint="What Shelf noted while running, for a bug report.">
+            <Button size="sm" onClick={() => api.showLog()}>{revealLabel}</Button>
+          </Row>
+        </Group>
+      </div>
+      <p className="mt-6 text-caption text-muted">
         Made by <TextLink href="https://simonveprek.cz">Šimon Vepřek</TextLink>, built on Fragms Personal.
       </p>
     </div>

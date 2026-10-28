@@ -165,7 +165,21 @@ export type Settings = {
   bookcase: BookcasePrefs;
   /** True once the welcome has been seen. */
   onboarded?: boolean;
+  /** Look for new versions by itself. On unless turned off. */
+  updates?: boolean;
 };
+
+/** Where finding and getting a new version of Shelf has got to. */
+export type UpdateState =
+  | { state: "idle" }
+  | { state: "checking" }
+  | { state: "none" }
+  | { state: "downloading"; version: string; progress: number }
+  /** Downloaded, and goes in on restart. Windows only. */
+  | { state: "ready"; version: string }
+  /** Out, to download from its page. macOS and Linux. */
+  | { state: "available"; version: string; url: string }
+  | { state: "failed"; error: string };
 
 export type BootState = {
   books: Book[];

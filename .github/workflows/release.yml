@@ -18,7 +18,8 @@ jobs:
         include:
           - { name: macOS, os: macos-latest, args: --mac --arm64 --x64 }
           - { name: Windows x64, os: windows-latest, args: --win --x64 }
-          - { name: Windows arm64, os: windows-latest, args: --win --arm64 }
+          # Its own update channel, so x64 and arm64 don't overwrite each other's latest.yml.
+          - { name: Windows arm64, os: windows-latest, args: --win --arm64 -c.publish.channel=latest-arm64 }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

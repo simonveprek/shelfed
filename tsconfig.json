@@ -17,5 +17,5 @@
       "next/link": ["src/renderer/src/shims/link.tsx"]
     }
   },
-  "include": ["src", "test", "electron.vite.config.ts", "vitest.config.ts"]
+  "include": ["src", "test", "e2e", "electron.vite.config.ts", "vitest.config.ts", "playwright.config.ts"]
 }
