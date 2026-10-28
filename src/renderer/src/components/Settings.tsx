@@ -8,6 +8,7 @@ import {
 import {
   Badge, Button, cx, Dialog, EASE, Field, Icon, IconButton, Input, Segmented, Select, SwitchRow, TextLink, toast, type IconLike,
 } from "@/components/ui";
+import { Point } from "@/components/fragms/points";
 import { api, isMac, revealLabel } from "@/lib/api";
 import { useKindlePort } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
@@ -80,6 +81,7 @@ function Choice({ on, label, onClick, children }: { on: boolean; label: string; 
 function LibrarySection() {
   const path = useStore((s) => s.settings.libraryPath);
   const books = useStore((s) => s.books);
+  const mood = useStore((s) => s.mood);
   const size = useMemo(() => books.reduce((n, b) => n + b.formats.reduce((m, f) => m + f.size, 0), 0), [books]);
   const authors = useMemo(() => new Set(books.flatMap((b) => b.authors)).size, [books]);
   const parts = path.split(/[\\/]/).filter(Boolean);
@@ -88,9 +90,7 @@ function LibrarySection() {
       <Title title="Library">Your books live in a plain folder, one folder for each author, so they stay yours and readable without Shelf.</Title>
       <Group>
         <div className="flex items-center gap-4 px-4 py-4">
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-[14px] bg-[#c99a2e]/15 text-[#a87b16] dark:text-[#e0b54a]">
-            <Icon icon={Folder01Icon} size={22} />
-          </span>
+          <Point shape="squircle" mood={mood ?? "idle"} size={44} look="pointer" energy={0.8} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-label font-medium">{parts.at(-1) ?? path}</p>
             <p className="line-clamp-1 text-caption break-all text-muted" title={path}>{path}</p>

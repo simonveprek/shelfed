@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Add01Icon, Book02Icon, BookOpen01Icon, Bookmark01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
   File01Icon, FileAddIcon, Folder01Icon, FolderAddIcon, FilterHorizontalIcon, GridViewIcon, Layers01Icon,
@@ -11,13 +10,11 @@ import {
   Badge, ContextMenu, cx, IconButton, Menu, MenuItem, MenuLabel, MenuSeparator, Popover, SearchField, Segmented,
   Select, Sidebar, SidebarGroup, SidebarItem, Slider, SwitchRow, ThemeToggle,
 } from "@/components/ui";
-import { Point } from "@/components/fragms/points";
 import { addToCollection, deleteCollection, pickAndImport } from "@/lib/actions";
 import { isMac, isWin, mod, shift } from "@/lib/api";
 import { newCollection } from "@/lib/commands";
 import { BOOK_MIME } from "@/lib/select";
 import { patchBooks, setSetting, useStore, type Browse, type Section } from "@/lib/store";
-import { bytes, plural } from "@/lib/util";
 import { sectionTitle, useVisibleBooks } from "@/lib/view";
 import { Logo } from "./Logo";
 import { MATERIALS } from "./Bookcase";
@@ -46,63 +43,6 @@ function DropTarget({ onDrop, children }: { onDrop?: (ids: string[]) => void; ch
       }}
     >
       {children}
-    </div>
-  );
-}
-
-/** The library's companion. It reads while books come in and naps when nothing happens. */
-function Companion({ collapsed }: { collapsed: boolean }) {
-  const mood = useStore((s) => s.mood);
-  const jobs = useStore((s) => s.jobs);
-  const dragging = useStore((s) => s.dragging);
-  const books = useStore((s) => s.books);
-  const [idle, setIdle] = useState(false);
-
-  useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
-    const wake = () => {
-      setIdle(false);
-      clearTimeout(t);
-      t = setTimeout(() => setIdle(true), 90_000);
-    };
-    wake();
-    window.addEventListener("pointermove", wake);
-    window.addEventListener("keydown", wake);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener("pointermove", wake);
-      window.removeEventListener("keydown", wake);
-    };
-  }, []);
-
-  const running = jobs.find((j) => j.state === "running");
-  const size = useMemo(() => books.reduce((n, b) => n + b.formats.reduce((m, f) => m + f.size, 0), 0), [books]);
-  const line = running ? running.title : dragging ? "Drop them anywhere" : books.length ? plural(books.length, "book") : "No books yet";
-
-  return (
-    <div className="mb-2 flex items-center gap-3 px-2 py-2">
-      <Point
-        shape="squircle"
-        mood={dragging ? "excited" : (mood ?? (running ? "thinking" : idle ? "sleepy" : "idle"))}
-        size={28}
-        look="pointer"
-        energy={0.8}
-        className="shrink-0"
-      />
-      <div className={cx("min-w-0 flex-1 transition-opacity duration-150", collapsed && "opacity-0")}>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.p
-            key={line}
-            initial={{ opacity: 0, y: 3 }}
-            animate={{ opacity: 1, y: 0, transition: { duration: 0.25 } }}
-            exit={{ opacity: 0, transition: { duration: 0.15 } }}
-            className="truncate text-label font-medium"
-          >
-            {line}
-          </motion.p>
-        </AnimatePresence>
-        <p className="truncate text-caption text-muted">{books.length ? bytes(size) : "Drop files to begin"}</p>
-      </div>
     </div>
   );
 }
@@ -143,7 +83,6 @@ export function AppSidebar() {
           </div>
         </div>
       }
-      footer={<Companion collapsed={!open} />}
     >
       <SidebarGroup>
         {PLACES.map((place) => (
