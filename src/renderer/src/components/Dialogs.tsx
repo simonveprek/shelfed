@@ -103,7 +103,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
             icon={MailSend01Icon}
             title="Set up sending once"
             description="Shelf mails books to your Kindle address from your own mail account. After that every book is one click."
-            action={<Button variant="primary" onClick={() => useStore.setState({ dialog: { kind: "settings", tab: "kindle" } })}>Set up Kindle</Button>}
+            action={<Button variant="primary" onClick={() => useStore.setState({ dialog: { kind: "settings", tab: "sending" } })}>Set up Kindle</Button>}
           />
         )}
 

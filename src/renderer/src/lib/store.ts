@@ -16,7 +16,7 @@ export type Section =
 
 export type Dialog =
   | { kind: "send" | "convert" | "metadata" | "edit"; ids: string[] }
-  | { kind: "settings"; tab?: "general" | "kindle" | "convert" | "reading" }
+  | { kind: "settings"; tab?: SettingsSection }
   | { kind: "rename-collection"; id: string }
   | { kind: "clippings"; text: string; from: string };
 
@@ -59,6 +59,8 @@ type State = {
   /** The welcome is showing. */
   onboarding: boolean;
 };
+
+export type SettingsSection = "library" | "appearance" | "reading" | "kindle" | "sending" | "converting" | "about";
 
 export type KindlePort = { usb: KindleOnUsb[]; drives: KindleDevice[] };
 

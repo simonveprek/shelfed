@@ -137,7 +137,7 @@ export function Palette() {
       { id: "add", label: "Add books", group: "Do", icon: FileAddIcon, shortcut: `${mod}O`, onSelect: () => pickAndImport(false) },
       { id: "add-folder", label: "Add a folder of books", group: "Do", icon: FolderAddIcon, onSelect: () => pickAndImport(true) },
       { id: "collection", label: "New collection", group: "Do", icon: FolderAddIcon, onSelect: () => newCollection(useStore.getState().selection) },
-      { id: "kindle", label: "Set up Send to Kindle", group: "Do", icon: Tablet01Icon, onSelect: () => useStore.setState({ dialog: { kind: "settings", tab: "kindle" } }) },
+      { id: "kindle", label: "Set up Send to Kindle", group: "Do", icon: Tablet01Icon, onSelect: () => useStore.setState({ dialog: { kind: "settings", tab: "sending" } }) },
       { id: "classics", label: "Classics", group: "Go to", icon: Globe02Icon, keywords: ["free books", "public domain", "Gutenberg", "Standard Ebooks"], onSelect: go({ kind: "discover" }) },
       { id: "clippings", label: "Import Kindle highlights", group: "Do", icon: Tablet01Icon, onSelect: () => runCommand("clippings") },
       { id: "welcome", label: "Show the welcome again", group: "Do", icon: Book02Icon, onSelect: () => useStore.setState({ onboarding: true }) },
