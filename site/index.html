@@ -87,43 +87,64 @@
     }
     .link:hover { text-decoration-color: currentColor; }
 
-    /* Header */
+    /* The header, a capsule floating over the page, with a bookmark ribbon that grows as you read down. */
     header {
       position: sticky;
-      top: 0;
+      top: 14px;
       z-index: 20;
-      backdrop-filter: blur(16px) saturate(1.4);
-      -webkit-backdrop-filter: blur(16px) saturate(1.4);
-      background: color-mix(in oklab, var(--background) 80%, transparent);
+      display: flex;
+      justify-content: center;
+      padding: 0 16px;
+      pointer-events: none;
     }
     .bar {
-      max-width: 1180px;
-      margin: 0 auto;
-      height: 64px;
-      padding: 0 24px;
+      position: relative;
+      pointer-events: auto;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
+      height: 52px;
+      padding: 0 6px 0 16px;
+      border-radius: 99px;
+      background: color-mix(in oklab, var(--card) 78%, transparent);
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 16px 40px -20px rgb(0 0 0 / 0.45);
+      backdrop-filter: blur(18px) saturate(1.5);
+      -webkit-backdrop-filter: blur(18px) saturate(1.5);
     }
-    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 500; font-size: 17px; letter-spacing: -0.02em; }
-    .brand svg { width: 26px; height: 26px; }
-    .pill {
-      display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 99px;
-      background: var(--control); color: var(--muted); font-size: 12px; font-family: "Geist Mono", ui-monospace, monospace;
+    .ribbon {
+      position: absolute;
+      left: 26px;
+      top: calc(100% - 2px);
+      width: 9px;
+      height: calc(12px + var(--read, 0) * 34px);
+      background: var(--aurora);
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 5px), 0 100%);
+      z-index: -1;
+      transition: height 0.2s ease-out;
     }
-    nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
-    nav a.text { text-decoration: none; color: var(--muted); font-size: 14px; padding: 8px 12px; border-radius: 99px; transition: color 0.15s, background 0.15s; }
+    .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; font-weight: 500; font-size: 16px; letter-spacing: -0.02em; margin-right: 10px; }
+    .brand svg { width: 22px; height: 22px; }
+    nav { display: flex; align-items: center; gap: 2px; }
+    nav a.text { text-decoration: none; color: var(--muted); font-size: 14px; padding: 7px 12px; border-radius: 99px; transition: color 0.15s, background 0.15s; }
     nav a.text:hover { color: var(--foreground); background: var(--control); }
+    .rule { width: 1px; height: 20px; background: var(--line-strong); margin: 0 6px; }
     .icon-button {
-      width: 36px; height: 36px; border-radius: 99px; border: 0; display: grid; place-items: center;
-      background: var(--control); color: var(--foreground); cursor: pointer; transition: background 0.15s;
+      width: 38px; height: 38px; border-radius: 99px; border: 0; display: grid; place-items: center;
+      background: transparent; color: var(--muted); cursor: pointer; transition: background 0.15s, color 0.15s;
     }
-    .icon-button:hover { background: var(--control-hover); }
+    .icon-button:hover { background: var(--control); color: var(--foreground); }
     .icon-button svg { width: 17px; height: 17px; }
-    @media (max-width: 640px) { nav a.text { display: none; } }
+    .get {
+      display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 99px; text-decoration: none;
+      font-size: 14px; font-weight: 500; background: var(--foreground); color: var(--background); transition: opacity 0.15s, transform 0.15s;
+    }
+    .get:hover { opacity: 0.88; }
+    .get:active { transform: scale(0.97); }
+    @media (max-width: 640px) { nav a.text, .rule { display: none; } }
 
     /* Hero */
-    .hero { position: relative; max-width: 1180px; margin: 0 auto; padding: 72px 24px 40px; text-align: center; }
+    .hero { position: relative; max-width: 1180px; margin: 0 auto; padding: 58px 24px 40px; text-align: center; }
     .orbit {
       position: absolute; left: 50%; top: 286px; width: 900px; height: 400px; transform: translate(-50%, -50%);
       pointer-events: none;
@@ -214,6 +235,7 @@
 <body>
   <header>
     <div class="bar">
+      <span class="ribbon" aria-hidden="true"></span>
       <a class="brand" href="#" aria-label="Shelf">
         <svg viewBox="0 0 32 32" aria-hidden="true">
           <defs>
@@ -227,15 +249,16 @@
         </svg>
         shelf
       </a>
-      <span class="pill">0.1</span>
       <nav>
         <a class="text" href="#features">Features</a>
         <a class="text" href="#kindle">Kindle</a>
         <a class="text" href="https://github.com/simonveprek/shelf">GitHub</a>
-        <button class="icon-button" id="theme" aria-label="Switch light and dark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4" /></svg>
-        </button>
       </nav>
+      <span class="rule"></span>
+      <button class="icon-button" id="theme" aria-label="Switch light and dark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4" /></svg>
+      </button>
+      <a class="get" href="https://github.com/simonveprek/shelf/releases/latest">Download</a>
     </div>
   </header>
 
@@ -408,6 +431,15 @@
       root.dataset.theme = dark ? "light" : "dark";
       try { localStorage.setItem("theme", root.dataset.theme); } catch {}
     });
+
+    // The header's ribbon grows the further down the page you read.
+    const ribbon = document.querySelector(".ribbon");
+    const read = () => {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      ribbon.style.setProperty("--read", max > 0 ? Math.min(1, scrollY / max).toFixed(3) : "0");
+    };
+    addEventListener("scroll", read, { passive: true });
+    read();
 
     // Things arrive as they come into view.
     const seen = new IntersectionObserver(
