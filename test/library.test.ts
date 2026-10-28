@@ -57,7 +57,9 @@ describe("importing books", () => {
     expect(lost.map((b) => b.title)).toEqual([]);
     // Incoming is left empty, or gone.
     expect(existsSync(join(root, "Incoming")) ? await readdir(join(root, "Incoming")) : []).toEqual([]);
-  });
+    await lib.flush();
+    // Windows is slower with files, antivirus looking at each one, so this gets a minute there.
+  }, 60_000);
 
   it("adds a file only once, even when it's added twice at the same moment", async () => {
     const lib = await new Library(root).open();
