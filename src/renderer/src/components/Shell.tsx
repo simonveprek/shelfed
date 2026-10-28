@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { motion } from "framer-motion";
 import {
   Add01Icon, Book02Icon, BookOpen01Icon, Bookmark01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
   File01Icon, FileAddIcon, Folder01Icon, FolderAddIcon, FilterHorizontalIcon, GridViewIcon, Layers01Icon,
@@ -7,7 +8,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import type { SortKey } from "../../../shared/types";
 import {
-  Badge, ContextMenu, cx, IconButton, Menu, MenuItem, MenuLabel, MenuSeparator, Popover, SearchField, Segmented,
+  Badge, ContextMenu, cx, EASE, IconButton, Menu, MenuItem, MenuLabel, MenuSeparator, Popover, SearchField, Segmented,
   Select, Sidebar, SidebarGroup, SidebarItem, Slider, SwitchRow, ThemeToggle,
 } from "@/components/ui";
 import { addToCollection, deleteCollection, pickAndImport } from "@/lib/actions";
@@ -301,7 +302,15 @@ export function Header() {
       {section.kind === "group" && (
         <IconButton label="Back" icon={ArrowLeft01Icon} className="-ml-2" onClick={() => useStore.setState({ section: { kind: "browse", by: section.by } })} />
       )}
-      <h1 className="truncate text-[15px] font-medium tracking-[-0.01em]">{sectionTitle(section, collections)}</h1>
+      <motion.h1
+        key={sectionTitle(section, collections)}
+        className="truncate text-[15px] font-medium tracking-[-0.01em]"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: EASE }}
+      >
+        {sectionTitle(section, collections)}
+      </motion.h1>
       {total > 0 && !browsing && <Badge>{visible.length.toLocaleString()}</Badge>}
       <div className="min-w-4 flex-1" />
 

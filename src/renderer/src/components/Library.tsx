@@ -1,11 +1,12 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { motion } from "framer-motion";
 import {
   ArrowDataTransferHorizontalIcon, ArrowRight01Icon, BookOpen01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
   FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import type { Book } from "../../../shared/types";
-import { Badge, Button, ContextMenu, cx, DataTable, Icon, MenuItem, MenuLabel, MenuSeparator, Progress, type DataTableColumn } from "@/components/ui";
+import { Badge, Button, ContextMenu, cx, DataTable, EASE, Icon, MenuItem, MenuLabel, MenuSeparator, Progress, type DataTableColumn } from "@/components/ui";
 import { Empty } from "@/components/bits";
 import { addToCollection, openReader, pickAndImport, removeFromCollection } from "@/lib/actions";
 import { api, isMac, revealLabel } from "@/lib/api";
@@ -401,7 +402,28 @@ const EMPTY: Record<string, string> = {
   recent: "Books added in the last two weeks show up here.",
 };
 
+/**
+ * The page for the section and view, coming in each time either changes.
+ * Only coming in: the page going out would already show the new books.
+ */
 export function LibraryView() {
+  const section = useStore((s) => s.section);
+  const view = useStore((s) => s.settings.view);
+  const key = JSON.stringify(section) + (section.kind === "browse" || section.kind === "discover" ? "" : view);
+  return (
+    <motion.div
+      key={key}
+      className="absolute inset-0"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.38, ease: EASE }}
+    >
+      <Page />
+    </motion.div>
+  );
+}
+
+function Page() {
   const visible = useVisibleBooks();
   const view = useStore((s) => s.settings.view);
   const section = useStore((s) => s.section);
