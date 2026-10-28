@@ -34,7 +34,8 @@
     "test:watch": "vitest",
     "test:app": "electron-vite build && playwright test",
     "check": "npm run typecheck && npm test",
-    "build:azw3": "cd tools/azw3 && GOOS=wasip1 GOARCH=wasm go build -trimpath -ldflags=\"-s -w\" -o ../../resources/azw3.wasm ."
+    "build:azw3": "cd tools/azw3 && GOOS=wasip1 GOARCH=wasm go build -trimpath -ldflags=\"-s -w\" -o ../../resources/azw3.wasm .",
+    "postinstall": "node scripts/dev-name.mjs"
   },
   "dependencies": {
     "electron-log": "^5.4.4",

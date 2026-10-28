@@ -19,7 +19,6 @@ import { APP_ICONS } from "../../../shared/icons";
 import type { UpdateState } from "../../../shared/types";
 import { ColourPicker } from "./Colours";
 import { Kindle3D } from "./Kindle3D";
-import { Mark } from "./Logo";
 
 /* ------------------------------------------------------------------------ */
 /* Pieces                                                                    */
@@ -566,12 +565,14 @@ function Updates() {
 
 function AboutSection() {
   const version = useStore((s) => s.version);
+  const icon = useStore((s) => s.settings.icon ?? "paper");
   const updates = useStore((s) => s.settings.updates !== false);
   const books = useStore((s) => s.books.length);
   return (
     <div className="flex flex-col items-center pt-6 text-center">
-      <span className="flex size-20 items-center justify-center rounded-[22px] border border-border bg-[#f7f5f0] shadow-card">
-        <Mark size={44} />
+      {/* The icon you chose, as it looks in the Dock or on the taskbar. */}
+      <span className="relative block size-24 overflow-hidden rounded-[22.5%] shadow-[0_10px_28px_rgba(0,0,0,0.22),0_0_0_1px_rgba(0,0,0,0.04)]">
+        <img src={iconSrc(icon)} alt="" draggable={false} className={cx("absolute inset-0 size-full", isMac && "scale-[1.243]")} />
       </span>
       <h2 className="mt-5 text-[26px] font-medium tracking-[-0.02em]">Shelf</h2>
       <p className="mt-1 text-label text-muted">Version {version}</p>
