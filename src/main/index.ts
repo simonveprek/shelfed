@@ -1,5 +1,5 @@
 import {
-  app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, protocol, screen, session, shell,
+  app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, nativeTheme, net, protocol, screen, session, shell,
   type MenuItemConstructorOptions,
 } from "electron";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -181,6 +181,24 @@ function shoot(target: BrowserWindow) {
 }
 
 const send = (channel: string, ...args: unknown[]) => win?.webContents.send(channel, ...args);
+
+/* ------------------------------------------------------------------------ */
+/* The app icon you chose                                                    */
+/* ------------------------------------------------------------------------ */
+
+const iconFile = () => join(app.getPath("userData"), "app-icon.png");
+
+/**
+ * Puts the chosen icon in the Dock or on the taskbar. It holds while Shelf
+ * runs; closed, the system shows the icon Shelf was installed with.
+ */
+function showIcon() {
+  if (!existsSync(iconFile())) return;
+  const image = nativeImage.createFromPath(iconFile());
+  if (image.isEmpty()) return;
+  if (isMac) app.dock?.setIcon(image);
+  else win?.setIcon(image.resize({ width: 256, height: 256, quality: "best" }));
+}
 
 /* ------------------------------------------------------------------------ */
 /* Files served to the window                                                */
@@ -377,6 +395,12 @@ const api = {
     if (!isMac) win.setTitleBarOverlay({ color: bg, symbolColor: ink ?? (dark ? PAPER.inkDark : PAPER.inkLight), height: 64 });
   },
 
+  /** A PNG of the chosen icon, drawn by the page, kept for the next start. */
+  setAppIcon(png: string) {
+    writeFileSync(iconFile(), nativeImage.createFromDataURL(png).toPNG());
+    showIcon();
+  },
+
   updateState: () => updateState(),
   checkForUpdates: () => checkForUpdates(),
   /** Restarts into a downloaded update, or opens the page of one to download. */
@@ -536,6 +560,7 @@ app.whenReady().then(async () => {
   serve();
   buildMenu();
   createWindow();
+  showIcon();
   watchUpdates((state) => send("update", state), () => getSettings().updates !== false);
   if (!isMac) win?.setMenuBarVisibility(false);
   // Windows shuts down and logs off without before-quit, so the library is saved here too.

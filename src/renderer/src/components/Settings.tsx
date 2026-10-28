@@ -10,10 +10,12 @@ import {
 } from "@/components/ui";
 import { Point } from "@/components/fragms/points";
 import { api, isMac, revealLabel } from "@/lib/api";
+import { chooseIcon, iconSrc } from "@/lib/icon";
 import { useKindlePort } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
+import { APP_ICONS } from "../../../shared/icons";
 import type { UpdateState } from "../../../shared/types";
 import { ColourPicker } from "./Colours";
 import { Kindle3D } from "./Kindle3D";
@@ -160,9 +162,30 @@ function Window({ dark }: { dark: boolean }) {
   );
 }
 
+/** One app icon to pick, the ring hugging its own tile. */
+function IconChoice({ id, label, on }: { id: string; label: string; on: boolean }) {
+  return (
+    <button type="button" aria-pressed={on} onClick={() => chooseIcon(id)} className="group flex flex-col items-center gap-2 outline-none">
+      <span
+        className={cx(
+          "relative block aspect-square w-full overflow-hidden rounded-[22.5%] transition-[box-shadow,transform] duration-200 ease-smooth",
+          on
+            ? "shadow-[0_0_0_2px_var(--card),0_0_0_4px_var(--foreground)]"
+            : "shadow-[0_4px_12px_rgba(0,0,0,0.14)] group-hover:-translate-y-0.5 group-focus-visible:shadow-[0_0_0_2px_var(--card),0_0_0_4px_var(--line-strong)]",
+        )}
+      >
+        {/* On macOS the drawing has room around the tile for its shadow; this crops to the tile. */}
+        <img src={iconSrc(id)} alt="" draggable={false} className={cx("absolute inset-0 size-full", isMac && "scale-[1.243]")} />
+      </span>
+      <span className={cx("text-caption transition-colors duration-150", on ? "font-medium text-foreground" : "text-muted group-hover:text-foreground")}>{label}</span>
+    </button>
+  );
+}
+
 function AppearanceSection() {
   const { theme, setTheme } = useTheme();
   const current = (theme as "system" | "light" | "dark") ?? "system";
+  const chosen = useStore((s) => s.settings.icon ?? "paper");
   return (
     <>
       <Title title="Appearance">Light, dark, or following your system through the day.</Title>
@@ -182,6 +205,15 @@ function AppearanceSection() {
               )}
             </span>
           </Choice>
+        ))}
+      </div>
+      <h3 className="mt-9 mb-1 text-label font-medium">App icon</h3>
+      <p className="mb-4 text-caption text-muted">
+        {isMac ? "Shows in the Dock while Shelf is open." : "Shows on the taskbar while Shelf is open."}
+      </p>
+      <div className="grid grid-cols-6 gap-4">
+        {APP_ICONS.map((icon) => (
+          <IconChoice key={icon.id} id={icon.id} label={icon.label} on={chosen === icon.id} />
         ))}
       </div>
       <p className="mt-6 text-caption text-muted">The bookcase has its own look, in its menu: shelves, wood, spines and ribbons.</p>

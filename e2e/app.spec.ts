@@ -120,3 +120,16 @@ test("the library is still there after a restart", async ({ shelf }) => {
   await shelf.restart();
   for (const book of BOOKS) await expect(card(shelf.page, book.title)).toBeVisible();
 });
+
+test("an app icon can be chosen, and stays chosen", async ({ shelf }) => {
+  await openSettings(shelf.page);
+  await shelf.page.getByRole("dialog").getByRole("button", { name: "Appearance", exact: true }).click();
+  const midnight = shelf.page.getByRole("button", { name: "Midnight" });
+  await midnight.click();
+  await expect(midnight).toHaveAttribute("aria-pressed", "true");
+  await expect(shelf.page.getByRole("button", { name: "Paper" })).toHaveAttribute("aria-pressed", "false");
+  await shelf.restart();
+  await openSettings(shelf.page);
+  await shelf.page.getByRole("dialog").getByRole("button", { name: "Appearance", exact: true }).click();
+  await expect(shelf.page.getByRole("button", { name: "Midnight" })).toHaveAttribute("aria-pressed", "true");
+});

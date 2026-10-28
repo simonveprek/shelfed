@@ -167,6 +167,8 @@ export type Settings = {
   onboarded?: boolean;
   /** Look for new versions by itself. On unless turned off. */
   updates?: boolean;
+  /** The app icon chosen in Settings, by its id in shared/icons. */
+  icon?: string;
 };
 
 /** Where finding and getting a new version of Shelf has got to. */
