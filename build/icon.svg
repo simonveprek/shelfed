@@ -1,60 +1,59 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdfcfa"/><stop offset="1" stop-color="#e9e5dc"/></linearGradient>
-    <linearGradient id="lean" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b4bff"/><stop offset="0.3333333333333333" stop-color="#a23bff"/><stop offset="0.6666666666666666" stop-color="#ff2d55"/><stop offset="1" stop-color="#ffb020"/></linearGradient>
-    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2a2622" stop-opacity="0.94"/><stop offset="1" stop-color="#121010" stop-opacity="0.86"/>
+    <linearGradient id="aurora" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b4bff"/><stop offset="0.3333333333333333" stop-color="#a23bff"/><stop offset="0.6666666666666666" stop-color="#ff2d55"/><stop offset="1" stop-color="#ffb020"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1efea"/></linearGradient>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232226"/><stop offset="1" stop-color="#0b0b0d"/></linearGradient>
+    <linearGradient id="zen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6ea"/><stop offset="0.5" stop-color="#fbe9e4"/><stop offset="1" stop-color="#efe4fb"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d5ce6"/><stop offset="0.3333333333333333" stop-color="#7f8ff5"/><stop offset="0.6666666666666666" stop-color="#d9c6f5"/><stop offset="1" stop-color="#ffe3f1"/></linearGradient>
+    <linearGradient id="jet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a40"/><stop offset="1" stop-color="#0d0d10"/></linearGradient>
+    <linearGradient id="indigo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b4bff"/><stop offset="0.5" stop-color="#2a1fb8"/><stop offset="1" stop-color="#3a2a9e"/></linearGradient>
+    <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cf3ff"/><stop offset="0.2" stop-color="#a98bff"/><stop offset="0.4" stop-color="#ff7ad9"/><stop offset="0.6" stop-color="#ffd36b"/><stop offset="0.8" stop-color="#8dffc0"/><stop offset="1" stop-color="#7cb8ff"/></linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="0.38" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="depth" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.18"/><stop offset="0.45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.12"/>
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.22"/><stop offset="0.4" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.18"/>
     </linearGradient>
-    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.12"/><stop offset="1" stop-color="#fff" stop-opacity="0.2"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <radialGradient id="sheen" cx="0.5" cy="0" r="0.75">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    <pattern id="candy" patternUnits="userSpaceOnUse" width="69.3" height="69.3" patternTransform="rotate(-35)">
+      <rect width="69.3" height="69.3" fill="#ff2d8a"/>
+      <rect width="69.3" height="23.099999999999998" fill="#ff8a3d"/>
+      <rect y="34.65" width="69.3" height="14.85" fill="#ffb3d9"/>
+    </pattern>
+    <radialGradient id="sheen" cx="0.5" cy="0" r="0.8">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.9"/><stop offset="0.35" stop-color="#fff" stop-opacity="0.04"/><stop offset="1" stop-color="#fff" stop-opacity="0.3"/>
-    </linearGradient>
     <clipPath id="clip"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
     <filter id="drop" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#1a1208" flood-opacity="0.3"/>
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000" flood-opacity="0.28"/>
     </filter>
-    <filter id="haze" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="74.16"/></filter>
-    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="33"/></filter>
-    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10.5"/></filter>
-    <filter id="hair" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.7999999999999998"/></filter>
+    <filter id="blur-s" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9.888"/></filter>
+    <filter id="blur-l" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="41.2"/></filter>
+    <filter id="blur-xl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="90.64"/></filter>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14.85"/></filter>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="39.6"/></filter>
   </defs>
-  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#tile)" filter="url(#drop)"/>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="#000" filter="url(#drop)"/>
   <g clip-path="url(#clip)">
-    <circle cx="759.2" cy="759.2" r="313.12" fill="#ff2d55" opacity="0.2" filter="url(#haze)"/><circle cx="264.8" cy="248.32" r="280.16" fill="#2b4bff" opacity="0.12" filter="url(#haze)"/>
-    <!-- The reading spine lights the tile around it. -->
-    <rect x="627.5" y="422" width="105" height="285" rx="45" fill="url(#lean)" opacity="0.45" filter="url(#glow)" transform="rotate(-16 627.5 707)"/>
-    <ellipse cx="512" cy="100" rx="510.88" ry="346.08" fill="url(#sheen)"/>
+    <rect x="100" y="100" width="824" height="824" fill="url(#paper)"/><circle cx="775.68" cy="800.4" r="247.2" fill="#ff2d55" opacity="0.08" filter="url(#blur-xl)"/><circle cx="223.6" cy="182.4" r="247.2" fill="#2b4bff" opacity="0.05" filter="url(#blur-xl)"/>
+    <ellipse cx="512" cy="100" rx="576.8" ry="329.6" fill="url(#sheen)"/>
+    
+    <rect x="289.25" y="315.65" width="115.5" height="429" rx="49.5" fill="#000" opacity="0.22" filter="url(#shadow)" /><rect x="437.75" y="398.15" width="115.5" height="346.5" rx="49.5" fill="#000" opacity="0.22" filter="url(#shadow)" /><rect x="639.05" y="431.15" width="115.5" height="313.5" rx="49.5" fill="#000" opacity="0.22" filter="url(#shadow)" transform="rotate(-16 639.05 726.5)"/>
     <g >
-      <rect x="309.5" y="330.5" width="105" height="390" rx="45" fill="#000" opacity="0.18" filter="url(#soft)"/>
-      <rect x="309.5" y="317" width="105" height="390" rx="45" fill="url(#body)"/>
-      <rect x="309.5" y="317" width="105" height="390" rx="45" fill="url(#depth)"/>
-      <rect x="311" y="318.5" width="102" height="387" rx="43.5" fill="none" stroke="url(#rim)" stroke-width="3.3"/>
-      <rect x="330.5" y="340.1" width="21" height="195" rx="10.5" fill="url(#shine)" filter="url(#hair)"/>
+      <rect x="289.25" y="297.5" width="115.5" height="429" rx="49.5" fill="#1d1b18"/>
+      <rect x="289.25" y="297.5" width="115.5" height="429" rx="49.5" fill="url(#side)"/>
+      <rect x="304.1" y="309.05" width="85.8" height="214.5" rx="34.65" fill="url(#gloss)" opacity="0.32"/>
+      
     </g><g >
-      <rect x="444.5" y="405.5" width="105" height="315" rx="45" fill="#000" opacity="0.18" filter="url(#soft)"/>
-      <rect x="444.5" y="392" width="105" height="315" rx="45" fill="url(#body)"/>
-      <rect x="444.5" y="392" width="105" height="315" rx="45" fill="url(#depth)"/>
-      <rect x="446" y="393.5" width="102" height="312" rx="43.5" fill="none" stroke="url(#rim)" stroke-width="3.3"/>
-      <rect x="465.5" y="415.1" width="21" height="157.5" rx="10.5" fill="url(#shine)" filter="url(#hair)"/>
-    </g>
-    <g transform="rotate(-16 627.5 707)">
-      <rect x="627.5" y="435.5" width="105" height="285" rx="45" fill="#000" opacity="0.18" filter="url(#soft)"/>
-      <rect x="627.5" y="422" width="105" height="285" rx="45" fill="url(#lean)"/>
-      <rect x="627.5" y="422" width="105" height="285" rx="45" fill="url(#depth)"/>
-      <rect x="629" y="423.5" width="102" height="282" rx="43.5" fill="none" stroke="url(#rim)" stroke-width="3.3"/>
-      <rect x="648.5" y="445.1" width="21" height="142.5" rx="10.5" fill="url(#shine)" filter="url(#hair)"/>
+      <rect x="437.75" y="380" width="115.5" height="346.5" rx="49.5" fill="#1d1b18"/>
+      <rect x="437.75" y="380" width="115.5" height="346.5" rx="49.5" fill="url(#side)"/>
+      <rect x="452.6" y="391.55" width="85.8" height="173.25" rx="34.65" fill="url(#gloss)" opacity="0.32"/>
+      
+    </g><g transform="rotate(-16 639.05 726.5)">
+      <rect x="639.05" y="413" width="115.5" height="313.5" rx="49.5" fill="url(#aurora)"/>
+      <rect x="639.05" y="413" width="115.5" height="313.5" rx="49.5" fill="url(#side)"/>
+      <rect x="653.9" y="424.55" width="85.8" height="156.75" rx="34.65" fill="url(#gloss)" opacity="0.32"/>
+      
     </g>
   </g>
-  <rect x="101.5" y="101.5" width="821" height="821" rx="184.5" fill="none" stroke="url(#edge)" stroke-width="3"/>
+  <rect x="101" y="101" width="822" height="822" rx="185" fill="none" stroke="#000" stroke-opacity="0.08" stroke-width="2"/>
 </svg>

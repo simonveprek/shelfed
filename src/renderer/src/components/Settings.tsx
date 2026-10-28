@@ -211,7 +211,7 @@ function AppearanceSection() {
       <p className="mb-4 text-caption text-muted">
         {isMac ? "Shows in the Dock while Shelf is open." : "Shows on the taskbar while Shelf is open."}
       </p>
-      <div className="grid grid-cols-6 gap-4">
+      <div className="grid grid-cols-4 gap-x-8 gap-y-5 px-4">
         {APP_ICONS.map((icon) => (
           <IconChoice key={icon.id} id={icon.id} label={icon.label} on={chosen === icon.id} />
         ))}

@@ -1,93 +1,161 @@
 /**
- * The app icon in different finishes, to choose from in Settings. The same
- * mark, two plain spines and the one you are reading, made of glass over a
- * glowing tile.
+ * The app icon in different finishes, to choose from in Settings. Always the
+ * same mark, two plain spines and the one you are reading, leaning; what
+ * changes is what it's made of and what it sits on.
  */
-type Glow = { x: number; y: number; r: number; color: string; opacity: number };
+type Tile = { x: number; y: number; size: number };
 
 export type AppIcon = {
   id: string;
   label: string;
-  /** The tile, top left to bottom right. */
-  tile: [string, string];
-  /** Light pooling under the glass. */
-  glows: Glow[];
-  /** Frosted white glass, or smoked dark glass on a light tile. */
-  glass: "light" | "dark";
-  /** The leaning spine's colours. */
-  lean: string[];
+  /** What the mark sits on, drawn inside the rounded tile. */
+  ground: (tile: Tile) => string;
+  /** The two plain spines, and the leaning one. Colours or paints from the shared defs. */
+  spine: string;
+  lean: string;
+  /** How much light catches the spines' tops. */
+  gloss: number;
+  /** A thin rainbow edge on the spines, like foil. */
+  rim?: boolean;
+  /** Light around the mark. */
+  glow?: string;
+  /** How dark the mark's shadow is on the tile. */
+  shadow: number;
+  /** The tile's own edge, light on dark tiles. */
+  edge: "light" | "dark";
 };
 
 export const AURORA_STOPS = ["#2b4bff", "#a23bff", "#ff2d55", "#ffb020"];
+
+const at = (t: Tile, x: number, y: number) => [t.x + x * t.size, t.y + y * t.size] as const;
+const blob = (t: Tile, x: number, y: number, r: number, color: string, opacity = 1, blur = "xl") => {
+  const [cx, cy] = at(t, x, y);
+  return `<circle cx="${cx}" cy="${cy}" r="${r * t.size}" fill="${color}" opacity="${opacity}" filter="url(#blur-${blur})"/>`;
+};
+const fill = (t: Tile, paint: string) => `<rect x="${t.x}" y="${t.y}" width="${t.size}" height="${t.size}" fill="${paint}"/>`;
+
+/** Rays from the middle in pastel foil, for something like a conic gradient. */
+const rays = (t: Tile, colors: string[]) => {
+  const [cx, cy] = at(t, 0.5, 0.5);
+  const reach = t.size;
+  return colors
+    .map((color, i) => {
+      const a = (i / colors.length) * Math.PI * 2;
+      const b = ((i + 1) / colors.length) * Math.PI * 2;
+      const p = (angle: number) => `${cx + Math.cos(angle) * reach},${cy + Math.sin(angle) * reach}`;
+      return `<polygon points="${cx},${cy} ${p(a)} ${p(b)}" fill="${color}"/>`;
+    })
+    .join("");
+};
 
 export const APP_ICONS: AppIcon[] = [
   {
     id: "paper",
     label: "Paper",
-    tile: ["#fdfcfa", "#e9e5dc"],
-    glows: [
-      { x: 0.8, y: 0.8, r: 0.38, color: "#ff2d55", opacity: 0.2 },
-      { x: 0.2, y: 0.18, r: 0.34, color: "#2b4bff", opacity: 0.12 },
-    ],
-    glass: "dark",
-    lean: AURORA_STOPS,
+    ground: (t) => fill(t, "url(#paper)") + blob(t, 0.82, 0.85, 0.3, "#ff2d55", 0.08) + blob(t, 0.15, 0.1, 0.3, "#2b4bff", 0.05),
+    spine: "#1d1b18",
+    lean: "url(#aurora)",
+    gloss: 0.32,
+    shadow: 0.22,
+    edge: "dark",
   },
   {
-    id: "midnight",
-    label: "Midnight",
-    tile: ["#1d2142", "#05060c"],
-    glows: [
-      { x: 0.78, y: 0.76, r: 0.42, color: "#a23bff", opacity: 0.6 },
-      { x: 0.18, y: 0.22, r: 0.36, color: "#2b4bff", opacity: 0.5 },
-      { x: 0.9, y: 0.3, r: 0.24, color: "#ff2d55", opacity: 0.32 },
-    ],
-    glass: "light",
-    lean: AURORA_STOPS,
+    id: "nebula",
+    label: "Nebula",
+    ground: (t) =>
+      fill(t, "#14091f") +
+      blob(t, 0.2, 1.0, 0.42, "#7a2bff", 0.9) +
+      blob(t, 0.62, 1.05, 0.3, "#16d6c4", 0.75) +
+      blob(t, 0.95, 0.75, 0.32, "#ff2d8a", 0.7) +
+      blob(t, 0.1, 0.05, 0.3, "#d24bff", 0.45),
+    spine: "#ffffff",
+    lean: "#ffffff",
+    gloss: 0.15,
+    glow: "#ffffff",
+    shadow: 0.35,
+    edge: "light",
   },
   {
-    id: "aurora",
-    label: "Aurora",
-    tile: ["#4a3dff", "#ff3d6e"],
-    glows: [
-      { x: 0.85, y: 0.9, r: 0.45, color: "#ffb020", opacity: 0.75 },
-      { x: 0.12, y: 0.12, r: 0.4, color: "#2b6bff", opacity: 0.6 },
-      { x: 0.5, y: 0.45, r: 0.3, color: "#c13bff", opacity: 0.35 },
-    ],
-    glass: "light",
-    lean: ["#ffffff", "#fff4fb", "#ffe9d6"],
+    id: "spectrum",
+    label: "Spectrum",
+    ground: (t) =>
+      fill(t, "#ff3fa4") +
+      blob(t, 0.0, 0.95, 0.5, "#1c3bff", 1) +
+      blob(t, 0.05, 0.25, 0.32, "#2ad3ff", 0.9) +
+      blob(t, 1.0, 0.15, 0.4, "#c13bff", 0.95) +
+      blob(t, 0.95, 0.95, 0.42, "#ffb020", 1) +
+      blob(t, 0.6, 0.65, 0.22, "#ff6a3d", 0.7),
+    spine: "#fffdf8",
+    lean: "#fffdf8",
+    gloss: 0.1,
+    glow: "#ffffff",
+    shadow: 0.18,
+    edge: "light",
   },
   {
-    id: "amber",
-    label: "Amber",
-    tile: ["#8c4a18", "#240f05"],
-    glows: [
-      { x: 0.74, y: 0.78, r: 0.46, color: "#ffb020", opacity: 0.6 },
-      { x: 0.18, y: 0.18, r: 0.32, color: "#ff6a2d", opacity: 0.32 },
-    ],
-    glass: "light",
-    lean: ["#fff0b8", "#ffc23d", "#ff7a1a"],
+    id: "foil",
+    label: "Foil",
+    ground: (t) =>
+      fill(t, "#f4f4f8") +
+      `<g opacity="0.9" filter="url(#blur-l)">${rays(t, ["#ffd1f0", "#c9f7ff", "#fff3b8", "#d9ccff", "#b8fff0", "#ffc9de", "#c9dcff", "#f1ffc4"])}</g>` +
+      blob(t, 0.5, 0.5, 0.2, "#ffffff", 0.9, "l"),
+    spine: "url(#jet)",
+    lean: "url(#jet)",
+    gloss: 0.45,
+    shadow: 0.3,
+    edge: "dark",
   },
   {
-    id: "ocean",
-    label: "Ocean",
-    tile: ["#0d5f73", "#04142a"],
-    glows: [
-      { x: 0.76, y: 0.72, r: 0.46, color: "#2de0ff", opacity: 0.5 },
-      { x: 0.16, y: 0.22, r: 0.36, color: "#2b4bff", opacity: 0.45 },
-    ],
-    glass: "light",
-    lean: ["#9af6ff", "#2bb4ff", "#5b4bff"],
+    id: "candy",
+    label: "Candy",
+    ground: (t) => fill(t, "url(#night)"),
+    spine: "url(#candy)",
+    lean: "url(#candy)",
+    gloss: 0.35,
+    glow: "#ff3fa4",
+    shadow: 0.4,
+    edge: "light",
   },
   {
-    id: "rose",
-    label: "Rose",
-    tile: ["#7d1733", "#22050d"],
-    glows: [
-      { x: 0.76, y: 0.78, r: 0.46, color: "#ff2d55", opacity: 0.55 },
-      { x: 0.2, y: 0.18, r: 0.3, color: "#ffb020", opacity: 0.26 },
-    ],
-    glass: "light",
-    lean: ["#ffe7b0", "#ffb020", "#ff5a3d"],
+    id: "lux",
+    label: "Lux",
+    ground: (t) => fill(t, "url(#night)") + blob(t, 0.5, -0.05, 0.4, "#ffffff", 0.08),
+    spine: "url(#jet)",
+    lean: "url(#jet)",
+    gloss: 0.5,
+    rim: true,
+    shadow: 0.5,
+    edge: "light",
+  },
+  {
+    id: "zen",
+    label: "Zen",
+    ground: (t) => fill(t, "url(#zen)") + blob(t, 0.85, 0.9, 0.35, "#e6d3ff", 0.7) + blob(t, 0.1, 0.05, 0.3, "#ffe6cc", 0.8),
+    spine: "url(#jet)",
+    lean: "url(#jet)",
+    gloss: 0.5,
+    rim: true,
+    shadow: 0.28,
+    edge: "dark",
+  },
+  {
+    id: "sky",
+    label: "Sky",
+    ground: (t) => {
+      const puff = (x: number, y: number, r: number, o = 1) => blob(t, x, y, r, "#ffffff", o, "s");
+      return (
+        fill(t, "url(#sky)") +
+        blob(t, 0.5, 0.95, 0.35, "#ffc2e4", 0.8) +
+        puff(0.05, 0.92, 0.17) + puff(0.25, 0.97, 0.15) + puff(0.48, 0.9, 0.13, 0.95) + puff(0.72, 0.96, 0.17) + puff(0.95, 0.88, 0.16) +
+        // A small cloud drifting by, top right.
+        puff(0.8, 0.2, 0.055, 0.85) + puff(0.87, 0.17, 0.07, 0.85) + puff(0.94, 0.21, 0.055, 0.85) + puff(0.87, 0.23, 0.06, 0.85)
+      );
+    },
+    spine: "url(#indigo)",
+    lean: "url(#indigo)",
+    gloss: 0.3,
+    shadow: 0.2,
+    edge: "light",
   },
 ];
 
@@ -100,71 +168,72 @@ const stops = (colors: string[]) => colors.map((c, i) => `<stop offset="${colors
  * with room for its shadow; elsewhere it fills the square, as Windows expects.
  */
 export function appIconSvg(icon: AppIcon, mac = true) {
-  const [t, size, round] = mac ? [100, 824, 186] : [0, 1024, 224];
-  // The mark on its 32 grid, placed in the middle.
-  const s = mac ? 15 : 18.6;
+  const [x, size, round] = mac ? [100, 824, 186] : [0, 1024, 224];
+  const tile = { x, y: x, size };
+  // The mark on its 32 grid, in the middle.
+  const s = mac ? 16.5 : 20.5;
   const o = 512 - 16 * s;
-  const spine = (x: number, y: number, h: number) => ({ x: o + x * s, y: o + y * s, w: 7 * s, h: h * s, r: 3 * s });
-  const plain = [spine(2.5, 3, 26), spine(11.5, 8, 21)];
+  const spine = (sx: number, sy: number, h: number) => ({ x: o + sx * s, y: o + sy * s, w: 7 * s, h: h * s, r: 3 * s });
   const lean = spine(23.7, 10, 19);
-  const tilt = `rotate(-16 ${lean.x} ${lean.y + lean.h})`;
-  const dark = icon.glass === "dark";
-
+  const marks = [
+    { box: spine(2.5, 3, 26), paint: icon.spine, tilt: "" },
+    { box: spine(11.5, 8, 21), paint: icon.spine, tilt: "" },
+    { box: lean, paint: icon.lean, tilt: `transform="rotate(-16 ${lean.x} ${lean.y + lean.h})"` },
+  ];
   const rect = (b: { x: number; y: number; w: number; h: number; r: number }, attrs: string) =>
     `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${b.r}" ${attrs}/>`;
 
-  /** One spine of glass: its shadow, body, rim and the light caught on its edge. */
-  const glass = (b: ReturnType<typeof spine>, body: string, extra = "") => {
-    const shine = { x: b.x + b.w * 0.2, y: b.y + b.w * 0.22, w: b.w * 0.2, h: b.h * 0.5, r: b.w * 0.1 };
-    return `<g ${extra}>
-      ${rect({ ...b, y: b.y + s * 0.9 }, `fill="#000" opacity="${dark ? 0.18 : 0.32}" filter="url(#soft)"`)}
-      ${rect(b, `fill="${body}"`)}
-      ${rect(b, `fill="url(#depth)"`)}
-      ${rect({ x: b.x + 1.5, y: b.y + 1.5, w: b.w - 3, h: b.h - 3, r: b.r - 1.5 }, `fill="none" stroke="url(#rim)" stroke-width="${s * 0.22}"`)}
-      ${rect(shine, `fill="url(#shine)" filter="url(#hair)"`)}
-    </g>`;
-  };
-
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">${stops(icon.tile)}</linearGradient>
-    <linearGradient id="lean" x1="0" y1="0" x2="1" y2="1">${stops(icon.lean)}</linearGradient>
-    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
-      ${dark ? `<stop offset="0" stop-color="#2a2622" stop-opacity="0.94"/><stop offset="1" stop-color="#121010" stop-opacity="0.86"/>` : `<stop offset="0" stop-color="#fff" stop-opacity="0.44"/><stop offset="0.6" stop-color="#fff" stop-opacity="0.16"/><stop offset="1" stop-color="#fff" stop-opacity="0.24"/>`}
+    <linearGradient id="aurora" x1="0" y1="0" x2="1" y2="1">${stops(AURORA_STOPS)}</linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">${stops(["#ffffff", "#f1efea"])}</linearGradient>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">${stops(["#232226", "#0b0b0d"])}</linearGradient>
+    <linearGradient id="zen" x1="0" y1="0" x2="1" y2="1">${stops(["#fff6ea", "#fbe9e4", "#efe4fb"])}</linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">${stops(["#3d5ce6", "#7f8ff5", "#d9c6f5", "#ffe3f1"])}</linearGradient>
+    <linearGradient id="jet" x1="0" y1="0" x2="0" y2="1">${stops(["#3a3a40", "#0d0d10"])}</linearGradient>
+    <linearGradient id="indigo" x1="0" y1="0" x2="1" y2="1">${stops(["#5b4bff", "#2a1fb8", "#3a2a9e"])}</linearGradient>
+    <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1">${stops(["#7cf3ff", "#a98bff", "#ff7ad9", "#ffd36b", "#8dffc0", "#7cb8ff"])}</linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset="0.38" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="depth" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.18"/><stop offset="0.45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.12"/>
+    <linearGradient id="side" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.22"/><stop offset="0.4" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.18"/>
     </linearGradient>
-    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="${dark ? 0.55 : 0.95}"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.12"/><stop offset="1" stop-color="#fff" stop-opacity="${dark ? 0.2 : 0.45}"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <radialGradient id="sheen" cx="0.5" cy="0" r="0.75">
-      <stop offset="0" stop-color="#fff" stop-opacity="${dark ? 0.7 : 0.26}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    <pattern id="candy" patternUnits="userSpaceOnUse" width="${s * 4.2}" height="${s * 4.2}" patternTransform="rotate(-35)">
+      <rect width="${s * 4.2}" height="${s * 4.2}" fill="#ff2d8a"/>
+      <rect width="${s * 4.2}" height="${s * 1.4}" fill="#ff8a3d"/>
+      <rect y="${s * 2.1}" width="${s * 4.2}" height="${s * 0.9}" fill="#ffb3d9"/>
+    </pattern>
+    <radialGradient id="sheen" cx="0.5" cy="0" r="0.8">
+      <stop offset="0" stop-color="#fff" stop-opacity="${icon.edge === "light" ? 0.12 : 0.5}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="${dark ? 0.9 : 0.42}"/><stop offset="0.35" stop-color="#fff" stop-opacity="0.04"/><stop offset="1" stop-color="#fff" stop-opacity="${dark ? 0.3 : 0.14}"/>
-    </linearGradient>
-    <clipPath id="clip"><rect x="${t}" y="${t}" width="${size}" height="${size}" rx="${round}"/></clipPath>
+    <clipPath id="clip"><rect x="${x}" y="${x}" width="${size}" height="${size}" rx="${round}"/></clipPath>
     <filter id="drop" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#1a1208" flood-opacity="${mac ? 0.3 : 0}"/>
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000" flood-opacity="${mac ? 0.28 : 0}"/>
     </filter>
-    <filter id="haze" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${size * 0.09}"/></filter>
-    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="${s * 2.2}"/></filter>
-    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${s * 0.7}"/></filter>
-    <filter id="hair" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${s * 0.12}"/></filter>
+    <filter id="blur-s" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${size * 0.012}"/></filter>
+    <filter id="blur-l" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${size * 0.05}"/></filter>
+    <filter id="blur-xl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${size * 0.11}"/></filter>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${s * 0.9}"/></filter>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="${s * 2.4}"/></filter>
   </defs>
-  <rect x="${t}" y="${t}" width="${size}" height="${size}" rx="${round}" fill="url(#tile)" filter="url(#drop)"/>
+  <rect x="${x}" y="${x}" width="${size}" height="${size}" rx="${round}" fill="#000" filter="url(#drop)"/>
   <g clip-path="url(#clip)">
-    ${icon.glows.map((g) => `<circle cx="${t + g.x * size}" cy="${t + g.y * size}" r="${g.r * size}" fill="${g.color}" opacity="${g.opacity}" filter="url(#haze)"/>`).join("")}
-    <!-- The reading spine lights the tile around it. -->
-    ${rect(lean, `fill="url(#lean)" opacity="${dark ? 0.45 : 0.75}" filter="url(#glow)" transform="${tilt}"`)}
-    <ellipse cx="512" cy="${t}" rx="${size * 0.62}" ry="${size * 0.42}" fill="url(#sheen)"/>
-    ${plain.map((b) => glass(b, "url(#body)")).join("")}
-    ${glass(lean, "url(#lean)", `transform="${tilt}"`)}
+    ${icon.ground(tile)}
+    <ellipse cx="512" cy="${x}" rx="${size * 0.7}" ry="${size * 0.4}" fill="url(#sheen)"/>
+    ${icon.glow ? marks.map((m) => rect(m.box, `fill="${icon.glow}" opacity="0.4" filter="url(#glow)" ${m.tilt}`)).join("") : ""}
+    ${marks.map((m) => rect({ ...m.box, y: m.box.y + s * 1.1 }, `fill="#000" opacity="${icon.shadow}" filter="url(#shadow)" ${m.tilt}`)).join("")}
+    ${marks
+      .map(
+        (m) => `<g ${m.tilt}>
+      ${rect(m.box, `fill="${m.paint}"`)}
+      ${rect(m.box, `fill="url(#side)"`)}
+      ${rect({ x: m.box.x + s * 0.9, y: m.box.y + s * 0.7, w: m.box.w - s * 1.8, h: m.box.h * 0.5, r: m.box.r - s * 0.9 }, `fill="url(#gloss)" opacity="${icon.gloss}"`)}
+      ${icon.rim ? rect({ x: m.box.x + s * 0.2, y: m.box.y + s * 0.2, w: m.box.w - s * 0.4, h: m.box.h - s * 0.4, r: m.box.r - s * 0.2 }, `fill="none" stroke="url(#rainbow)" stroke-width="${s * 0.26}"`) : ""}
+    </g>`,
+      )
+      .join("")}
   </g>
-  <rect x="${t + 1.5}" y="${t + 1.5}" width="${size - 3}" height="${size - 3}" rx="${round - 1.5}" fill="none" stroke="url(#edge)" stroke-width="3"/>
+  <rect x="${x + 1}" y="${x + 1}" width="${size - 2}" height="${size - 2}" rx="${round - 1}" fill="none" stroke="${icon.edge === "light" ? "#fff" : "#000"}" stroke-opacity="${icon.edge === "light" ? 0.14 : 0.08}" stroke-width="2"/>
 </svg>`;
 }
