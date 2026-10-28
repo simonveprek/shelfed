@@ -143,26 +143,90 @@
     .get:active { transform: scale(0.97); }
     @media (max-width: 640px) { nav a.text, .rule { display: none; } }
 
-    /* Hero */
-    .hero { position: relative; max-width: 1180px; margin: 0 auto; padding: 58px 24px 40px; text-align: center; }
-    .orbit {
-      position: absolute; left: 50%; top: 286px; width: 900px; height: 400px; transform: translate(-50%, -50%);
-      pointer-events: none;
+    /* Hero: words on the left, a Kindle on the right turning through books. */
+    .hero {
+      position: relative; max-width: 1180px; margin: 0 auto; padding: 40px 24px 0;
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 24px; min-height: 600px;
     }
-    .orbit .ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid var(--line-strong); opacity: 0.7; }
-    .orbit .tile {
-      position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
-      background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow-float);
-      display: grid; place-items: center; color: var(--foreground);
+    .copy { position: relative; z-index: 1; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px 0 10px; border-radius: 99px;
+      background: var(--control); color: var(--muted); font-size: 13px;
     }
-    .orbit .tile svg { width: 26px; height: 26px; }
-    @media (max-width: 900px) { .orbit { display: none; } }
+    .tag b { width: 7px; height: 7px; border-radius: 99px; background: #46b37a; box-shadow: 0 0 0 3px color-mix(in oklab, #46b37a 25%, transparent); }
     h1 {
-      position: relative; font-size: clamp(44px, 7vw, 76px); line-height: 1; font-weight: 500; letter-spacing: -0.045em;
-      max-width: 11ch; margin: 64px auto 0;
+      position: relative; font-size: clamp(46px, 6.2vw, 78px); line-height: 0.98; font-weight: 500; letter-spacing: -0.05em;
+      max-width: 10ch; margin: 22px 0 0;
     }
-    .lede { position: relative; max-width: 44ch; margin: 22px auto 0; color: var(--muted); font-size: 17px; line-height: 1.6; }
-    .actions { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px; margin-top: 34px; }
+    .lede { position: relative; max-width: 40ch; margin: 22px 0 0; color: var(--muted); font-size: 17px; line-height: 1.6; }
+    .actions { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 32px; }
+    .button {
+      display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 20px; border-radius: 99px; text-decoration: none;
+      font-size: 15px; font-weight: 500; transition: transform 0.15s, background 0.15s, opacity 0.15s;
+    }
+    .button svg { width: 16px; height: 16px; }
+    .button:active { transform: scale(0.97); }
+    .button.solid { background: var(--foreground); color: var(--background); }
+    .button.solid:hover { opacity: 0.88; }
+    .button.soft { background: var(--control); color: var(--foreground); }
+    .button.soft:hover { background: var(--control-hover); }
+    .formats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 30px; }
+    .formats span {
+      font-family: "Geist Mono", ui-monospace, monospace; font-size: 11.5px; letter-spacing: 0.02em; color: var(--muted);
+      padding: 4px 9px; border-radius: 99px; border: 1px solid var(--border);
+    }
+    .small { position: relative; margin-top: 16px; color: var(--muted); font-size: 13px; }
+
+    /* The Kindle, built from slices so it has an edge, in jade. */
+    .device { position: relative; height: 560px; display: grid; place-items: center; perspective: 1400px; }
+    .device .glow {
+      position: absolute; width: 560px; height: 560px; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(closest-side, color-mix(in oklab, #46736a 42%, transparent), transparent 72%);
+    }
+    .float { animation: float 7s ease-in-out infinite; transform-style: preserve-3d; }
+    @keyframes float { 50% { transform: translateY(-12px); } }
+    .kindle {
+      --rx: 7deg; --ry: -24deg;
+      position: relative; width: 300px; height: 414px; transform-style: preserve-3d;
+      transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .kindle .slice { position: absolute; inset: 0; border-radius: 24px; }
+    .kindle .front {
+      position: absolute; inset: 0; border-radius: 24px; background: #131315; transform: translateZ(8px); overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+    }
+    .kindle .front::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(125deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.02) 36%, transparent 52%, rgb(255 255 255 / 0.05));
+    }
+    .screen { position: absolute; left: 24px; right: 24px; top: 26px; height: 336px; border-radius: 3px; overflow: hidden; background: #e8e6df; }
+    .screen::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 0%, rgb(255 248 230 / 0.18), transparent 60%); }
+    .flash { position: absolute; inset: 0; opacity: 0; pointer-events: none; z-index: 2; }
+    .flash.go { animation: eink 0.6s ease-out; }
+    @keyframes eink { 0% { opacity: 1; background: #141311; } 38% { opacity: 1; background: #f2f0ea; } 100% { opacity: 0; background: #f2f0ea; } }
+    .shadow { width: 230px; height: 26px; margin-top: 36px; border-radius: 50%; background: rgb(0 0 0 / 0.35); filter: blur(14px); }
+
+    /* Covers as e-ink shows them: type, rules and a little ornament, in greys. */
+    .cover {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      padding: 28px 22px; color: #1b1a18; font-family: "Iowan Old Style", Charter, Georgia, "Times New Roman", serif;
+    }
+    .cover.dark { background: #2b2a27; color: #ece8de; }
+    .cover.framed { box-shadow: inset 0 0 0 10px #e8e6df, inset 0 0 0 11.5px currentColor, inset 0 0 0 15px #e8e6df, inset 0 0 0 15.8px currentColor; }
+    .cover.dark.framed { box-shadow: inset 0 0 0 10px #2b2a27, inset 0 0 0 11.5px currentColor, inset 0 0 0 15px #2b2a27, inset 0 0 0 15.8px currentColor; }
+    .cover.lines { background: repeating-linear-gradient(135deg, #d9d6cd 0 1px, transparent 1px 9px), #e8e6df; }
+    .cover .kicker { font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; opacity: 0.6; }
+    .cover b { display: block; margin: 16px 0; font-weight: 400; font-size: 30px; line-height: 1.05; letter-spacing: -0.01em; max-width: 8.5ch; }
+    .cover .lines-box { background: #e8e6df; padding: 18px 14px; }
+    .cover i { display: block; width: 34px; height: 1px; background: currentColor; opacity: 0.5; }
+    .cover .by { margin-top: 14px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; min-height: 0; padding-top: 28px; gap: 0; }
+      .device { height: 470px; }
+      .float { scale: 0.82; }
+    }
+    @media (prefers-reduced-motion: reduce) { .float { animation: none; } .flash.go { animation: none; } }
     .aurora-button {
       position: relative; display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 8px 0 20px; border-radius: 99px;
       text-decoration: none; font-weight: 500; font-size: 15px; color: var(--foreground); background: var(--card);
@@ -180,8 +244,8 @@
     .quiet-link:hover { color: var(--foreground); }
     .small { position: relative; margin-top: 16px; color: var(--muted); font-size: 13px; }
 
-    .stage { max-width: 1180px; margin: 120px auto 0; padding: 0 24px; }
-    @media (max-width: 900px) { .stage { margin-top: 48px; } h1 { margin-top: 24px; } section.block { padding-top: 88px; } }
+    .stage { max-width: 1180px; margin: 48px auto 0; padding: 0 24px; }
+    @media (max-width: 900px) { .stage { margin-top: 24px; } section.block { padding-top: 88px; } }
     .frame {
       border-radius: 28px; background: var(--card); border: 1px solid var(--border); padding: 10px; box-shadow: var(--shadow-float);
     }
@@ -264,21 +328,34 @@
 
   <main>
     <div class="hero">
-      <!-- The things Shelf does, going slowly round. -->
-      <div class="orbit" aria-hidden="true">
-        <div class="ring"></div>
-        <div class="spin" id="orbit"></div>
+      <div class="copy">
+        <span class="tag reveal"><b></b>Free for macOS and Windows</span>
+        <h1 class="reveal">A quiet home for your books.</h1>
+        <p class="lede reveal">Read, organise and convert your books, and send them to your Kindle. Fast, private, and yours.</p>
+        <div class="actions reveal">
+          <a class="button solid" id="download" href="https://github.com/simonveprek/shelf/releases/latest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+            <span id="download-label">Download Shelf</span>
+          </a>
+          <a class="button soft" href="https://github.com/simonveprek/shelf">View the source</a>
+        </div>
+        <div class="formats reveal" aria-label="Reads">
+          <span>EPUB</span><span>MOBI</span><span>AZW3</span><span>PDF</span><span>FB2</span><span>CBZ</span><span>DOCX</span><span>MD</span>
+        </div>
+        <p class="small reveal">Open source. No account, no tracking.</p>
       </div>
-      <h1 class="reveal">A quiet home for your books</h1>
-      <p class="lede reveal">Read, organise and convert your books, and send them to your Kindle. Fast, private, and yours. For macOS and Windows.</p>
-      <div class="actions reveal">
-        <a class="aurora-button" id="download" href="https://github.com/simonveprek/shelf/releases/latest">
-          <span id="download-label">Download Shelf</span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg></span>
-        </a>
-        <a class="quiet-link" href="https://github.com/simonveprek/shelf">View the source</a>
+      <!-- A Kindle, turning through classics with the black flash e-ink makes. -->
+      <div class="device reveal" aria-hidden="true">
+        <div class="glow"></div>
+        <div class="float">
+          <div class="kindle" id="kindle">
+            <div class="front">
+              <div class="screen"><div class="flash" id="flash"></div><div id="page"></div></div>
+            </div>
+          </div>
+          <div class="shadow"></div>
+        </div>
       </div>
-      <p class="small reveal">Free and open source. No account, no tracking.</p>
     </div>
 
     <div class="stage reveal">
@@ -380,26 +457,57 @@
     };
     const svg = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[name]}</svg>`;
 
-    // The orbit: tiles going slowly round the ellipse, one lap every two minutes.
-    const orbit = document.getElementById("orbit");
-    const tiles = ["book", "kindle", "highlight", "convert", "shelf", "globe", "search", "bookmark", "star", "cable", "lock"].map((name) => {
-      const el = document.createElement("div");
-      el.className = "tile";
-      el.innerHTML = svg(name);
-      orbit.appendChild(el);
-      return el;
-    });
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const place = (time) => {
-      const turn = still ? 0 : (time / 120000) * Math.PI * 2;
-      tiles.forEach((el, i) => {
-        const a = (i / tiles.length) * Math.PI * 2 - Math.PI / 2 + turn;
-        el.style.left = `${50 + Math.cos(a) * 50}%`;
-        el.style.top = `${50 + Math.sin(a) * 50}%`;
+    // The Kindle: an edge of jade slices behind the glass front.
+    const kindle = document.getElementById("kindle");
+    for (let i = 0; i < 12; i++) {
+      const slice = document.createElement("div");
+      slice.className = "slice";
+      const shade = 70 + Math.round(Math.sin((i / 11) * Math.PI) * 14);
+      slice.style.background = `color-mix(in oklab, #46736a ${shade}%, black)`;
+      slice.style.transform = `translateZ(${-7 + (i * 14) / 11}px)`;
+      kindle.prepend(slice);
+    }
+    // It turns toward the pointer, gently.
+    const hero = document.querySelector(".hero");
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!calm) {
+      hero.addEventListener("pointermove", (e) => {
+        const box = hero.getBoundingClientRect();
+        const x = (e.clientX - box.left) / box.width - 0.5;
+        const y = (e.clientY - box.top) / box.height - 0.5;
+        kindle.style.setProperty("--ry", `${-16 + x * 30}deg`);
+        kindle.style.setProperty("--rx", `${6 - y * 12}deg`);
       });
-      if (!still) requestAnimationFrame(place);
+      hero.addEventListener("pointerleave", () => {
+        kindle.style.removeProperty("--ry");
+        kindle.style.removeProperty("--rx");
+      });
+    }
+    // Classics on its screen, each arriving with e-ink's black flash.
+    const COVERS = [
+      ["Pride and Prejudice", "Jane Austen", "framed", "A novel"],
+      ["Moby-Dick", "Herman Melville", "lines", "or, the whale"],
+      ["Dracula", "Bram Stoker", "dark framed", "A novel"],
+      ["Jane Eyre", "Charlotte Brontë", "framed", "An autobiography"],
+      ["The Great Gatsby", "F. Scott Fitzgerald", "dark", "A novel"],
+      ["Walden", "Henry David Thoreau", "lines", "or, life in the woods"],
+    ];
+    const page = document.getElementById("page");
+    const flash = document.getElementById("flash");
+    const show = (i) => {
+      const [title, author, look, kicker] = COVERS[i % COVERS.length];
+      const inner = `<span class="kicker">${kicker}</span><b>${title}</b><i></i><span class="by">${author}</span>`;
+      page.innerHTML = `<div class="cover ${look}">${look.includes("lines") ? `<div class="lines-box">${inner}</div>` : inner}</div>`;
     };
-    place(0);
+    let shown = 0;
+    show(0);
+    if (!calm)
+      setInterval(() => {
+        flash.classList.remove("go");
+        void flash.offsetWidth;
+        flash.classList.add("go");
+        setTimeout(() => show(++shown), 200);
+      }, 3600);
 
     // The quieter features, as rows.
     const rows = [
