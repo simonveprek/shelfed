@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import {
   ArrowDataTransferHorizontalIcon, BookOpen01Icon, Cancel01Icon, CheckmarkCircle02Icon, Folder01Icon, GithubIcon, Globe02Icon,
-  InformationCircleIcon, LicenseIcon, MailSend01Icon, PaintBoardIcon, Tablet01Icon,
+  InformationCircleIcon, LicenseIcon, MailSend01Icon, PaintBoardIcon, PlayCircleIcon, Tablet01Icon,
 } from "@hugeicons/core-free-icons";
 import {
   Badge, Button, cx, Dialog, EASE, Field, Icon, IconButton, Input, Segmented, Select, SwitchRow, TextLink, toast, type IconLike,
@@ -263,6 +263,11 @@ function KindleSection() {
   const plugged = found?.find((k) => k.model === model?.id);
   const stranger = Boolean(found?.length) && !found?.some((k) => k.model);
   const set = (patch: Partial<typeof kindle>) => setSetting({ kindle: { ...useStore.getState().settings.kindle, ...patch } });
+  // Settings steps aside first, so the welcome has the whole window.
+  const plugIn = () => {
+    useStore.setState({ dialog: null });
+    setTimeout(() => useStore.setState({ kindleArrived: Date.now() }), 300);
+  };
 
   return (
     <>
@@ -307,6 +312,9 @@ function KindleSection() {
               />
             </div>
           )}
+          <div>
+            <Button size="sm" icon={PlayCircleIcon} onClick={plugIn}>Play the plug-in animation</Button>
+          </div>
         </div>
       </div>
       <Group label="From your Kindle">
