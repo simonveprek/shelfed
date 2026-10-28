@@ -388,7 +388,11 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
     else if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
       e.preventDefault();
       v.goRight();
-    } else if (e.key === "Escape") window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    } else if (e.key === "Escape" && e.currentTarget !== window) {
+      // Escape inside the book's page is passed up to the window, which closes the book.
+      // Not one already on the window: this listens there too, and would pass it on forever.
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    }
   }, [touch]);
 
   // Trackpads turn pages too, one page per swipe.
