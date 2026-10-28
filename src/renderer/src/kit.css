@@ -1,0 +1,326 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Fragms. Warm paper in light, near black in dark. A card holds a well,
+ * controls sit on either. Every piece in components/ui reads these.
+ */
+
+:root {
+  --background: #f6f5f1;
+  --foreground: #1d1b18;
+  --muted: #77716a;
+  --card: #fdfcfa;
+  --card-hover: #f9f8f4;
+  --border: rgb(46 36 20 / 0.08);
+  --tile: #efede8;
+  --pill: #ebe9e3;
+  --underline: rgb(46 36 20 / 0.2);
+  --comment: #5e8a73;
+
+  --well: #f3f1ec;
+  --control: #edebe6;
+  --control-hover: #e6e3dd;
+  --control-active: #dfdcd5;
+  --line-strong: rgb(46 36 20 / 0.12);
+  --shadow-float: 0 22px 50px -20px rgb(60 44 22 / 0.22);
+  --shadow-card: 0 1px 2px rgb(60 44 22 / 0.04), 0 10px 28px -18px rgb(60 44 22 / 0.14);
+  --stage: #fdfcfa;
+  --stage-ink: #1d1b18;
+
+  --danger: #c4372b;
+  --success: #2f8f5b;
+
+  /* Main buttons, switches, checks and fills, and the brand colour. */
+  --primary: #1d1b18;
+  --primary-ink: #f6f5f1;
+  --accent: #3d7bff;
+
+  /* Corners. A theme scales these together. */
+  --r-card: 28px;
+  --r-panel: 24px;
+  --r-stage: 20px;
+  --r-field: 14px;
+  --r-item: 12px;
+
+  /* Code. Quiet colours that read on the warm well. */
+  --code-plain: #1d1b18;
+  --code-punct: #8a847c;
+  --code-comment: #7c8c7f;
+  --code-keyword: #a8326e;
+  --code-string: #96580f;
+  --code-number: #b0481f;
+  --code-function: #2b5bb5;
+  --code-type: #7640ad;
+  --code-tag: #2b5bb5;
+  --code-attr: #876712;
+}
+
+.dark {
+  --background: #111111;
+  --foreground: #ededed;
+  --muted: #8f8f8f;
+  --card: #181818;
+  --card-hover: #1c1c1c;
+  --border: rgb(255 255 255 / 0.06);
+  --tile: #222222;
+  --pill: #232323;
+  --underline: rgb(255 255 255 / 0.22);
+  --comment: #86b29b;
+
+  --well: #141414;
+  --control: #212121;
+  --control-hover: #282828;
+  --control-active: #2f2f2f;
+  --line-strong: rgb(255 255 255 / 0.1);
+  --shadow-float: 0 22px 50px -18px rgb(0 0 0 / 0.75);
+  --shadow-card: none;
+  --stage: #070707;
+  --stage-ink: #ffffff;
+
+  --danger: #f0695c;
+  --success: #5fc48c;
+
+  --primary: #ededed;
+  --primary-ink: #111111;
+  --accent: #6b9bff;
+
+  --code-plain: #ededed;
+  --code-punct: #8f8f8f;
+  --code-comment: #74937f;
+  --code-keyword: #ff8fbd;
+  --code-string: #f0c27b;
+  --code-number: #ff9e7a;
+  --code-function: #8ab4ff;
+  --code-type: #c9a2ff;
+  --code-tag: #8ab4ff;
+  --code-attr: #e9cf7e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-border: var(--border);
+  --color-tile: var(--tile);
+  --color-pill: var(--pill);
+  --color-underline: var(--underline);
+  --color-comment: var(--comment);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-well: var(--well);
+  --color-control: var(--control);
+  --color-control-hover: var(--control-hover);
+  --color-control-active: var(--control-active);
+  --color-line-strong: var(--line-strong);
+  --shadow-float: var(--shadow-float);
+  --shadow-card: var(--shadow-card);
+  --color-stage: var(--stage);
+  --color-stage-ink: var(--stage-ink);
+
+  --radius-card: var(--r-card);
+  --radius-panel: var(--r-panel);
+  --radius-stage: var(--r-stage);
+  --radius-field: var(--r-field);
+  --radius-item: var(--r-item);
+
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-pop: cubic-bezier(0.34, 1.36, 0.64, 1);
+
+  --text-display: clamp(2.5rem, 6vw, 4.5rem);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 500;
+  --text-title: clamp(1.875rem, 3.6vw, 2.75rem);
+  --text-title--line-height: 1.04;
+  --text-title--letter-spacing: -0.03em;
+  --text-title--font-weight: 500;
+  --text-heading: 1.25rem;
+  --text-heading--line-height: 1.3;
+  --text-heading--letter-spacing: -0.02em;
+  --text-heading--font-weight: 500;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  text-rendering: optimizeLegibility;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.shimmer {
+  background-image: linear-gradient(
+    110deg,
+    var(--foreground) 40%,
+    color-mix(in oklab, var(--foreground) 65%, transparent) 50%,
+    var(--foreground) 60%
+  );
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 0% 0;
+  }
+}
+
+/* Theme switch. The new theme is revealed by a clip path from JS, so the
+   default cross fade between snapshots is off. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Page transitions. Each navigation is tagged with where it goes and the
+   page picks one of these. Leaving takes 150ms, arriving 250ms, on the kit's
+   smooth curve, so the old page is gone before the new one asks for attention. */
+::view-transition {
+  pointer-events: none;
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+@keyframes vt-move-out {
+  to {
+    translate: var(--vt-to, 0 0);
+  }
+}
+@keyframes vt-move-in {
+  from {
+    translate: var(--vt-from, 0 0);
+  }
+}
+
+::view-transition-old(.vt-forward),
+::view-transition-old(.vt-back),
+::view-transition-old(.vt-deeper),
+::view-transition-old(.vt-up),
+::view-transition-old(.vt-fade) {
+  --vt-to: 0 14px;
+  animation:
+    160ms var(--ease-smooth) both vt-out,
+    160ms var(--ease-smooth) both vt-move-out;
+}
+::view-transition-new(.vt-forward),
+::view-transition-new(.vt-back),
+::view-transition-new(.vt-deeper),
+::view-transition-new(.vt-up),
+::view-transition-new(.vt-fade) {
+  --vt-from: 0 18px;
+  animation:
+    300ms var(--ease-smooth) 90ms both vt-in,
+    420ms var(--ease-smooth) 90ms both vt-move-in;
+}
+/* Sideways between neighbours, so the library reads like pages of a book. */
+::view-transition-old(.vt-forward) {
+  --vt-to: -24px 0;
+}
+::view-transition-new(.vt-forward) {
+  --vt-from: 32px 0;
+}
+::view-transition-old(.vt-back) {
+  --vt-to: 24px 0;
+}
+::view-transition-new(.vt-back) {
+  --vt-from: -32px 0;
+}
+
+/* Headers and sidebars hold perfectly still, on top. */
+::view-transition-group(.vt-still) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(.vt-still) {
+  display: none;
+}
+::view-transition-new(.vt-still) {
+  animation: none;
+}
+
+/* A name travelling from its card into its page's title, softened mid flight. */
+::view-transition-group(.vt-morph) {
+  animation-duration: 400ms;
+  animation-timing-function: var(--ease-smooth);
+}
+::view-transition-image-pair(.vt-morph) {
+  animation-name: vt-via-blur;
+  animation-duration: 400ms;
+}
+@keyframes vt-via-blur {
+  35% {
+    filter: blur(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+  .shimmer {
+    animation: none;
+  }
+}
+
+/* Even line lengths, no lonely last words. */
+p {
+  text-wrap: pretty;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* A calm focus ring that follows the shape of whatever has focus. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--foreground) 55%, transparent);
+    outline-offset: 2px;
+  }
+}
+
+/* Anchor links glide instead of jumping. */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

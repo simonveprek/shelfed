@@ -1,0 +1,75 @@
+@import "./kit.css";
+
+@font-face {
+  font-family: "Geist";
+  src: url("./assets/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: block;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./assets/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: block;
+}
+
+:root {
+  --font-geist-sans: "Geist";
+  --font-geist-mono: "Geist Mono";
+  --font-serif: "Iowan Old Style", "Charter", "New York", Georgia, serif;
+  --shadow-book: 0 1px 1px rgb(60 44 22 / 0.08), 0 8px 18px -8px rgb(60 44 22 / 0.35);
+  --shadow-book-hover: 0 2px 2px rgb(60 44 22 / 0.08), 0 20px 34px -14px rgb(60 44 22 / 0.45);
+}
+.dark {
+  --shadow-book: 0 1px 1px rgb(0 0 0 / 0.3), 0 8px 18px -8px rgb(0 0 0 / 0.7);
+  --shadow-book-hover: 0 2px 2px rgb(0 0 0 / 0.3), 0 20px 34px -14px rgb(0 0 0 / 0.85);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* A desktop app: text is chosen on purpose, not by a stray drag. */
+body {
+  user-select: none;
+  cursor: default;
+}
+input,
+textarea,
+.selectable {
+  user-select: text;
+}
+
+.drag {
+  -webkit-app-region: drag;
+}
+.drag button,
+.drag input,
+.drag a,
+.drag label,
+.drag [role="button"],
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.serif {
+  font-family: var(--font-serif);
+}
+
+/* A cover fades in once decoded, so scrolling never flashes. */
+.cover-img {
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-smooth, ease);
+}
+.cover-img[data-loaded="true"] {
+  opacity: 1;
+}

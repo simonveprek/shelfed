@@ -1,0 +1,28 @@
+appId: cz.simonveprek.shelf
+productName: Shelf
+copyright: Copyright © 2026 Šimon Vepřek
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**
+  - package.json
+fileAssociations:
+  - ext: [epub, mobi, azw3, azw, fb2, cbz, pdf]
+    name: E-book
+    role: Viewer
+mac:
+  category: public.app-category.books
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  darkModeSupport: true
+  icon: build/icon.png
+win:
+  target:
+    - target: nsis
+      arch: [x64, arm64]
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
