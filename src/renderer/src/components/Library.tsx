@@ -23,7 +23,9 @@ import { Cover } from "./Cover";
 /* ------------------------------------------------------------------------ */
 
 export function BookMenu({ ids }: { ids: string[] }) {
-  const books = useStore((s) => s.books.filter((b) => ids.includes(b.id)));
+  // Filtered outside the selector: a new list from it on every look sends React round in circles.
+  const all = useStore((s) => s.books);
+  const books = useMemo(() => all.filter((b) => ids.includes(b.id)), [all, ids]);
   const collections = useStore((s) => s.collections);
   const section = useStore((s) => s.section);
   const one = books.length === 1 ? books[0] : null;
