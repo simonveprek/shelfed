@@ -21,15 +21,27 @@ export async function fetchFile(book: Book, ext: string) {
   return new File([await res.blob()], format?.file ?? `book.${ext}`);
 }
 
-const DATE = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" });
+// Dates in words, the way the rest of Shelf is written: 17 Jan 2021.
+const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const MONTH = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
 export const date = (t?: number) => (t ? DATE.format(t) : "");
+
+/** A published date as books give it, a year, a month or a day, in words. */
+export function published(value?: string) {
+  const [, y, m, d] = value?.match(/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/) ?? [];
+  if (!y) return value ?? "";
+  if (d) return DATE.format(Date.UTC(+y, +m - 1, +d));
+  if (m) return MONTH.format(Date.UTC(+y, +m - 1));
+  return y;
+}
 
 export function ago(t?: number) {
   if (!t) return "Never";
   const s = (Date.now() - t) / 1000;
   if (s < 60) return "Just now";
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  if (s < 3600) return Math.floor(s / 60) === 1 ? "A minute ago" : `${Math.floor(s / 60)} minutes ago`;
+  if (s < 86400) return Math.floor(s / 3600) === 1 ? "An hour ago" : `${Math.floor(s / 3600)} hours ago`;
+  if (s < 86400 * 2) return "Yesterday";
   if (s < 86400 * 7) return `${Math.floor(s / 86400)} days ago`;
   return date(t);
 }

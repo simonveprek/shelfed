@@ -3,11 +3,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Add01Icon, ArrowDataTransferHorizontalIcon, BookOpen01Icon, Cancel01Icon, CheckmarkCircle02Icon, Delete02Icon,
   FavouriteIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, Image01Icon, MagicWand01Icon, MailSend01Icon,
-  MoreHorizontalIcon, PencilEdit02Icon, StarIcon,
+  MoreHorizontalIcon, PencilEdit02Icon, StarIcon, BarCode02Icon, Building03Icon, Calendar03Icon, CalendarAdd01Icon, Clock01Icon,
+  Copy01Icon, Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import type { Book, ReadStatus } from "../../../shared/types";
 import {
   Badge, Button, Chip, cx, EASE, Icon, IconButton, Menu, MenuItem, MenuLabel, MenuSeparator, Panel, Progress, Segmented, Tooltip, toast,
+  type IconLike,
 } from "@/components/ui";
 import { Stat } from "@/components/bits";
 import { addToCollection, canRead, openReader, removeFromCollection, toggleFavorite } from "@/lib/actions";
@@ -15,7 +17,7 @@ import { api, revealLabel } from "@/lib/api";
 import { saveCover } from "@/lib/books";
 import { newCollection, runAction } from "@/lib/commands";
 import { patchBooks, upsert, useStore } from "@/lib/store";
-import { ago, authorsOf, bytes, coverUrl, date, duration, plural } from "@/lib/util";
+import { ago, authorsOf, bytes, coverUrl, date, duration, plural, published } from "@/lib/util";
 import { ColourPicker, RIBBONS, SPINES } from "./Colours";
 import { hasKindred, Kindred } from "./Suggestions";
 import { KindleDock, useHasKindle } from "./KindleDock";
@@ -71,13 +73,64 @@ function Look({ books }: { books: Book[] }) {
   );
 }
 
-function Fact({ label, value }: { label: string; value?: ReactNode }) {
-  if (!value) return null;
+/** The book's details: the ones worth a glance as tiles, the rest in rows. */
+function Details({ book }: { book: Book }) {
+  const year = book.published?.match(/^\d{4}/)?.[0];
+  const tiles = [
+    year && { value: year, label: "Published" },
+    book.language && { value: language(book.language), label: "Language" },
+    (book.readSeconds ?? 0) >= 60 && { value: duration(book.readSeconds ?? 0), label: "Read for" },
+  ].filter(Boolean) as Array<{ value: string; label: string }>;
+  const rows = [
+    book.publisher && { icon: Building03Icon, label: "Publisher", value: book.publisher },
+    // The full date, when the book knows more than its year.
+    book.published && book.published.length > 4 && { icon: Calendar03Icon, label: "Published", value: published(book.published) },
+    book.isbn && { icon: BarCode02Icon, label: "ISBN", value: <Isbn value={book.isbn} /> },
+    { icon: CalendarAdd01Icon, label: "Added", value: date(book.added) },
+    book.opened && { icon: Clock01Icon, label: "Last opened", value: ago(book.opened) },
+  ].filter(Boolean) as Array<{ icon: IconLike; label: string; value: ReactNode }>;
+
   return (
-    <div className="flex gap-3 py-1.5 text-label">
-      <span className="w-20 shrink-0 text-muted">{label}</span>
-      <span className="selectable min-w-0 flex-1 break-words">{value}</span>
-    </div>
+    <>
+      {tiles.length > 0 && (
+        <div className={cx("mb-2 grid divide-x divide-border overflow-hidden rounded-[14px] bg-well", ["", "grid-cols-1", "grid-cols-2", "grid-cols-3"][tiles.length])}>
+          {tiles.map((tile) => (
+            <div key={tile.label} className="min-w-0 px-3 py-2.5">
+              <p className="truncate text-[15px] leading-tight font-medium tracking-[-0.01em] tabular-nums" title={tile.value}>{tile.value}</p>
+              <p className="mt-0.5 text-caption text-muted">{tile.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="-mb-1 divide-y divide-border">
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-center gap-2.5 py-2.5 text-label">
+            <Icon icon={row.icon} size={15} className="shrink-0 text-muted" />
+            <span className="shrink-0 text-muted">{row.label}</span>
+            <span className="selectable min-w-0 flex-1 truncate text-right" title={typeof row.value === "string" ? row.value : undefined}>{row.value}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** An ISBN that copies itself when clicked. */
+function Isbn({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="group inline-flex items-center gap-1.5 tabular-nums transition-colors hover:text-foreground"
+      onClick={() => {
+        navigator.clipboard.writeText(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1400);
+      }}
+    >
+      <Icon icon={copied ? Tick02Icon : Copy01Icon} size={13} className={cx("transition-opacity", copied ? "text-success opacity-100" : "text-muted opacity-0 group-hover:opacity-100")} />
+      {value}
+    </button>
   );
 }
 
@@ -321,13 +374,7 @@ function One({ book }: { book: Book }) {
       )}
 
       <Block title="Details" action={<Button size="sm" variant="ghost" className="-my-1 -mr-2 h-7" onClick={() => runAction("edit", [book.id])}>Edit</Button>}>
-        <Fact label="Publisher" value={book.publisher} />
-        <Fact label="Published" value={book.published} />
-        <Fact label="Language" value={language(book.language)} />
-        <Fact label="ISBN" value={book.isbn && <span className="tabular-nums">{book.isbn}</span>} />
-        <Fact label="Added" value={date(book.added)} />
-        <Fact label="Opened" value={book.opened ? ago(book.opened) : undefined} />
-        <Fact label="Time read" value={(book.readSeconds ?? 0) >= 60 ? duration(book.readSeconds ?? 0) : undefined} />
+        <Details book={book} />
         {!book.publisher && !book.isbn && (
           <Button size="sm" variant="outline" icon={MagicWand01Icon} className="mt-2 w-full" onClick={() => runAction("metadata", [book.id])}>
             Find details online

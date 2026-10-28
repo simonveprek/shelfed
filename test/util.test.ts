@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { bestFormat, bytes, debounce, norm, plural, readingFormat, similarity, sortTitle } from "../src/renderer/src/lib/util";
+import { ago, bestFormat, bytes, debounce, norm, plural, published, readingFormat, similarity, sortTitle } from "../src/renderer/src/lib/util";
 import { book } from "./helpers";
 
 describe("text helpers", () => {
@@ -62,5 +62,27 @@ describe("debounce", () => {
     expect(fn).toHaveBeenCalledExactlyOnceWith("saved");
     vi.advanceTimersByTime(2000);
     expect(fn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("dates in words", () => {
+  it("writes a published date as precisely as the book gives it", () => {
+    expect(published("2021-01-17")).toBe("17 Jan 2021");
+    expect(published("2021-01")).toBe("January 2021");
+    expect(published("1813")).toBe("1813");
+    expect(published("1813-01-28T00:00:00Z")).toBe("28 Jan 1813");
+    expect(published("sometime")).toBe("sometime");
+  });
+
+  it("says how long ago, in words", () => {
+    const now = Date.now();
+    expect(ago(now - 20_000)).toBe("Just now");
+    expect(ago(now - 60_000)).toBe("A minute ago");
+    expect(ago(now - 5 * 60_000)).toBe("5 minutes ago");
+    expect(ago(now - 3_600_000)).toBe("An hour ago");
+    expect(ago(now - 3 * 3_600_000)).toBe("3 hours ago");
+    expect(ago(now - 30 * 3_600_000)).toBe("Yesterday");
+    expect(ago(now - 3 * 86_400_000)).toBe("3 days ago");
+    expect(ago()).toBe("Never");
   });
 });
