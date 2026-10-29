@@ -1,4 +1,7 @@
-/** Where the site lives: at the root on Netlify, under /shelf on GitHub Pages. */
+/** The site's own address, for links that leave it: canonical, sitemap, structured data. */
+export const SITE = (process.env.SITE_URL ?? "https://shelfed.simonveprek.cz").replace(/\/$/, "");
+
+/** Where the site lives: at the root on its own domain, under a folder on a project page. */
 export const BASE = process.env.NEXT_PUBLIC_BASE ?? "";
 export const VERSION = process.env.NEXT_PUBLIC_VERSION ?? "0.1.0";
 export const REPO = "https://github.com/simonveprek/shelfed";

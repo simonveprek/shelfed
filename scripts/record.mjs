@@ -142,6 +142,7 @@ function render(name, film) {
     "-vf", `fps=30,scale=${WINDOW.width}:${WINDOW.height}:flags=lanczos,format=yuv420p`,
     "-c:v", "libx264", "-preset", "slow", "-crf", "21", "-movflags", "+faststart", "-an", mp4,
   ]);
+  // The first frame, as the site's poster; scripts/posters.mjs makes its WebPs.
   execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", mp4, "-frames:v", "1", "-q:v", "3", join(OUT.site, `${name}.jpg`)]);
   const framed = join(work, `${name}-framed.mp4`);
   execFileSync("ffmpeg", [

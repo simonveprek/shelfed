@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* A phone on its side: too short to stack the words over the window, so they sit beside it. */
+@custom-variant short (@media (max-height: 520px) and (orientation: landscape));
+
 /* The app's own colours, from its kit, so the site looks like what you download. */
 :root {
   --background: #f6f5f1;
@@ -53,7 +56,7 @@
   --color-accent: var(--accent);
   --color-success: var(--success);
   --font-sans: var(--font-geist-sans), -apple-system, "Segoe UI", system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   --font-serif: "Iowan Old Style", "Palatino Linotype", Charter, "Sitka Text", Cambria, Georgia, serif;
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 }

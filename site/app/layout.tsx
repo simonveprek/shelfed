@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { asset } from "@/lib";
 import "./globals.css";
@@ -12,8 +11,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? "https://shelfed.simonveprek.cz"),
   title: "Shelfed, a quiet home for your books",
   description,
+  applicationName: "Shelfed",
+  authors: [{ name: "Šimon Vepřek", url: "https://simonveprek.cz" }],
+  creator: "Šimon Vepřek",
+  keywords: ["ebook library", "ebook manager", "Calibre alternative", "Send to Kindle", "EPUB reader", "Kindle", "macOS", "Windows", "open source"],
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
   icons: { icon: asset("icon.svg") },
-  openGraph: { title: "Shelfed", description, images: [asset("media/social.jpg")], type: "website" },
+  openGraph: { title: "Shelfed", description, images: [{ url: asset("media/social.jpg"), width: 1200, height: 630, alt: "Shelfed's bookcase, with the line A quiet home for your books" }], type: "website", siteName: "Shelfed" },
   twitter: { card: "summary_large_image", title: "Shelfed", description, images: [asset("media/social.jpg")] },
 };
 
@@ -26,7 +31,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="en" className={`${GeistSans.variable}`}>
       <body>{children}</body>
     </html>
   );

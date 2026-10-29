@@ -39,7 +39,7 @@ const NAMES = { mac: { arm64: "Apple silicon", x64: "Intel" }, win: { x64: "x64"
 export function DownloadButton({ center = false }: { center?: boolean }) {
   const found = useSystem();
   return (
-    <div className={`flex flex-col gap-2.5 ${center ? "items-center" : "items-start"}`}>
+    <div className={`flex flex-col gap-2.5 ${center ? "items-center short:items-start" : "items-start"}`}>
       <a
         href={found ? installer(found.os, found.arch) : "#download"}
         className="inline-flex h-12 items-center gap-2.5 rounded-full bg-foreground px-6 text-[15px] font-medium text-background transition-transform duration-200 ease-smooth hover:-translate-y-0.5 active:translate-y-0"
@@ -47,7 +47,7 @@ export function DownloadButton({ center = false }: { center?: boolean }) {
         <HugeiconsIcon icon={found?.os === "win" ? WindowsNewIcon : found?.os === "mac" ? AppleIcon : Download04Icon} size={18} />
         {found ? `Download for ${found.os === "mac" ? "Mac" : "Windows"}` : "Download Shelfed"}
       </a>
-      <p className={`text-[13px] text-muted ${center ? "" : "pl-1"}`}>
+      <p className={`text-[13px] text-muted ${center ? "short:pl-1" : "pl-1"}`}>
         {found ? `${NAMES[found.os][found.arch]}, version ${VERSION}. ` : `Version ${VERSION}, for Mac and Windows. `}
         <a href="#download" className="underline decoration-line-strong underline-offset-4 hover:text-foreground">
           Other downloads

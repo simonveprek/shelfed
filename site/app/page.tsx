@@ -6,6 +6,8 @@ import {
 import { DownloadButton, OtherBuilds } from "@/components/download";
 import { Mark } from "@/components/mark";
 import { Scene } from "@/components/scene";
+import { Schema } from "@/components/schema";
+import { GROUPS, MAKES, OPENS, QUESTIONS, REASONS } from "@/content";
 import { REPO } from "@/lib";
 
 /*
@@ -17,6 +19,7 @@ import { REPO } from "@/lib";
 export default function Home() {
   return (
     <>
+      <Schema />
       <Nav />
       <main>
         <Scene />
@@ -63,17 +66,14 @@ function Nav() {
 
 /** Three reasons to try it, each said once. */
 function Why() {
-  const reasons = [
-    { icon: SourceCodeIcon, title: "Free and open source.", text: "No account, no subscription, no paid version." },
-    { icon: SquareLock02Icon, title: "Your books stay yours.", text: "Plain files on your computer. Nothing is tracked, and Shelfed only goes online when you ask." },
-    { icon: PackageIcon, title: "Nothing else to install.", text: "Reading, converting and sending to your Kindle are all built in." },
-  ];
+  const icons = [SourceCodeIcon, SquareLock02Icon, PackageIcon];
   return (
-    <section className="mx-auto max-w-[1080px] px-5 py-28 sm:px-8 sm:py-40">
+    <section aria-labelledby="why" className="mx-auto max-w-[1080px] px-5 py-28 sm:px-8 sm:py-40">
+      <h2 id="why" className="sr-only">Why it's safe to try</h2>
       <div className="grid gap-12 sm:grid-cols-3 sm:gap-10">
-        {reasons.map(({ icon, title, text }) => (
+        {REASONS.map(([title, text], i) => (
           <div key={title}>
-            <Tile icon={icon} />
+            <Tile icon={icons[i]} />
             <h3 className="mt-6 text-[clamp(1.35rem,2.2vw,1.65rem)] leading-tight font-medium tracking-[-0.03em]">{title}</h3>
             <p className="mt-3 text-[15.5px] leading-relaxed text-muted">{text}</p>
           </div>
@@ -111,86 +111,16 @@ function Get() {
 
 /** Everything Shelfed does, grouped, for the visitor who reads to the end before trying. */
 function Everything() {
-  const groups: Array<[typeof LibraryIcon, string, string[]]> = [
-    [
-      LibraryIcon,
-      "Your library",
-      [
-        "Covers, a list, shelves or a 3D bookcase",
-        "Plain files, one folder per author, movable anywhere",
-        "Browse by author, series, tag or format",
-        "Collections, favourites, ratings and reading status",
-        "Covers, descriptions and publishers found online",
-        "Removing a book can be undone",
-      ],
-    ],
-    [
-      BookOpen01Icon,
-      "Reading",
-      [
-        "Opens every book where you left it",
-        "Highlights, notes and bookmarks, copied out as Markdown",
-        "Search inside the book",
-        "Light, sepia, dark or black pages",
-        "The book's own type, a serif or a sans, at any size",
-        "Pages to turn, or one long scroll",
-      ],
-    ],
-    [
-      Tablet01Icon,
-      "Kindle",
-      [
-        "Recognises every model from the Kindle 2 on",
-        "Copies by cable, making the Kindle file it needs",
-        "Sends by email from your own mail account",
-        "Ready settings for Gmail, Outlook and iCloud",
-        "Brings your Kindle highlights back from My Clippings",
-        "PDFs laid out to fit a Kindle's screen",
-      ],
-    ],
-    [
-      ArrowDataTransferHorizontalIcon,
-      "Converting",
-      [
-        "EPUB, AZW3, PDF, Word, FB2, text or a web page",
-        "From any format Shelfed can open",
-        "PDF pages in A4, A5, Letter or Kindle size",
-        "All built in, with nothing else to install",
-        "The new file sits beside the old one",
-      ],
-    ],
-    [
-      Globe02Icon,
-      "Finding books",
-      [
-        "Thousands of free classics from Standard Ebooks",
-        "And from Project Gutenberg, a click each",
-        "Suggestions from what you own, worked out on your computer",
-        "Drop files or whole folders anywhere on the window",
-        "Opens books straight from Finder or Explorer",
-      ],
-    ],
-    [
-      PaintBoardIcon,
-      "Yours",
-      [
-        "Light, dark, or following your system",
-        "Eight app icons to choose from",
-        "A spine colour and a ribbon for every book",
-        "No account, no tracking, works offline",
-        "Updates itself, if you let it",
-      ],
-    ],
-  ];
+  const icons = [LibraryIcon, BookOpen01Icon, Tablet01Icon, ArrowDataTransferHorizontalIcon, Globe02Icon, PaintBoardIcon];
   return (
     <section className="border-t border-border">
       <div className="mx-auto max-w-[1080px] px-5 py-24 sm:px-8 sm:py-32">
         <h2 className="max-w-[18ch] text-[clamp(2rem,4vw,3rem)] leading-[1.02] font-medium tracking-[-0.04em]">Everything in it.</h2>
         <div className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-          {groups.map(([icon, title, items]) => (
+          {GROUPS.map(([title, items], i) => (
             <div key={title} className="border-t border-border pt-5">
               <h3 className="flex items-center gap-3 text-[15px] font-medium">
-                <Tile icon={icon} small />
+                <Tile icon={icons[i]} small />
                 {title}
               </h3>
               <ul className="mt-4 flex flex-col gap-2.5">
@@ -211,8 +141,8 @@ function Everything() {
 /** What it takes in and what it gives back, the first question of anyone with a pile of ebooks. */
 function Formats() {
   const rows: Array<[typeof FileImportIcon, string, string[]]> = [
-    [FileImportIcon, "Opens", ["EPUB", "MOBI", "AZW3", "AZW", "PRC", "FB2", "CBZ", "PDF", "Word", "Markdown", "HTML", "Text"]],
-    [FileExportIcon, "Makes", ["EPUB", "AZW3", "PDF", "Word", "FB2", "Text", "Web page"]],
+    [FileImportIcon, "Opens", OPENS],
+    [FileExportIcon, "Makes", MAKES],
   ];
   return (
     <section className="border-t border-border bg-well">
@@ -239,25 +169,12 @@ function Formats() {
 
 /** The honest answers, all open, before anyone has to ask. */
 function Questions() {
-  const questions: Array<[string, string]> = [
-    ["Is it really free?", "Yes. Shelfed is open source under the MIT licence, with no paid version, no account and nothing to subscribe to."],
-    [
-      "Which Kindles does it work with?",
-      "Every Kindle, by email. By cable, the ones that show up as a drive when plugged in, which is most made before 2024. Newer ones, like the 2024 Paperwhite and the Colorsoft, connect the way phones do, so Shelfed sends to them by email for now.",
-    ],
-    ["Can it open books I bought on Amazon?", "Not if they have DRM, as most do, and Shelfed doesn't remove it. Books without DRM, from anywhere, open fine."],
-    ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelfed and every book comes in, with the details stored inside each file. Calibre's own tags and shelves don't come across yet."],
-    ["Where are my books kept?", "In a Shelf Library folder in your Documents, a folder for each author, as ordinary files. Move it anywhere from Settings."],
-    ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
-    ["Why does my computer warn me the first time?", "Shelfed isn't signed with a paid certificate yet. On a Mac, open it once, then go to System Settings, Privacy & Security, and click Open Anyway; on macOS 14 or earlier, right-click it and choose Open instead. On Windows, choose More info, then Run anyway."],
-    ["What does it run on?", "macOS on Apple silicon or Intel, and Windows 10 or 11 on x64 or ARM. On Linux it runs built from the source."],
-  ];
   return (
     <section className="border-t border-border">
       <div className="mx-auto max-w-[1080px] px-5 py-24 sm:px-8 sm:py-28">
         <h2 className="text-[clamp(2rem,4vw,3rem)] leading-[1.02] font-medium tracking-[-0.04em]">Good to know.</h2>
         <dl className="mt-12 grid gap-x-12 gap-y-9 sm:grid-cols-2">
-          {questions.map(([question, answer]) => (
+          {QUESTIONS.map(([question, answer]) => (
             <div key={question}>
               <dt className="text-[15.5px] font-medium">{question}</dt>
               <dd className="mt-2 text-[14.5px] leading-relaxed text-muted">{answer}</dd>
