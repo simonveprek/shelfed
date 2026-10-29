@@ -6,7 +6,7 @@ The first release of Shelfed: a quiet home for your books, on Mac and Windows. F
 - **A reader for every format.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens every book where you stopped, and reads aloud in your system's voices.
 - **Your Kindle, by name.** Plug one in and Shelfed recognises the model, from the Kindle 2 to the Colorsoft and Scribe, and shows it in 3D. Drag a book onto it to copy it across by cable, or send it by email from your own mail account. Books already on it get a badge, and a list of their own, and the ones you've finished can come off it in one go.
 - **Converting, built in.** EPUB, AZW3 for Kindle, PDF, Word, FB2, plain text and web pages, with nothing else to install.
-- **Finding books.** An empty library starts with eight classics in one click. Thousands more free from Standard Ebooks and Project Gutenberg, suggestions worked out from what you own, and details from Open Library and Google Books.
+- **Finding books.** An empty library starts with eight classics in one click. Thousands more free classics from Standard Ebooks and Project Gutenberg, suggestions worked out from what you own, and details from Open Library and Google Books.
 - **Coming from Calibre.** Shelfed finds your Calibre library by itself and offers to bring it over: every book once, with its formats, cover, series and tags.
 - **Books you download come in by themselves.** A new EPUB, MOBI, AZW3, FB2 or comic in your Downloads folder joins the library while Shelfed is open.
 - **In English and Czech.** Shelfed speaks your system's language, or the one you choose in Settings.
