@@ -37,7 +37,10 @@
 - **Reads everything.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens where you stopped.
 - **Keeps your library as plain files.** One folder per author in `Documents/Shelf Library`, readable without the app.
 - **Converts.** To EPUB, AZW3 for Kindle, PDF, Word, FB2, text or a web page, all built in.
-- **Sends to your Kindle.** By cable, or by email from your own mail account. It shows which of your books are already on a Kindle.
+- **Sends to your Kindle.** By cable, or by email from your own mail account. It shows which of your books are already on a Kindle, and takes the finished ones off.
+- **Brings your Calibre library over.** It finds it by itself; each book comes once, with its formats, cover, series and tags.
+- **Picks up what you download.** New ebooks in your Downloads folder come in by themselves.
+- **Speaks English and Czech,** following your system or your choice.
 - **Finds details.** Descriptions, publishers and better covers from Open Library and Google Books.
 - **Brings back your Kindle highlights** from `My Clippings.txt`.
 - **Classics, free.** Thousands of books from Standard Ebooks and Project Gutenberg, one click to add.
