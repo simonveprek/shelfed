@@ -1,10 +1,11 @@
 import type { Book, Collection } from "../../../shared/types";
 import { KINDLE_EMAIL, KINDLE_LIMIT, KINDLE_USB } from "../../../shared/types";
 import { toast } from "@/components/ui";
-import { api } from "./api";
+import { api, isMac } from "./api";
 import { relistKindle } from "./kindle";
 import { extractContent, parseBook, saveCover } from "./books";
 import { readCalibreOpf } from "./calibre";
+import { findCopies, inherit } from "./copies";
 import { buildDocx } from "./docx";
 import { buildEpub, buildHtml, buildText } from "./epub";
 import { buildFb2 } from "./fb2";
@@ -82,6 +83,7 @@ export async function importPaths(paths: string[], open = false) {
   let skipped = 0;
   let joined = 0;
   let done = 0;
+  const touched = new Set<string>();
   let last: Book | null = null;
   try {
     await pool(books, 3, async ([first, ...others]) => {
@@ -110,6 +112,7 @@ export async function importPaths(paths: string[], open = false) {
           current = grown;
         }
         upsert(current);
+        touched.add(current.id);
         last = current;
       } catch {
         // One bad file does not stop the rest.
@@ -117,6 +120,10 @@ export async function importPaths(paths: string[], open = false) {
       done++;
       job.update({ progress: done / books.length, detail: `${done.toLocaleString()} of ${books.length.toLocaleString()}` });
     });
+    // Copies that came as books of their own, like an EPUB and a MOBI Calibre kept apart, join up.
+    const into = await joinCopies(touched);
+    joined += into.size;
+    if (last && into.has((last as Book).id)) last = bookById(into.get((last as Book).id)!) ?? null;
     set({ mood: null });
     const notes = [skipped && `${skipped} already here`, joined && `${plural(joined, "copy", "copies")} joined to ${joined === 1 ? "its book" : "their books"}`].filter(Boolean).join(", ");
     job.done(added ? `Added ${plural(added, "book")}${notes ? `, ${notes}` : ""}` : joined ? `Joined ${plural(joined, "copy", "copies")} to ${joined === 1 ? "its book" : "their books"}` : "Those books are already here");
@@ -127,6 +134,48 @@ export async function importPaths(paths: string[], open = false) {
   } catch (error) {
     set({ mood: null });
     job.fail(error);
+  }
+}
+
+/**
+ * Folds copies of a book into it: their files become its formats, and it takes
+ * whatever it lacked from them, reading progress and notes included. The
+ * copies' folders go to the Trash or Recycle Bin.
+ */
+export async function joinBooks(keepId: string, copyIds: string[]) {
+  const keep = bookById(keepId);
+  const copies = copyIds.map(bookById).filter((b): b is Book => Boolean(b) && b!.id !== keepId);
+  if (!keep || !copies.length) return keep ?? null;
+  let joined = await api.update(keep.id, inherit(keep, copies));
+  for (const copy of copies) {
+    joined = await api.merge(copy.id, keep.id);
+    drop([copy.id]);
+  }
+  upsert(joined);
+  return joined;
+}
+
+/** Joins every copy in the library, or only those of the given books. Says which book each copy went into. */
+export async function joinCopies(among?: Set<string>) {
+  const into = new Map<string, string>();
+  for (const { keep, copies } of findCopies(get().books, among)) {
+    if (!(await joinBooks(keep.id, copies.map((c) => c.id)).catch(() => null))) continue;
+    for (const copy of copies) into.set(copy.id, keep.id);
+  }
+  return into;
+}
+
+/** The books picked by hand, joined into the one that knows most about itself. */
+export async function joinSelected(ids: string[]) {
+  const books = ids.map(bookById).filter((b): b is Book => Boolean(b));
+  if (books.length < 2) return;
+  const [keep, ...rest] = [...books].sort((a, b) => b.formats.length - a.formats.length || a.added - b.added);
+  const joined = await joinBooks(keep.id, rest.map((b) => b.id));
+  if (joined) {
+    set({ selection: [joined.id], anchor: joined.id });
+    toast.success(`Joined into one book${rest.length > 1 ? ` from ${books.length}` : ""}`, {
+      description: `Files it already had went to the ${isMac ? "Trash" : "Recycle Bin"}, with the copies' folders.`,
+    });
   }
 }
 

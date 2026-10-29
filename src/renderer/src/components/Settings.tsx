@@ -10,6 +10,8 @@ import {
 } from "@/components/ui";
 import { Point } from "@/components/fragms/points";
 import { api, isMac, revealLabel } from "@/lib/api";
+import { joinCopies } from "@/lib/actions";
+import { findCopies } from "@/lib/copies";
 import { chooseIcon, iconSrc } from "@/lib/icon";
 import { PHONE_LIKE, useKindlePort, useOnKindle } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
@@ -126,12 +128,44 @@ function LibrarySection() {
           ))}
         </div>
       </Group>
+      <Copies />
       <Group label="The first time">
         <Row label="The welcome" hint="The short story about reading Shelfed opens with.">
           <Button size="sm" onClick={() => useStore.setState({ dialog: null, onboarding: true })}>Show it again</Button>
         </Row>
       </Group>
     </>
+  );
+}
+
+/** Books that are the same book in different files, like an EPUB and a MOBI Calibre kept apart, joined in one go. */
+function Copies() {
+  const books = useStore((s) => s.books);
+  const copies = useMemo(() => findCopies(books).reduce((n, group) => n + group.copies.length, 0), [books]);
+  const [busy, setBusy] = useState(false);
+  return (
+    <Group label="Copies">
+      <Row
+        label="The same book twice"
+        hint={
+          copies
+            ? `${plural(copies, "book is a copy", "books are copies")} of another in a different format, with the same title and author. Joined, each becomes one book with both files.`
+            : "No book here is a copy of another in a different format. Books that come in as copies join up by themselves."
+        }
+      >
+        <Button
+          size="sm"
+          disabled={!copies || busy}
+          onClick={async () => {
+            setBusy(true);
+            const joined = (await joinCopies().finally(() => setBusy(false))).size;
+            toast.success(`Joined ${plural(joined, "copy", "copies")} to ${joined === 1 ? "its book" : "their books"}`);
+          }}
+        >
+          {busy ? "Joining…" : copies ? `Join ${copies.toLocaleString()}` : "None found"}
+        </Button>
+      </Row>
+    </Group>
   );
 }
 

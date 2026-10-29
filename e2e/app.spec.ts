@@ -76,6 +76,17 @@ test("opens a book, turns a page and comes back", async ({ shelf }) => {
   await expect(card(page, "The Lighthouse Keeper")).toBeVisible();
 });
 
+test("books picked by hand join into one, with both books' files", async ({ shelf }) => {
+  const { page } = shelf;
+  await shelf.add();
+  await card(page, "Salt and Ink").click();
+  await card(page, "A Winter Orchard").click({ modifiers: [process.platform === "darwin" ? "Meta" : "Control"] });
+  await card(page, "A Winter Orchard").click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Join into one book" }).click();
+  await expect(page.getByText("Joined into one book")).toBeVisible();
+  await expect(page.locator("main [draggable=true]")).toHaveCount(BOOKS.length - 1);
+});
+
 test("removing a book can be undone", async ({ shelf }) => {
   const { page } = shelf;
   await shelf.add();
@@ -235,26 +246,59 @@ test.describe("a Calibre library", () => {
     }
   });
 
-  test("brought in again, joins up books that came in as separate copies", async ({ shelf }) => {
+  test("its files handed over one at a time join up as they come", async ({ shelf }) => {
     const { page } = shelf;
     const { root, epubFile, fb2File } = calibreLibrary();
     try {
-      // How it went before: each file a book of its own, named from inside it.
-      // A single file handed over opens to read, as from Finder or Explorer.
+      // A single file handed over opens to read, as from Finder or Explorer; the second
+      // is the same book, so it joins the first, and that one opens.
       for (const file of [epubFile, fb2File]) {
         await hand(shelf, [file]);
         await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
         await page.keyboard.press("Escape");
         await expect(page.getByRole("button", { name: "Next page" })).toHaveCount(0);
       }
-      await expect(page.locator("main [draggable=true]")).toHaveCount(2);
-      await hand(shelf, [root]);
-      await expect(page.getByText("Joined 1 copy to its book")).toBeVisible();
       await expect(page.locator("main [draggable=true]")).toHaveCount(1);
       await expect(card(page, "The Ruins of Gorlan")).toContainText("John Flanagan");
+      await card(page, "The Ruins of Gorlan").click();
+      await expect(page.locator("aside").getByText("FB2", { exact: true })).toBeVisible();
+      // Brought in again as a whole, nothing more comes in.
+      await hand(shelf, [root]);
+      await expect(page.getByText("Those books are already here")).toBeVisible();
+      await expect(page.locator("main [draggable=true]")).toHaveCount(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("holding one book twice, an EPUB and an FB2 in folders of their own, gives one book", async ({ shelf }) => {
+    const { page } = shelf;
+    const root = mkdtempSync(join(tmpdir(), "shelf-calibre-"));
+    try {
+      const opf = `<?xml version='1.0' encoding='utf-8'?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+<dc:title>The King of the West: (Path of the Ranger Book 7)</dc:title><dc:creator opf:role="aut">Pedro Urvi</dc:creator></metadata></package>`;
+      // As Calibre keeps a book added twice, once per format.
+      const first = join(root, "Pedro Urvi", "The King of the West_ (Path of the Ranger Book 7) (45)");
+      const second = join(root, "Pedro Urvi", "The King of the West_ (Path of the Ranger Book 7) (46)");
+      for (const dir of [first, second]) {
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, "metadata.opf"), opf);
+      }
+      writeFileSync(join(first, "The King of the West_ (Path of the Ranger Book 7) - Pedro Urvi.epub"), epub({ title: "The King of the West", author: "Pedro Urvi" }));
+      writeFileSync(
+        join(second, "The King of the West_ (Path of the Ranger Book 7) - Pedro Urvi.fb2"),
+        `<?xml version="1.0" encoding="UTF-8"?><FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0"><description><title-info><author><first-name>Pedro</first-name><last-name>Urvi</last-name></author><book-title>The King of the West</book-title><lang>en</lang></title-info></description><body><section><p>West.</p></section></body></FictionBook>`,
+      );
+      await hand(shelf, [root]);
+      await expect(page.getByText("1 copy joined to its book", { exact: false })).toBeVisible();
+      await expect(page.locator("main [draggable=true]")).toHaveCount(1);
+      await card(page, "The King of the West").click();
+      const details = page.locator("aside");
+      await expect(details.getByText("EPUB", { exact: true })).toBeVisible();
+      await expect(details.getByText("FB2", { exact: true })).toBeVisible();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 });
-

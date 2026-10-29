@@ -3,12 +3,12 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { motion } from "framer-motion";
 import {
   ArrowDataTransferHorizontalIcon, ArrowRight01Icon, BookOpen01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
-  FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon, Tablet01Icon,
+  FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, Layers01Icon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon, Tablet01Icon,
 } from "@hugeicons/core-free-icons";
 import type { Book } from "../../../shared/types";
 import { Badge, Button, ContextMenu, cx, DataTable, EASE, Icon, MenuItem, MenuLabel, MenuSeparator, Progress, type DataTableColumn } from "@/components/ui";
 import { Empty } from "@/components/bits";
-import { addToCollection, openReader, pickAndImport, removeFromCollection } from "@/lib/actions";
+import { addToCollection, joinSelected, openReader, pickAndImport, removeFromCollection } from "@/lib/actions";
 import { api, isMac, revealLabel } from "@/lib/api";
 import { newCollection, runAction } from "@/lib/commands";
 import { useOnKindle } from "@/lib/kindle";
@@ -64,6 +64,7 @@ export function BookMenu({ ids }: { ids: string[] }) {
         Read it
       </MenuItem>
       {one && <MenuItem icon={FolderOpenIcon} onSelect={() => api.reveal(one.id)}>{revealLabel}</MenuItem>}
+      {books.length > 1 && <MenuItem icon={Layers01Icon} onSelect={() => joinSelected(ids)}>Join into one book</MenuItem>}
       <MenuSeparator />
       <MenuItem icon={Delete02Icon} danger onSelect={() => runAction("remove", ids)}>
         {books.length > 1 ? `Remove ${books.length} books` : "Remove from library"}
