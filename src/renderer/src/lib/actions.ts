@@ -4,6 +4,7 @@ import { toast } from "@/components/ui";
 import { api } from "./api";
 import { relistKindle } from "./kindle";
 import { extractContent, parseBook, saveCover } from "./books";
+import { readCalibreOpf } from "./calibre";
 import { buildDocx } from "./docx";
 import { buildEpub, buildHtml, buildText } from "./epub";
 import { buildFb2 } from "./fb2";
@@ -19,8 +20,11 @@ const set = useStore.setState;
 /* Adding books                                                              */
 /* ------------------------------------------------------------------------ */
 
-/** Reads a freshly copied book's details and cover, then files it away. */
-async function finishImport(book: Book): Promise<Book> {
+/**
+ * Reads a freshly copied book's details and cover, then files it away. Details
+ * Calibre kept for it count for more than the file's own, and so does its cover.
+ */
+async function finishImport(book: Book, calibre?: Partial<Book>, calibreCover?: Blob): Promise<Book> {
   let patch: Partial<Book> = {};
   let cover: Blob | null = null;
   try {
@@ -28,6 +32,8 @@ async function finishImport(book: Book): Promise<Book> {
   } catch {
     // An unreadable file still joins the library, named after its file.
   }
+  patch = { ...patch, ...calibre };
+  cover = calibreCover ?? cover;
   // The same book in another format joins the one already here, but only when
   // the ISBN proves it. Two books can share a title and an author and still be
   // different books, like two volumes of collected poems.
@@ -57,39 +63,66 @@ async function pool<T>(items: T[], limit: number, task: (item: T) => Promise<voi
   );
 }
 
+/**
+ * Adds the books under these paths. Each book comes with all its formats: a
+ * Calibre library's EPUB and MOBI of one book become one book with two files.
+ * Brought in again, a Calibre library also joins up books that came in as
+ * separate copies before, and its details put right what was read from files.
+ */
 export async function importPaths(paths: string[], open = false) {
   if (!paths.length) return;
-  const files = await api.collect(paths);
-  if (!files.length) {
+  const books = await api.collect(paths);
+  if (!books.length) {
     toast.error("No books there that Shelfed can read");
     return;
   }
-  const job = startJob(files.length === 1 ? "Adding a book" : `Adding ${files.length.toLocaleString()} books`);
+  const job = startJob(books.length === 1 ? "Adding a book" : `Adding ${books.length.toLocaleString()} books`);
   set({ mood: "reading" });
   let added = 0;
   let skipped = 0;
+  let joined = 0;
   let done = 0;
   let last: Book | null = null;
   try {
-    await pool(files, 3, async (path) => {
+    await pool(books, 3, async ([first, ...others]) => {
       try {
-        const { book, duplicate } = await api.importFile(path);
-        if (duplicate) skipped++;
-        else {
+        const side = await api.sidecar(first).catch(() => ({}) as { opf?: string; cover?: Uint8Array });
+        const calibre = side.opf ? readCalibreOpf(side.opf) : undefined;
+        const cover = side.cover ? new Blob([side.cover as Uint8Array<ArrayBuffer>], { type: "image/jpeg" }) : undefined;
+        const { book, duplicate } = await api.importFile(first);
+        let current: Book;
+        if (duplicate) {
+          skipped++;
+          const { title, authors, series, seriesIndex } = calibre ?? {};
+          const fix = Object.fromEntries(Object.entries({ title, authors, series, seriesIndex }).filter(([, v]) => v !== undefined));
+          current = Object.keys(fix).length ? await api.update(book.id, fix, true) : book;
+        } else {
           upsert(book);
-          last = await finishImport(book);
+          current = await finishImport(book, calibre, cover);
           added++;
         }
+        for (const path of others) {
+          const { book: grown, folded } = await api.joinFile(current.id, path).catch(() => ({ book: current, folded: undefined }));
+          if (folded) {
+            drop([folded]);
+            joined++;
+          }
+          current = grown;
+        }
+        upsert(current);
+        last = current;
       } catch {
         // One bad file does not stop the rest.
       }
       done++;
-      job.update({ progress: done / files.length, detail: `${done.toLocaleString()} of ${files.length.toLocaleString()}` });
+      job.update({ progress: done / books.length, detail: `${done.toLocaleString()} of ${books.length.toLocaleString()}` });
     });
     set({ mood: null });
-    job.done(added ? `Added ${plural(added, "book")}${skipped ? `, ${skipped} already here` : ""}` : "Those books are already here");
+    const notes = [skipped && `${skipped} already here`, joined && `${plural(joined, "copy", "copies")} joined to ${joined === 1 ? "its book" : "their books"}`].filter(Boolean).join(", ");
+    job.done(added ? `Added ${plural(added, "book")}${notes ? `, ${notes}` : ""}` : joined ? `Joined ${plural(joined, "copy", "copies")} to ${joined === 1 ? "its book" : "their books"}` : "Those books are already here");
     const book = last as Book | null;
-    if (book && open && files.length === 1) openReader(book.id);
+    // A single file handed over opens; a folder, even of one book, doesn't.
+    if (book && open && paths.length === 1 && books.length === 1 && books[0][0] === paths[0]) openReader(book.id);
     else if (book) set({ selection: [book.id], anchor: book.id });
   } catch (error) {
     set({ mood: null });

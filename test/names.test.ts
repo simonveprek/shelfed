@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { personName, personNames } from "../src/shared/names";
+import { personName, personNames, splitNames } from "../src/shared/names";
 
 describe("names on spines", () => {
   it("turns a catalogue name round", () => {
@@ -28,5 +28,20 @@ describe("names on spines", () => {
 
   it("counts a writer once when two spellings meet", () => {
     expect(personNames(["Flanagan, John", "John Flanagan", ""])).toEqual(["John Flanagan"]);
+  });
+
+  it("takes writers apart when one name holds several", () => {
+    expect(splitNames("Terry Pratchett & Neil Gaiman")).toEqual(["Terry Pratchett", "Neil Gaiman"]);
+    expect(splitNames("Austen, Jane; Brontë, Charlotte")).toEqual(["Austen, Jane", "Brontë, Charlotte"]);
+    expect(personNames(["Austen, Jane; Brontë, Charlotte"])).toEqual(["Jane Austen", "Charlotte Brontë"]);
+  });
+
+  it("keeps a name with & in it together when it's two single words", () => {
+    expect(splitNames("Simon & Schuster")).toEqual(["Simon & Schuster"]);
+    expect(splitNames("Mary Shelley")).toEqual(["Mary Shelley"]);
+  });
+
+  it("drops authors that say no one", () => {
+    expect(personNames(["Unknown", "Jane Austen", "unknown author"])).toEqual(["Jane Austen"]);
   });
 });

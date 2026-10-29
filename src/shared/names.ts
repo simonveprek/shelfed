@@ -21,5 +21,18 @@ export function personName(raw: string) {
   return [first, last, suffix].filter(Boolean).join(" ");
 }
 
-/** Every author turned round, without the ones that come out the same twice. */
-export const personNames = (names: string[]) => [...new Set(names.map(personName).filter(Boolean))];
+/**
+ * Several writers given as one name, as many files and Calibre's own file names
+ * do: "Terry Pratchett & Neil Gaiman", "Austen, Jane; Brontë, Charlotte". Two
+ * single words, like "Simon & Schuster", are taken to be one name.
+ */
+export function splitNames(raw: string) {
+  const parts = raw.split(/\s*;\s*|\s+&\s+/).map((part) => part.trim()).filter(Boolean);
+  return parts.length > 1 && parts.every((part) => !/[\s,]/.test(part)) ? [raw.trim()] : parts;
+}
+
+/** What files say when they don't know who wrote them. */
+const NOBODY = /^(unknown|unknown author|anonymous author|author)$/i;
+
+/** Every author apart and turned round, without the ones that come out the same twice, or say no one. */
+export const personNames = (names: string[]) => [...new Set(names.flatMap(splitNames).map(personName).filter((name) => name && !NOBODY.test(name)))];

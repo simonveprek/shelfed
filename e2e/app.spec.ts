@@ -1,4 +1,7 @@
-import { BOOKS, card, expect, openSettings, test } from "./shelf";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { BOOKS, card, epub, expect, openSettings, test } from "./shelf";
 
 const broken = (page: import("@playwright/test").Page) => expect(page.getByText("Something went wrong")).toHaveCount(0);
 
@@ -185,3 +188,73 @@ test.describe("a Kindle that connects like a phone", () => {
     await expect(page.getByText("connects like a phone", { exact: false }).last()).toBeVisible();
   });
 });
+
+test.describe("a Calibre library", () => {
+  /** Calibre's way: Author/Title (id)/ with each format, a cover and metadata.opf, which knows better than the files. */
+  function calibreLibrary() {
+    const root = mkdtempSync(join(tmpdir(), "shelf-calibre-"));
+    const dir = join(root, "John Flanagan", "The Ruins of Gorlan (12)");
+    mkdirSync(dir, { recursive: true });
+    const epubFile = join(dir, "The Ruins of Gorlan - John Flanagan.epub");
+    const fb2File = join(dir, "The Ruins of Gorlan - John Flanagan.fb2");
+    // The files themselves say little: a short title, and no author anyone wants.
+    writeFileSync(epubFile, epub({ title: "Gorlan", author: "Unknown" }));
+    writeFileSync(
+      fb2File,
+      `<?xml version="1.0" encoding="UTF-8"?><FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0"><description><title-info><author><first-name>Unknown</first-name></author><book-title>Gorlan (FB2)</book-title><lang>en</lang></title-info></description><body><section><p>The tide came in slowly over the flats.</p></section></body></FictionBook>`,
+    );
+    writeFileSync(
+      join(dir, "metadata.opf"),
+      `<?xml version='1.0' encoding='utf-8'?>
+<package xmlns="http://www.idpf.org/2007/opf" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+<dc:title>The Ruins of Gorlan</dc:title><dc:creator opf:role="aut" opf:file-as="Flanagan, John">John Flanagan</dc:creator>
+<meta name="calibre:series" content="Ranger's Apprentice"/><meta name="calibre:series_index" content="1.0"/></metadata></package>`,
+    );
+    writeFileSync(join(root, "metadata.db"), "");
+    return { root, epubFile, fb2File };
+  }
+
+  const hand = (shelf: { app: import("@playwright/test").ElectronApplication }, paths: string[]) =>
+    shelf.app.evaluate(({ BrowserWindow }, files) => BrowserWindow.getAllWindows()[0].webContents.send("open-files", files), paths);
+
+  test("comes in a book at a time, every format together, with Calibre's details", async ({ shelf }) => {
+    const { page } = shelf;
+    const { root } = calibreLibrary();
+    try {
+      await hand(shelf, [root]);
+      await expect(page.getByText("Added 1 book", { exact: true })).toBeVisible();
+      await expect(page.locator("main [draggable=true]")).toHaveCount(1);
+      await expect(card(page, "The Ruins of Gorlan")).toContainText("John Flanagan");
+      await card(page, "The Ruins of Gorlan").click();
+      const details = page.locator("aside");
+      await expect(details.getByText("EPUB", { exact: true })).toBeVisible();
+      await expect(details.getByText("FB2", { exact: true })).toBeVisible();
+      await expect(details.getByText("Ranger's Apprentice", { exact: false }).first()).toBeVisible();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("brought in again, joins up books that came in as separate copies", async ({ shelf }) => {
+    const { page } = shelf;
+    const { root, epubFile, fb2File } = calibreLibrary();
+    try {
+      // How it went before: each file a book of its own, named from inside it.
+      // A single file handed over opens to read, as from Finder or Explorer.
+      for (const file of [epubFile, fb2File]) {
+        await hand(shelf, [file]);
+        await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("button", { name: "Next page" })).toHaveCount(0);
+      }
+      await expect(page.locator("main [draggable=true]")).toHaveCount(2);
+      await hand(shelf, [root]);
+      await expect(page.getByText("Joined 1 copy to its book")).toBeVisible();
+      await expect(page.locator("main [draggable=true]")).toHaveCount(1);
+      await expect(card(page, "The Ruins of Gorlan")).toContainText("John Flanagan");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+

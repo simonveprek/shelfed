@@ -11,7 +11,7 @@ The first release. A library kept as plain files; a reader for every common form
 The gaps people will hit first.
 
 - **Cable copying to Kindles from 2024 on, on Windows.** These connect over MTP rather than as a drive. Windows has MTP built in (Windows Portable Devices), so Shelfed can copy to them there, and tell which books they already hold, as it does for older Kindles.
-- **Calibre's own data.** Dropping a Calibre library in brings its books today. Next is reading Calibre's `metadata.db` too: tags, series and their order, ratings, and edited titles and authors, so moving across loses nothing.
+- **The rest of Calibre's data.** A Calibre library already comes in with each book's formats, cover, authors, series, tags and rating. Next are its custom columns and read state, from `metadata.db`.
 - **Linux installers.** Shelfed runs on Linux from source, and CI tests it there. An AppImage and a `.deb` are mostly packaging.
 - **Managing what's on a Kindle.** Shelfed shows which of your books are on a plugged-in Kindle. Next is removing them from it, and seeing what's on it that isn't in your library.
 

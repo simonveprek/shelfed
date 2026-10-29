@@ -292,8 +292,11 @@ const api = {
     return new Uint8Array(readFileSync(res.filePaths[0]));
   },
 
-  collect: (paths: string[]) => library.collect(paths),
+  /** The books under these paths, each as its files. */
+  collect: (paths: string[]) => library.collectBooks(paths),
   importFile: (path: string) => library.importFile(path),
+  joinFile: (id: string, path: string) => library.joinFile(id, path),
+  sidecar: (path: string) => library.sidecar(path),
   update: (id: string, patch: Partial<Book>, relocate = false) => library.update(id, patch, relocate),
   setCover: (id: string, cover: Uint8Array, thumb: Uint8Array, tint?: string) => library.setCover(id, cover, thumb, tint),
   addFormat: (id: string, ext: string, data: Uint8Array) => library.addFormat(id, ext, data),

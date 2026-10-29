@@ -204,7 +204,7 @@ Pushing a tag like `v0.2.0` builds every installer into a draft release. If some
 - **Unsigned builds.** You'll see the warnings above until there is a paid certificate.
 - **Kindles from 2024 on** (2024 Paperwhite, Colorsoft, Kindle) take books by email only for now, since they connect over MTP rather than as a drive.
 - **No DRM removal.** Books with DRM, as most bought from Amazon are, won't open.
-- **Calibre libraries import their books**, but not yet Calibre's own tags and shelves.
+- **From Calibre,** each book comes in with its formats, cover, title, authors, series, tags and rating, but not Calibre's custom columns or its read and unread state.
 - **Linux** runs from source, but there's no installer yet.
 
 What's planned for these, and what isn't, is in the [roadmap](ROADMAP.md). Bugs and ideas are welcome in [issues](https://github.com/simonveprek/shelfed/issues); see [CONTRIBUTING.md](CONTRIBUTING.md) before a pull request.

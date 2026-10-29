@@ -1,7 +1,7 @@
 import { shell } from "electron";
 import { createHash, randomBytes } from "node:crypto";
 import { createReadStream, existsSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { copyFile, mkdir, readdir, rename, rm, rmdir, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, rename, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import type { Book, Collection } from "../shared/types";
 import { READABLE } from "../shared/types";
@@ -79,6 +79,15 @@ const LITTER = [".DS_Store", "Thumbs.db", "desktop.ini"];
 
 /** Folders that are never books, or that Windows won't let anyone read. */
 const SKIP = /^(\$RECYCLE\.BIN|System Volume Information|My Music|My Pictures|My Videos)$/i;
+
+/** Which of a book's files to read it from first, when it comes in several. */
+const PREFERRED = ["epub", "azw3", "kf8", "mobi", "azw", "fb2", "fbz", "docx", "pdf", "cbz", "html", "htm", "xhtml", "md", "markdown", "txt", "prc"];
+
+/** A file's format, by its extension, with the long spellings made short. */
+function formatOf(path: string) {
+  const raw = extname(path).slice(1).toLowerCase();
+  return raw === "htm" ? "html" : raw === "markdown" ? "md" : raw;
+}
 
 const baseName = (book: Book) => safeName(`${book.title}${book.authors[0] ? ` - ${book.authors[0]}` : ""}`, LIMIT.file);
 
@@ -195,6 +204,27 @@ export class Library {
     return join(this.bookDir(book), format.file);
   }
 
+  /**
+   * The books under the given paths, folders searched through, each as its
+   * files, the best one to read first. One book's formats travel together: a
+   * folder Calibre keeps for one book (it holds a metadata.opf) is one book,
+   * and so are files sharing a name in one folder, like Emma.epub and Emma.mobi.
+   */
+  async collectBooks(paths: string[]): Promise<string[][]> {
+    const groups = new Map<string, string[]>();
+    for (const file of await this.collect(paths)) {
+      const dir = dirname(file);
+      const calibre = existsSync(join(dir, "metadata.opf"));
+      const key = calibre ? `${dir}\0` : join(dir, basename(file, extname(file)).toLowerCase());
+      groups.set(key, [...(groups.get(key) ?? []), file]);
+    }
+    const rank = (file: string) => {
+      const at = PREFERRED.indexOf(extname(file).slice(1).toLowerCase());
+      return at < 0 ? PREFERRED.length : at;
+    };
+    return [...groups.values()].map((files) => files.sort((a, b) => rank(a) - rank(b)));
+  }
+
   /** Every readable file under the given paths, folders searched through. */
   async collect(paths: string[]): Promise<string[]> {
     const out: string[] = [];
@@ -235,8 +265,7 @@ export class Library {
   }
 
   private async copyIn(src: string, hash: string): Promise<{ book: Book; duplicate: boolean }> {
-    const raw = extname(src).slice(1).toLowerCase();
-    const ext = raw === "htm" ? "html" : raw === "markdown" ? "md" : raw;
+    const ext = formatOf(src);
     const id = newId();
     const title = titleFromFile(src);
     const dir = stored("Incoming", id);
@@ -334,6 +363,34 @@ export class Library {
     book.modified = Date.now();
     this.save();
     return book;
+  }
+
+  /**
+   * Another file of the same book, added as one more of its formats. If that
+   * file came in before as a book of its own, as it did when each format
+   * arrived separately, that book is folded into this one.
+   */
+  async joinFile(id: string, src: string): Promise<{ book: Book; folded?: string }> {
+    const book = this.get(id);
+    const ext = formatOf(src);
+    const hash = await hashFile(src);
+    const twin = [...this.books.values()].find((b) => b.id !== id && b.hash === hash);
+    if (twin) return { book: await this.merge(twin.id, id), folded: twin.id };
+    if (book.formats.some((f) => f.ext === ext)) return { book };
+    return { book: await this.addFormat(id, ext, src) };
+  }
+
+  /**
+   * What Calibre keeps beside a book: its details, as metadata.opf, and its
+   * cover. Only those two files are read, and only next to a book file.
+   */
+  async sidecar(src: string): Promise<{ opf?: string; cover?: Uint8Array }> {
+    if (!READABLE.includes(extname(src).slice(1).toLowerCase())) return {};
+    const dir = dirname(src);
+    const opf = await readFile(join(dir, "metadata.opf"), "utf8").catch(() => undefined);
+    if (!opf) return {};
+    const cover = await readFile(join(dir, "cover.jpg")).catch(() => undefined);
+    return { opf, cover: cover && new Uint8Array(cover) };
   }
 
   async removeFormat(id: string, ext: string) {

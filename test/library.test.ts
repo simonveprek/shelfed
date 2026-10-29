@@ -236,3 +236,86 @@ describe("authors' names", () => {
   });
 });
 
+describe("a book in several formats", () => {
+  /** A Calibre library: Author/Title (id)/ with every format, the cover and metadata.opf. */
+  async function calibre() {
+    const book = join(source, "John Flanagan", "The Ruins of Gorlan (12)");
+    await mkdir(book, { recursive: true });
+    for (const ext of ["mobi", "epub", "azw3"]) await writeFile(join(book, `The Ruins of Gorlan - John Flanagan.${ext}`), `gorlan as ${ext}`);
+    await writeFile(join(book, "metadata.opf"), "<package/>");
+    await writeFile(join(book, "cover.jpg"), "a cover");
+    const other = join(source, "Jane Austen", "Emma (13)");
+    await mkdir(other, { recursive: true });
+    await writeFile(join(other, "Emma - Jane Austen.epub"), "emma");
+    await writeFile(join(other, "metadata.opf"), "<package/>");
+    await writeFile(join(source, "metadata.db"), "calibre's database");
+    return book;
+  }
+
+  it("collects a Calibre book's formats as one book, the EPUB first", async () => {
+    await calibre();
+    const lib = await new Library(root).open();
+    const books = await lib.collectBooks([source]);
+    expect(books).toHaveLength(2);
+    const gorlan = books.find((files) => files.length === 3)!;
+    expect(gorlan.map((file) => basename(file))).toEqual([
+      "The Ruins of Gorlan - John Flanagan.epub",
+      "The Ruins of Gorlan - John Flanagan.azw3",
+      "The Ruins of Gorlan - John Flanagan.mobi",
+    ]);
+  });
+
+  it("collects files sharing a name in one folder as one book, and different names apart", async () => {
+    for (const name of ["Emma.epub", "Emma.MOBI", "Persuasion.epub"]) await writeFile(join(source, name), name);
+    const lib = await new Library(root).open();
+    const books = (await lib.collectBooks([source])).map((files) => files.map((file) => basename(file)));
+    expect(books).toHaveLength(2);
+    expect(books).toContainEqual(["Emma.epub", "Emma.MOBI"]);
+    expect(books).toContainEqual(["Persuasion.epub"]);
+  });
+
+  it("adds the other formats to the book", async () => {
+    await calibre();
+    const lib = await new Library(root).open();
+    const [first, ...others] = (await lib.collectBooks([source])).find((files) => files.length === 3)!;
+    const { book } = await lib.importFile(first);
+    for (const other of others) await lib.joinFile(book.id, other);
+    expect(lib.list()).toHaveLength(1);
+    expect(lib.get(book.id).formats.map((f) => f.ext).sort()).toEqual(["azw3", "epub", "mobi"]);
+    for (const format of lib.get(book.id).formats) expect(existsSync(join(lib.bookDir(lib.get(book.id)), format.file))).toBe(true);
+  });
+
+  it("folds a format that came in before as a book of its own into its book", async () => {
+    await calibre();
+    const lib = await new Library(root).open();
+    const [first, ...others] = (await lib.collectBooks([source])).find((files) => files.length === 3)!;
+    // How it went before: every file a book.
+    for (const file of [first, ...others]) await lib.importFile(file);
+    expect(lib.list()).toHaveLength(3);
+    // Brought in again, the copies join the first.
+    const { book, duplicate } = await lib.importFile(first);
+    expect(duplicate).toBe(true);
+    const folded: string[] = [];
+    for (const other of others) {
+      const result = await lib.joinFile(book.id, other);
+      if (result.folded) folded.push(result.folded);
+    }
+    expect(folded).toHaveLength(2);
+    expect(lib.list()).toHaveLength(1);
+    expect(lib.get(book.id).formats.map((f) => f.ext).sort()).toEqual(["azw3", "epub", "mobi"]);
+    // And again changes nothing.
+    for (const other of others) expect((await lib.joinFile(book.id, other)).folded).toBeUndefined();
+    expect(lib.get(book.id).formats).toHaveLength(3);
+  });
+
+  it("reads Calibre's details and cover beside a book, and nothing else", async () => {
+    const dir = await calibre();
+    const lib = await new Library(root).open();
+    const side = await lib.sidecar(join(dir, "The Ruins of Gorlan - John Flanagan.epub"));
+    expect(side.opf).toBe("<package/>");
+    expect(Buffer.from(side.cover!).toString()).toBe("a cover");
+    expect(await lib.sidecar(join(dir, "metadata.opf"))).toEqual({});
+    expect(await lib.sidecar(join(source, "loose.epub"))).toEqual({});
+  });
+});
+
