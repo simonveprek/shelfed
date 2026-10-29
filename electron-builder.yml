@@ -29,7 +29,7 @@ mac:
   darkModeSupport: true
   icon: build/icon.png
 win:
-  # The release builds x64 and arm64 one at a time, so each installer holds only its own app.
+  # x64 only: Windows on ARM runs it as it is.
   target: nsis
   icon: build/icon.png
 # One click: a small window with Shelfed's icon and a progress bar, then Shelfed

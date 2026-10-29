@@ -9,7 +9,7 @@ type Found = { os: System; arch: Arch } | null;
 
 /**
  * Which installer this visitor wants. A Mac doesn't say whether it's Apple
- * silicon, but its graphics chip does; Windows on ARM says so in its hints.
+ * silicon, but its graphics chip does. Windows has one, which ARM PCs run too.
  */
 function useSystem(): Found {
   const [found, setFound] = useState<Found>(null);
@@ -26,14 +26,12 @@ function useSystem(): Found {
       setFound({ os: "mac", arch });
     } else if (/Windows/i.test(agent)) {
       setFound({ os: "win", arch: "x64" });
-      const hints = (navigator as Navigator & { userAgentData?: { getHighEntropyValues: (k: string[]) => Promise<{ architecture?: string }> } }).userAgentData;
-      hints?.getHighEntropyValues(["architecture"]).then((v) => v.architecture === "arm" && setFound({ os: "win", arch: "arm64" })).catch(() => {});
     }
   }, []);
   return found;
 }
 
-const NAMES = { mac: { arm64: "Apple silicon", x64: "Intel" }, win: { x64: "x64", arm64: "ARM" } };
+const NAMES: Record<System, Partial<Record<Arch, string>>> = { mac: { arm64: "Apple silicon", x64: "Intel" }, win: { x64: "x64" } };
 
 /** The one button the hero needs: this visitor's installer, or the choices below. */
 export function DownloadButton({ center = false }: { center?: boolean }) {
@@ -62,8 +60,7 @@ export function OtherBuilds() {
   const builds: Array<[System, Arch, string]> = [
     ["mac", "arm64", "Mac, Apple silicon"],
     ["mac", "x64", "Mac, Intel"],
-    ["win", "x64", "Windows, x64"],
-    ["win", "arm64", "Windows, ARM"],
+    ["win", "x64", "Windows"],
   ];
   return (
     <p className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[14px] text-muted">

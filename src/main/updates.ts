@@ -39,11 +39,6 @@ export function watchUpdates(send: (state: UpdateState) => void, automatic: () =
   if (installs) {
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
-    // The two Windows builds each have their own list of files.
-    if (process.arch === "arm64") {
-      autoUpdater.channel = "latest-arm64";
-      autoUpdater.allowDowngrade = false;
-    }
     autoUpdater.on("update-available", (info) => set({ state: "downloading", version: info.version, progress: 0 }));
     autoUpdater.on("download-progress", (p) => state.state === "downloading" && set({ ...state, progress: p.percent / 100 }));
     autoUpdater.on("update-downloaded", (info) => set({ state: "ready", version: info.version }));

@@ -34,8 +34,7 @@ ${GROUPS.map(([title, items]) => `### ${title}\n\n${items.map((i) => `- ${i}`).j
 
 - macOS, Apple silicon: ${installer("mac", "arm64")}
 - macOS, Intel: ${installer("mac", "x64")}
-- Windows, x64: ${installer("win", "x64")}
-- Windows, ARM: ${installer("win", "arm64")}
+- Windows (x64, runs on ARM PCs too): ${installer("win", "x64")}
 - Every release: ${RELEASES}
 
 ## Questions

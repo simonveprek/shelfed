@@ -79,7 +79,7 @@ Eight app icons, from plain paper to holographic foil.
 
 ## Install
 
-Download the installer for your system from [the latest release](https://github.com/simonveprek/shelfed/releases/latest): `.dmg` for Apple silicon or Intel Macs, `.exe` for Windows on x64 or ARM.
+Download the installer for your system from [the latest release](https://github.com/simonveprek/shelfed/releases/latest): `.dmg` for Apple silicon or Intel Macs, `.exe` for Windows, which runs on ARM PCs too.
 
 The builds aren't code-signed yet, so the system asks before the first launch:
 

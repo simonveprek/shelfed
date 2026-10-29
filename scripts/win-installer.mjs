@@ -47,7 +47,7 @@ try {
     "--copyright", "Copyright © 2026 Šimon Vepřek",
     "--original-filename", `Shelfed-${version}-win-${arch}.exe`,
   ]);
-  // One installer program for both: on ARM it runs as x64, and the Shelfed it installs is ARM's own.
+  // An x64 program, which Windows on ARM runs too.
   go(["build", "-trimpath", "-ldflags", `-s -w -H windowsgui -X main.version=${version} -X main.size=${size}`, "-o", out, "."], {
     GOOS: "windows",
     GOARCH: "amd64",
