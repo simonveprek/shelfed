@@ -36,6 +36,9 @@ win:
 # opens. Installed for this user only, so Windows doesn't ask for an admin.
 # build/installer.nsh replaces the check for a running Shelfed.
 nsis:
+  # The installer people download is Shelfed's own (tools/installer), which runs
+  # this one inside it. Updates run this one directly, silently.
+  artifactName: ${productName}-${version}-win-${arch}-setup.${ext}
   oneClick: true
   perMachine: false
   runAfterFinish: true

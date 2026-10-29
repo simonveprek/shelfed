@@ -32,15 +32,20 @@ jobs:
       matrix:
         include:
           - { name: macOS, os: macos-latest, args: --mac --arm64 --x64 }
-          - { name: Windows x64, os: windows-latest, args: --win --x64 }
+          - { name: Windows x64, os: windows-latest, arch: x64, args: --win --x64 }
           # Its own update channel, so x64 and arm64 don't overwrite each other's latest.yml.
-          - { name: Windows arm64, os: windows-latest, args: --win --arm64 -c.publish.channel=latest-arm64 }
+          - { name: Windows arm64, os: windows-latest, arch: arm64, args: --win --arm64 -c.publish.channel=latest-arm64 }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: npm
+      - if: runner.os == 'Windows'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: tools/installer/go.mod
+          cache-dependency-path: tools/installer/go.sum
       - run: npm ci
       - run: npm test
       - run: npm run build
@@ -49,3 +54,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Unsigned for now. Add CSC_LINK and CSC_KEY_PASSWORD secrets to sign.
           CSC_IDENTITY_AUTO_DISCOVERY: false
+      # The installer people download on Windows: Shelfed's own window around the
+      # one above, which updates keep using on their own.
+      - if: runner.os == 'Windows'
+        run: node scripts/win-installer.mjs ${{ matrix.arch }}
+      - if: runner.os == 'Windows'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ github.ref_name }}" dist/Shelfed-*-win-${{ matrix.arch }}.exe --clobber

@@ -13,6 +13,9 @@ texts ship inside the app with each package.
 | [leotaku/mobi](https://github.com/leotaku/mobi) | MIT | Writing Kindle AZW3 files |
 | [seapy/kindle-cli](https://github.com/seapy/kindle-cli) | MIT | Turning EPUB into AZW3, in `tools/azw3` |
 | [Go](https://go.dev) and golang.org/x/image, net and text | BSD 3-Clause | The AZW3 converter, built to WebAssembly |
+| [go-webview2](https://github.com/jchv/go-webview2) | MIT | The Windows installer's window, in `tools/installer` |
+| [go-winloader](https://github.com/jchv/go-winloader) | ISC | Loading WebView2 for the Windows installer |
+| golang.org/x/sys | BSD 3-Clause | The Windows installer |
 | [electron-updater](https://github.com/electron-userland/electron-builder) | MIT | Updates |
 | [electron-log](https://github.com/megahertz/electron-log) | MIT | The log file |
 | [Mammoth](https://github.com/mwilliamson/mammoth.js) | BSD 2-Clause | Reading Word files |

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Shelfed</title>
+<style>
+  /* Geist, put inline by the installer so nothing is fetched. */
+  @font-face {
+    font-family: Geist;
+    src: url("geist.woff2") format("woff2");
+    font-weight: 100 900;
+  }
+
+  /* Shelfed's own colours, from its kit. */
+  :root {
+    --background: #f6f5f1;
+    --foreground: #1d1b18;
+    --muted: #77716a;
+    --control: #edebe6;
+    --control-hover: #e6e3dd;
+    --line-strong: rgb(46 36 20 / 0.12);
+    --glow: 0.5;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #111111;
+      --foreground: #ededed;
+      --muted: #8f8f8f;
+      --control: #212121;
+      --control-hover: #282828;
+      --line-strong: rgb(255 255 255 / 0.1);
+      --glow: 0.42;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font: 14px/1.4 Geist, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+    cursor: default;
+  }
+
+  /* The aurora, low and faint, rising behind everything. */
+  .glow {
+    position: fixed;
+    inset: auto -30% -62% -30%;
+    height: 100%;
+    filter: blur(48px);
+    opacity: var(--glow);
+    background:
+      radial-gradient(40% 50% at 30% 50%, rgb(43 75 255 / 0.55), transparent),
+      radial-gradient(40% 50% at 70% 50%, rgb(255 45 85 / 0.45), transparent),
+      radial-gradient(30% 40% at 50% 60%, rgb(162 59 255 / 0.4), transparent);
+    transition: opacity 900ms ease, transform 900ms ease;
+    pointer-events: none;
+  }
+  body[data-state="ready"] .glow { opacity: calc(var(--glow) * 1.6); transform: translateY(-12%); }
+
+  /* The whole window moves by dragging anywhere but a button. */
+  .bar {
+    position: fixed;
+    top: 0; right: 0;
+    display: flex;
+    gap: 2px;
+    padding: 10px;
+    z-index: 2;
+  }
+  .bar button {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    border: 0; border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    transition: background 150ms, color 150ms;
+  }
+  .bar button:hover { background: var(--control); color: var(--foreground); }
+  .bar button.close:hover { background: #e5484d; color: white; }
+
+  main {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 40px 18px;
+  }
+
+  .mark { width: 56px; height: 56px; overflow: visible; }
+  .mark .lean { transform-origin: 23.7px 29px; transform: rotate(-16deg); transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1); }
+  body[data-state="installing"] .mark .lean { animation: rock 2.4s ease-in-out infinite; }
+  @keyframes rock { 0%, 100% { transform: rotate(-16deg); } 50% { transform: rotate(-4deg); } }
+
+  h1 {
+    margin-top: 18px;
+    font-size: 26px;
+    font-weight: 500;
+    letter-spacing: -0.035em;
+  }
+  .line { margin-top: 4px; color: var(--muted); font-size: 14px; }
+
+  /* What's happening: one of these shows at a time. */
+  .now { position: relative; margin-top: 26px; height: 64px; width: 100%; max-width: 280px; }
+  .step {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity 350ms ease, transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  body[data-state="installing"] .step.installing,
+  body[data-state="ready"] .step.ready,
+  body[data-state="open"] .step.open,
+  body[data-state="failed"] .step.failed { opacity: 1; transform: none; pointer-events: auto; }
+
+  .track {
+    width: 100%; height: 4px;
+    border-radius: 99px;
+    background: var(--control);
+    overflow: hidden;
+  }
+  .fill {
+    height: 100%; width: 0%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #2b4bff, #a23bff 40%, #ff2d55 75%, #ffb020);
+    background-size: 280px 100%;
+    transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+  }
+  .fill::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+    animation: shine 1.6s ease-in-out infinite;
+  }
+  @keyframes shine { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+  .status { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .check { display: inline-flex; align-items: center; gap: 8px; color: var(--foreground); font-size: 14px; font-weight: 500; }
+  .check svg { width: 18px; height: 18px; }
+
+  .button {
+    height: 34px; padding: 0 16px;
+    border: 0; border-radius: 99px;
+    background: var(--foreground); color: var(--background);
+    font: inherit; font-size: 13.5px; font-weight: 500;
+    transition: transform 150ms;
+  }
+  .button:hover { transform: translateY(-1px); }
+  .button:active { transform: none; }
+
+  footer {
+    position: fixed; bottom: 14px; left: 0; right: 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11.5px;
+    opacity: 0.8;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body data-state="installing">
+  <div class="glow"></div>
+
+  <div class="bar">
+    <button title="Minimise" aria-label="Minimise" onclick="call('minimise')">
+      <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>
+    </button>
+    <button class="close" title="Close" aria-label="Close" onclick="call('quit')">
+      <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>
+    </button>
+  </div>
+
+  <main>
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+      <defs>
+        <linearGradient id="aurora" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#2b4bff" />
+          <stop offset="0.33" stop-color="#a23bff" />
+          <stop offset="0.67" stop-color="#ff2d55" />
+          <stop offset="1" stop-color="#ffb020" />
+        </linearGradient>
+      </defs>
+      <rect x="2.5" y="3" width="7" height="26" rx="3" fill="currentColor" />
+      <rect x="11.5" y="8" width="7" height="21" rx="3" fill="currentColor" />
+      <rect class="lean" x="23.7" y="10" width="7" height="19" rx="3" fill="url(#aurora)" />
+    </svg>
+    <h1>Shelfed</h1>
+    <p class="line">A quiet home for your books.</p>
+
+    <div class="now">
+      <div class="step installing">
+        <div class="track"><div class="fill" id="fill"></div></div>
+        <p class="status" id="status">Getting ready</p>
+      </div>
+      <div class="step ready">
+        <p class="check">
+          <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="url(#aurora)" /><path d="M5.5 9.2l2.3 2.3 4.7-5" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          Ready. Opening Shelfed
+        </p>
+      </div>
+      <div class="step open">
+        <p class="status">Shelfed is open. Close it, then try again.</p>
+        <button class="button" onclick="call('retry')">Try again</button>
+      </div>
+      <div class="step failed">
+        <p class="status" id="problem">Shelfed couldn't be installed.</p>
+        <button class="button" onclick="call('retry')">Try again</button>
+      </div>
+    </div>
+  </main>
+
+  <footer id="footer">Version 0.1.0 · Installs for you, no admin needed</footer>
+
+  <script>
+    // The buttons tell the installer, which calls setState and setProgress back.
+    const call = (name) => window.chrome?.webview?.postMessage(name);
+
+    function setState(state, detail) {
+      document.body.dataset.state = state;
+      if (state === "failed" && detail) document.getElementById("problem").textContent = detail;
+    }
+
+    const STEPS = [[0.02, "Unpacking"], [0.35, "Putting up the shelves"], [0.75, "Dusting the spines"]];
+    function setProgress(share) {
+      const p = Math.max(0, Math.min(1, share));
+      document.getElementById("fill").style.width = `${Math.round(p * 100)}%`;
+      const step = STEPS.filter(([at]) => p >= at).pop();
+      document.getElementById("status").textContent = step ? `${step[1]} · ${Math.round(p * 100)}%` : "Getting ready";
+    }
+
+    function setVersion(version) {
+      document.getElementById("footer").textContent = `Version ${version} · Installs for you, no admin needed`;
+    }
+
+    // Dragging anywhere that isn't a button moves the window.
+    document.addEventListener("mousedown", (event) => {
+      if (event.button === 0 && !event.target.closest("button")) call("drag");
+    });
+    document.addEventListener("contextmenu", (event) => event.preventDefault());
+
+    if (window.SHELFED_VERSION) setVersion(window.SHELFED_VERSION);
+
+    // Opened in a browser to look at it: ?state=installing&p=0.4
+    const query = new URLSearchParams(location.search);
+    if (query.has("state")) {
+      setState(query.get("state"));
+      setProgress(parseFloat(query.get("p") ?? "0.4"));
+    }
+  </script>
+</body>
+</html>

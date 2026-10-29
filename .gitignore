@@ -5,3 +5,5 @@ dist
 test-results
 playwright-report
 screens
+tools/installer/payload/setup.exe
+tools/installer/*.syso

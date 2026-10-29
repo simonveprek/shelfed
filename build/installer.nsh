@@ -22,7 +22,9 @@
       ; After an update, Shelfed is still closing itself, so it gets a few seconds first.
       IntOp $R1 $R1 + 1
       ${If} $R1 >= 20
-        MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "${PRODUCT_NAME} is open. Close it, then choose Retry." /SD IDCANCEL IDRETRY +2
+        MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "${PRODUCT_NAME} is open. Close it, then choose Retry." /SD IDCANCEL IDRETRY +3
+        ; Run silently, by Shelfed's own installer, it says why it stopped.
+        SetErrorLevel 2
         Quit
         StrCpy $R1 0
       ${Else}

@@ -195,6 +195,7 @@ Pushing a tag like `v0.2.0` builds every installer into a draft release. If some
 | `src/renderer/src/lib` | State, importing, format readers and writers, sending, suggestions |
 | `src/shared` | Types, and the list of every Kindle model |
 | `tools/azw3` | The EPUB to AZW3 converter, in Go |
+| `tools/installer` | The Windows installer's window, in Go and WebView2, around electron-builder's installer |
 | `test`, `e2e` | Unit tests and app tests |
 | `site` | The website, in Next.js, exported to static files |
 | `scripts` | Recording the demos, the app icon and the posters |
