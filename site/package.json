@@ -1,7 +1,7 @@
 {
   "name": "shelf-site",
   "private": true,
-  "description": "Shelf's website, built to plain files for Netlify or GitHub Pages",
+  "description": "Shelfed's website, built to plain files for Netlify or GitHub Pages",
   "scripts": {
     "dev": "next dev -p 4173",
     "build": "next build",

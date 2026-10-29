@@ -55,13 +55,13 @@ export type Shelf = {
   page: Page;
   /** Errors the page threw or logged. Each test fails if there are any. */
   errors: string[];
-  /** Adds books the way the system hands Shelf files, as from Finder or Explorer. */
+  /** Adds books the way the system hands Shelfed files, as from Finder or Explorer. */
   add(books?: Fake[]): Promise<void>;
   /** Quits and starts again on the same library. */
   restart(): Promise<void>;
 };
 
-/** Each test gets its own Shelf, on its own empty library, never yours. */
+/** Each test gets its own Shelfed, on its own empty library, never yours. */
 export const test = base.extend<{ shelf: Shelf }>({
   shelf: async ({}, use) => {
     const dir = mkdtempSync(join(tmpdir(), "shelf-e2e-"));

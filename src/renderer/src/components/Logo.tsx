@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { AURORA } from "@/components/ui";
 
 /**
- * Shelf's mark, drawn the Fragms way on its 32 grid. Two plain spines and
+ * Shelfed's mark, drawn the Fragms way on its 32 grid. Two plain spines and
  * one alive, the book you are reading, leaning on the others in the aurora.
  * The spines stand up on arrival, then the last one tips over and glows.
  */
@@ -67,7 +67,7 @@ export function Mark({ size = 26, animate = true, className = "" }: { size?: num
 }
 
 /** The mark with its name, set the way Fragms sets its own. */
-export function Logo({ name = "shelf", animate = true, collapsed = false }: { name?: string; animate?: boolean; collapsed?: boolean }) {
+export function Logo({ name = "shelfed", animate = true, collapsed = false }: { name?: string; animate?: boolean; collapsed?: boolean }) {
   return (
     <span className="flex items-center gap-2.5">
       <Mark size={24} animate={animate} className="shrink-0" />

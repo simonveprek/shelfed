@@ -1,4 +1,4 @@
-# Contributing to Shelf
+# Contributing to Shelfed
 
 Thank you for helping. A few things to know first.
 
@@ -13,11 +13,11 @@ Before a pull request, run `npm run check`. It typechecks and runs the tests.
 
 ## The Fragms Personal kit is not open source
 
-Shelf's own code is MIT. The UI kit it's built on is not:
+Shelfed's own code is MIT. The UI kit it's built on is not:
 `src/renderer/src/components/ui/`, `components/bits.tsx`,
 `components/character.tsx` and `src/renderer/src/kit.css` are under
 [LICENSE-FRAGMS-PERSONAL.md](LICENSE-FRAGMS-PERSONAL.md). You may change them
-for Shelf, but not copy them into other projects. Contributions to those files
+for Shelfed, but not copy them into other projects. Contributions to those files
 are licensed to the author under the same terms.
 
 ## Style
@@ -29,6 +29,6 @@ are licensed to the author under the same terms.
 
 ## Your Kindle
 
-If Shelf doesn't recognise your Kindle, open an issue with its model and the
+If Shelfed doesn't recognise your Kindle, open an issue with its model and the
 first six characters of its serial number (Settings, Device Options, Device
 Info on the Kindle). Never post the whole serial.

@@ -66,13 +66,13 @@ function announce(update: UpdateState) {
   useStore.setState({ update });
   if (before.state === update.state) return;
   if (update.state === "ready")
-    toast(`Shelf ${update.version} is ready`, {
-      description: "It goes in when Shelf next starts.",
+    toast(`Shelfed ${update.version} is ready`, {
+      description: "It goes in when Shelfed next starts.",
       duration: 15_000,
       action: { label: "Restart now", onClick: () => api.installUpdate() },
     });
   if (update.state === "available")
-    toast(`Shelf ${update.version} is out`, {
+    toast(`Shelfed ${update.version} is out`, {
       description: "Download it from GitHub.",
       duration: 15_000,
       action: { label: "Download", onClick: () => api.installUpdate() },
@@ -86,7 +86,7 @@ class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
     return { error };
   }
   componentDidCatch(error: Error) {
-    console.error("Shelf hit an error:", error);
+    console.error("Shelfed hit an error:", error);
   }
   render() {
     const { error } = this.state;
@@ -94,7 +94,7 @@ class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <p className="text-heading">Something went wrong</p>
-        <p className="mt-2 max-w-[440px] text-label text-muted">Your books are safe. Shelf hit an error drawing this screen.</p>
+        <p className="mt-2 max-w-[440px] text-label text-muted">Your books are safe. Shelfed hit an error drawing this screen.</p>
         <pre className="selectable mt-4 max-w-[560px] rounded-[10px] bg-well px-3 py-2 text-left text-caption whitespace-pre-wrap text-muted">{error.message}</pre>
         <div className="mt-5 flex gap-2">
           <Button variant="primary" onClick={() => this.setState({ error: null })}>Try again</Button>
@@ -102,7 +102,7 @@ class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
           <Button
             onClick={() => {
               const { version, platform } = useStore.getState();
-              navigator.clipboard.writeText(`Shelf ${version} on ${platform}\n\n${error.stack ?? error.message}`);
+              navigator.clipboard.writeText(`Shelfed ${version} on ${platform}\n\n${error.stack ?? error.message}`);
               toast.success("Copied, ready to paste into a bug report");
             }}
           >
@@ -159,7 +159,7 @@ export function App() {
     const offs = [
       on("command", runCommand),
       on("open-files", (paths: string[]) => importPaths(paths, paths.length === 1)),
-      on("save-failed", () => toast.error("Shelf could not save your library", { description: "Your changes are kept and it will try again. Check the disk has room." })),
+      on("save-failed", () => toast.error("Shelfed could not save your library", { description: "Your changes are kept and it will try again. Check the disk has room." })),
       on("update", announce),
     ];
     api.updateState().then((update) => useStore.setState({ update }));

@@ -46,7 +46,7 @@ export async function sendToKindle(settings: KindleSettings, file: string, name:
     from: settings.from,
     to: settings.to.trim(),
     subject: title,
-    text: `${title}, sent from Shelf.`,
+    text: `${title}, sent from Shelfed.`,
     attachments: [{ filename: name, path: file }],
   });
 }
@@ -157,7 +157,7 @@ export async function findDevices(): Promise<KindleDevice[]> {
 }
 
 /**
- * The Kindles plugged in, with their model when Shelf knows it. Newer Kindles
+ * The Kindles plugged in, with their model when Shelfed knows it. Newer Kindles
  * don't show up as a drive, but they are still on the bus.
  */
 export async function kindlesOnUsb(): Promise<KindleOnUsb[]> {

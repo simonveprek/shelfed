@@ -33,11 +33,10 @@ jobs:
           cache: npm
           cache-dependency-path: site/package-lock.json
       - run: npm ci --prefix site
-      # A project site lives under /shelf on GitHub Pages.
+      # Served at its own address, so no base path.
       - run: npm run build --prefix site
         env:
-          SITE_BASE: /shelf
-          SITE_URL: https://simonveprek.github.io
+          SITE_URL: https://shelfed.simonveprek.cz
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

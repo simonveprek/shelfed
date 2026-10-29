@@ -81,8 +81,8 @@ ${cover ? `<coverpage><image l:href="#${cover}"/></coverpage>` : ""}
 <lang>${esc(lang)}</lang>
 </title-info>
 <document-info>
-<author><nickname>Shelf</nickname></author>
-<program-used>Shelf</program-used>
+<author><nickname>Shelfed</nickname></author>
+<program-used>Shelfed</program-used>
 <date value="${new Date().toISOString().slice(0, 10)}">${new Date().toISOString().slice(0, 10)}</date>
 <id>${crypto.randomUUID()}</id>
 <version>1.0</version>

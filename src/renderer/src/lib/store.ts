@@ -47,7 +47,7 @@ type State = {
   jobs: Job[];
   mood: PointMood | null;
   dragging: boolean;
-  /** Books being dragged around inside Shelf. */
+  /** Books being dragged around inside Shelfed. */
   carrying: string[] | null;
   /** What the Kindle is busy with, so its 3D model can show it. */
   kindleActivity: KindleActivity | null;
@@ -57,7 +57,7 @@ type State = {
   kindleArrived: number | null;
   /** The welcome is showing. */
   onboarding: boolean;
-  /** Where finding a new version of Shelf has got to. */
+  /** Where finding a new version of Shelfed has got to. */
   update: UpdateState;
 };
 

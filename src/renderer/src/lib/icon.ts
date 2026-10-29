@@ -16,7 +16,7 @@ async function draw(id: string) {
   return canvas.toDataURL("image/png");
 }
 
-/** Makes an icon Shelf's, now and from the next start. */
+/** Makes an icon Shelfed's, now and from the next start. */
 export async function chooseIcon(id: string) {
   if (!APP_ICONS.some((icon) => icon.id === id)) return;
   setSetting({ icon: id });

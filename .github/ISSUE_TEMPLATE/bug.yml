@@ -1,18 +1,18 @@
 name: Something's wrong
-description: Shelf did something it shouldn't, or didn't do something it should.
+description: Shelfed did something it shouldn't, or didn't do something it should.
 labels: [bug]
 body:
   - type: textarea
     id: what
     attributes:
       label: What happened
-      description: What you did, what you expected, and what Shelf did instead.
+      description: What you did, what you expected, and what Shelfed did instead.
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: Shelf version
+      label: Shelfed version
       placeholder: "0.1.0"
   - type: dropdown
     id: system

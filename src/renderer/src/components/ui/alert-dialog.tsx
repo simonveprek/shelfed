@@ -1,5 +1,5 @@
 "use client";
-// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelfed. See LICENSE-FRAGMS-PERSONAL.md.
 
 import { useRef, useState, type ReactNode } from "react";
 import { Loading03Icon } from "@hugeicons/core-free-icons";

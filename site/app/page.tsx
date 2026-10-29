@@ -46,7 +46,7 @@ function Nav() {
       <nav className="mx-auto flex h-16 max-w-[1240px] items-center justify-between px-5 sm:px-8">
         <a href="#" className="flex items-center gap-2.5 text-[17px] font-medium tracking-[-0.03em]">
           <Mark size={22} />
-          shelf
+          shelfed
         </a>
         <div className="flex items-center gap-1.5 rounded-full border border-border bg-background/70 p-1 backdrop-blur-xl">
           <a href={REPO} aria-label="Source on GitHub" className="grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-control hover:text-foreground">
@@ -65,7 +65,7 @@ function Nav() {
 function Why() {
   const reasons = [
     { icon: SourceCodeIcon, title: "Free and open source.", text: "No account, no subscription, no paid version." },
-    { icon: SquareLock02Icon, title: "Your books stay yours.", text: "Plain files on your computer. Nothing is tracked, and Shelf only goes online when you ask." },
+    { icon: SquareLock02Icon, title: "Your books stay yours.", text: "Plain files on your computer. Nothing is tracked, and Shelfed only goes online when you ask." },
     { icon: PackageIcon, title: "Nothing else to install.", text: "Reading, converting and sending to your Kindle are all built in." },
   ];
   return (
@@ -109,7 +109,7 @@ function Get() {
   );
 }
 
-/** Everything Shelf does, grouped, for the visitor who reads to the end before trying. */
+/** Everything Shelfed does, grouped, for the visitor who reads to the end before trying. */
 function Everything() {
   const groups: Array<[typeof LibraryIcon, string, string[]]> = [
     [
@@ -153,7 +153,7 @@ function Everything() {
       "Converting",
       [
         "EPUB, AZW3, PDF, Word, FB2, text or a web page",
-        "From any format Shelf can open",
+        "From any format Shelfed can open",
         "PDF pages in A4, A5, Letter or Kindle size",
         "All built in, with nothing else to install",
         "The new file sits beside the old one",
@@ -240,16 +240,16 @@ function Formats() {
 /** The honest answers, all open, before anyone has to ask. */
 function Questions() {
   const questions: Array<[string, string]> = [
-    ["Is it really free?", "Yes. Shelf is open source under the MIT licence, with no paid version, no account and nothing to subscribe to."],
+    ["Is it really free?", "Yes. Shelfed is open source under the MIT licence, with no paid version, no account and nothing to subscribe to."],
     [
       "Which Kindles does it work with?",
-      "Every Kindle, by email. By cable, the ones that show up as a drive when plugged in, which is most made before 2024. Newer ones, like the 2024 Paperwhite and the Colorsoft, connect the way phones do, so Shelf sends to them by email for now.",
+      "Every Kindle, by email. By cable, the ones that show up as a drive when plugged in, which is most made before 2024. Newer ones, like the 2024 Paperwhite and the Colorsoft, connect the way phones do, so Shelfed sends to them by email for now.",
     ],
-    ["Can it open books I bought on Amazon?", "Not if they have DRM, as most do, and Shelf doesn't remove it. Books without DRM, from anywhere, open fine."],
-    ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelf and every book comes in, with the details stored inside each file. Calibre's own tags and shelves don't come across yet."],
+    ["Can it open books I bought on Amazon?", "Not if they have DRM, as most do, and Shelfed doesn't remove it. Books without DRM, from anywhere, open fine."],
+    ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelfed and every book comes in, with the details stored inside each file. Calibre's own tags and shelves don't come across yet."],
     ["Where are my books kept?", "In a Shelf Library folder in your Documents, a folder for each author, as ordinary files. Move it anywhere from Settings."],
     ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
-    ["Why does my computer warn me the first time?", "Shelf isn't signed with a paid certificate yet. On a Mac, right-click it in Applications and choose Open. On Windows, choose More info, then Run anyway."],
+    ["Why does my computer warn me the first time?", "Shelfed isn't signed with a paid certificate yet. On a Mac, right-click it in Applications and choose Open. On Windows, choose More info, then Run anyway."],
     ["What does it run on?", "macOS on Apple silicon or Intel, and Windows 10 or 11 on x64 or ARM. On Linux it runs built from the source."],
   ];
   return (

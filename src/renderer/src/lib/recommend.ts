@@ -5,7 +5,7 @@ import { norm } from "./util";
  * What to read next, worked out on this computer. Two parts: a hand-made
  * map of classics that belong together, each pairing with its reason, and a
  * score for the books already in the library by shared subjects, author and
- * series. Nothing about your reading leaves Shelf.
+ * series. Nothing about your reading leaves Shelfed.
  */
 
 type Classic = { title: string; author: string };

@@ -2,7 +2,7 @@ import { net } from "electron";
 import type { MetadataCandidate } from "../shared/types";
 
 const get = async (url: string) => {
-  const res = await net.fetch(url, { headers: { "User-Agent": "Shelf/1.0 (book library app)" } });
+  const res = await net.fetch(url, { headers: { "User-Agent": "Shelfed/1.0 (book library app)" } });
   if (!res.ok) throw new Error(`${new URL(url).host} answered ${res.status}`);
   return res.json();
 };

@@ -96,7 +96,7 @@ test("settings opens every section", async ({ shelf }) => {
     ["Kindle", "Kindle"],
     ["Sending", "Sending by email"],
     ["Converting", "Converting"],
-    ["About Shelf", "Shelf"],
+    ["About Shelfed", "Shelfed"],
   ];
   for (const [section, heading] of sections) {
     await dialog.getByRole("button", { name: section, exact: true }).click();

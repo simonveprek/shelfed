@@ -21,7 +21,7 @@ export async function fetchFile(book: Book, ext: string) {
   return new File([await res.blob()], format?.file ?? `book.${ext}`);
 }
 
-// Dates in words, the way the rest of Shelf is written: 17 Jan 2021.
+// Dates in words, the way the rest of Shelfed is written: 17 Jan 2021.
 const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const MONTH = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
 export const date = (t?: number) => (t ? DATE.format(t) : "");

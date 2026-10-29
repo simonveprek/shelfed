@@ -30,13 +30,16 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 // A separate profile for development and tests, so they never touch a real library.
+// Otherwise the folder Shelfed kept its settings in when it was called Shelf, so
+// nobody's library, Kindle or icon goes missing with the new name.
 if (process.env.SHELF_USERDATA) app.setPath("userData", process.env.SHELF_USERDATA);
+else app.setPath("userData", join(app.getPath("appData"), "Shelf"));
 
-// A log of what went wrong, for bug reports. Settings, About Shelf, Show the log.
+// A log of what went wrong, for bug reports. Settings, About Shelfed, Show the log.
 log.transports.file.level = "info";
 log.transports.console.level = false;
 log.errorHandler.startCatching({ showDialog: false });
-log.info(`Shelf ${app.getVersion()} on ${process.platform} ${process.arch}`);
+log.info(`Shelfed ${app.getVersion()} on ${process.platform} ${process.arch}`);
 
 // A second copy hands its files to the first and leaves at once. quit() would
 // let it carry on starting up, opening the same library alongside.
@@ -81,7 +84,7 @@ function createWindow() {
     minWidth: 780,
     minHeight: 540,
     show: false,
-    title: "Shelf",
+    title: "Shelfed",
     backgroundColor: dark ? PAPER.dark : PAPER.light,
     ...(isMac
       ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 20, y: 22 } }
@@ -116,7 +119,7 @@ function createWindow() {
     if (/^https:\/\//.test(url)) shell.openExternal(url);
     return { action: "deny" };
   });
-  // Only Shelf itself loads in the window. Any other file, dropped where nothing
+  // Only Shelfed itself loads in the window. Any other file, dropped where nothing
   // takes it, would replace the whole app.
   const home = process.env.ELECTRON_RENDERER_URL ?? pathToFileURL(join(here, "../renderer/index.html")).href;
   win.webContents.on("will-navigate", (event, url) => {
@@ -203,8 +206,8 @@ function demoKindle() {
 const iconFile = () => join(app.getPath("userData"), "app-icon.png");
 
 /**
- * Puts the chosen icon in the Dock or on the taskbar. It holds while Shelf
- * runs; closed, the system shows the icon Shelf was installed with.
+ * Puts the chosen icon in the Dock or on the taskbar. It holds while Shelfed
+ * runs; closed, the system shows the icon Shelfed was installed with.
  */
 function showIcon() {
   if (!existsSync(iconFile())) return;
@@ -441,9 +444,9 @@ function buildMenu() {
   const template: MenuItemConstructorOptions[] = [
     ...(isMac
       ? [{
-          label: "Shelf",
+          label: "Shelfed",
           submenu: [
-            { label: "About Shelf", role: "about" as const },
+            { label: "About Shelfed", role: "about" as const },
             { type: "separator" as const },
             { label: "Settings…", accelerator: "Cmd+,", click: cmd("settings") },
             { type: "separator" as const },
@@ -555,7 +558,7 @@ app.whenReady().then(async () => {
   if (!primary) return;
   session.defaultSession.setPermissionRequestHandler((_wc, _permission, done) => done(false));
   queued.push(...process.argv.slice(1).filter(isBook));
-  // While developing, the dock shows Shelf's icon instead of Electron's.
+  // While developing, the dock shows Shelfed's icon instead of Electron's.
   if (isMac && !app.isPackaged) app.dock?.setIcon(join(here, "../../build/icon.png"));
   library = await new Library(getSettings().libraryPath).open();
   library.onSaveError = () => send("save-failed");

@@ -108,7 +108,7 @@ export function ClippingsDialog({ text, from }: { text: string; from: string }) 
                   </Row>
                 ))}
             </List>
-            <p className="mt-2 px-1 text-caption text-muted">Add these books to Shelf and import again to keep their highlights too.</p>
+            <p className="mt-2 px-1 text-caption text-muted">Add these books to Shelfed and import again to keep their highlights too.</p>
           </div>
         )}
       </div>

@@ -45,7 +45,7 @@ export function DownloadButton({ center = false }: { center?: boolean }) {
         className="inline-flex h-12 items-center gap-2.5 rounded-full bg-foreground px-6 text-[15px] font-medium text-background transition-transform duration-200 ease-smooth hover:-translate-y-0.5 active:translate-y-0"
       >
         <HugeiconsIcon icon={found?.os === "win" ? WindowsNewIcon : found?.os === "mac" ? AppleIcon : Download04Icon} size={18} />
-        {found ? `Download for ${found.os === "mac" ? "Mac" : "Windows"}` : "Download Shelf"}
+        {found ? `Download for ${found.os === "mac" ? "Mac" : "Windows"}` : "Download Shelfed"}
       </a>
       <p className={`text-[13px] text-muted ${center ? "" : "pl-1"}`}>
         {found ? `${NAMES[found.os][found.arch]}, version ${VERSION}. ` : `Version ${VERSION}, for Mac and Windows. `}

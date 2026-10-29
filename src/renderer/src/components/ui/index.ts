@@ -1,4 +1,4 @@
-// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelfed. See LICENSE-FRAGMS-PERSONAL.md.
 /**
  * Fragms UI. Every piece the starter and the Fragms Personal docs are built
  * from, on one set of tokens in app/globals.css. Surfaces go card, well,

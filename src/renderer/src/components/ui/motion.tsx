@@ -1,5 +1,5 @@
 "use client";
-// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelfed. See LICENSE-FRAGMS-PERSONAL.md.
 
 import { Fragment, ViewTransition, useEffect, useState, type ElementType, type ReactNode } from "react";
 import { motion, type Variants } from "framer-motion";

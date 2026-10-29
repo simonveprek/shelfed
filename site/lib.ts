@@ -11,4 +11,4 @@ export type System = "mac" | "win";
 export type Arch = "arm64" | "x64";
 
 /** The installer for a system, named the way the release builds them. */
-export const installer = (os: System, arch: Arch) => `${RELEASES}/download/Shelf-${VERSION}-${os}-${arch}.${os === "mac" ? "dmg" : "exe"}`;
+export const installer = (os: System, arch: Arch) => `${RELEASES}/download/Shelfed-${VERSION}-${os}-${arch}.${os === "mac" ? "dmg" : "exe"}`;

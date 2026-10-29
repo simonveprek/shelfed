@@ -75,7 +75,7 @@ body {
   background: color-mix(in oklab, var(--accent) 28%, transparent);
 }
 
-/* The aurora, Shelf's one colour, on the leaning spine and a few accents. */
+/* The aurora, Shelfed's one colour, on the leaning spine and a few accents. */
 .aurora-text {
   background: linear-gradient(100deg, #2b4bff, #a23bff 35%, #ff2d55 70%, #ffb020);
   -webkit-background-clip: text;

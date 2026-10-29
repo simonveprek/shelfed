@@ -1,5 +1,5 @@
 appId: cz.simonveprek.shelf
-productName: Shelf
+productName: Shelfed
 copyright: Copyright © 2026 Šimon Vepřek
 directories:
   output: dist
@@ -38,7 +38,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: Shelf
+  shortcutName: Shelfed
   license: LICENSE
 publish:
   provider: github

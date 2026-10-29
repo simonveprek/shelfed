@@ -8,15 +8,15 @@ const { autoUpdater } = updater;
 
 const REPO = "simonveprek/shelf";
 const RELEASES = `https://github.com/${REPO}/releases/latest`;
-/** How often to look again while Shelf stays open. */
+/** How often to look again while Shelfed stays open. */
 const EVERY = 6 * 60 * 60 * 1000;
 
 /**
  * New versions, from the GitHub releases.
  *
  * On Windows they download quietly and go in on the next restart. A Mac app
- * can only replace itself when it's signed, and Shelf isn't yet, so on macOS
- * and Linux Shelf only says a new version is out and links to it.
+ * can only replace itself when it's signed, and Shelfed isn't yet, so on macOS
+ * and Linux Shelfed only says a new version is out and links to it.
  */
 const installs = app.isPackaged && process.platform === "win32";
 
@@ -80,7 +80,7 @@ export function installUpdate() {
 
 async function checkGitHub() {
   const res = await net.fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
-    headers: { Accept: "application/vnd.github+json", "User-Agent": `Shelf/${app.getVersion()}` },
+    headers: { Accept: "application/vnd.github+json", "User-Agent": `Shelfed/${app.getVersion()}` },
   });
   // No releases yet, or the repository is private: nothing newer to tell of.
   if (res.status === 404) return set({ state: "none" });

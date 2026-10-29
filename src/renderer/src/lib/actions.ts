@@ -60,7 +60,7 @@ export async function importPaths(paths: string[], open = false) {
   if (!paths.length) return;
   const files = await api.collect(paths);
   if (!files.length) {
-    toast.error("No books there that Shelf can read");
+    toast.error("No books there that Shelfed can read");
     return;
   }
   const job = startJob(files.length === 1 ? "Adding a book" : `Adding ${files.length.toLocaleString()} books`);
@@ -137,7 +137,7 @@ export function sourceFor(book: Book, to: string) {
   return SOURCE_ORDER.find((ext) => ext !== to && book.formats.some((f) => f.ext === ext)) ?? book.formats[0]?.ext;
 }
 
-/** Every format Shelf can make, and whether it can make it from this book. */
+/** Every format Shelfed can make, and whether it can make it from this book. */
 export function targetsFor(book: Book): Target[] {
   return TARGETS.map((ext) => {
     const from = sourceFor(book, ext);
@@ -149,7 +149,7 @@ export function targetsFor(book: Book): Target[] {
 export async function convert(id: string, to: string, outer?: JobHandle): Promise<Book> {
   let book = bookById(id)!;
   const from = sourceFor(book, to);
-  if (!targetsFor(book).find((t) => t.ext === to)?.possible) throw new Error(`Shelf can't read this book's files to make ${to.toUpperCase()} from them.`);
+  if (!targetsFor(book).find((t) => t.ext === to)?.possible) throw new Error(`Shelfed can't read this book's files to make ${to.toUpperCase()} from them.`);
   const job = outer ?? startJob(`${book.title} to ${to.toUpperCase()}`);
   set({ mood: "thinking" });
   try {
@@ -291,7 +291,7 @@ export async function sendByCable(ids: string[], device: string) {
     kindle.progress(i / books.length);
     try {
       const plan = usbPlan(book);
-      if (!plan) throw new Error("Shelf can't read this book's files to make a Kindle file from them");
+      if (!plan) throw new Error("Shelfed can't read this book's files to make a Kindle file from them");
       if (plan.convert) {
         const inner = { ...job, update: (p: { detail?: string }) => p.detail && job.update({ detail: p.detail }) } as JobHandle;
         book = await convert(book.id, plan.ext, inner);

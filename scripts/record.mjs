@@ -8,7 +8,7 @@
 // title, separated by |, so only books free to show end up in public. Needs ffmpeg.
 import { _electron as electron } from "@playwright/test";
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -48,7 +48,7 @@ const place = JSON.parse(readFileSync(join(frame, "place.json"), "utf8"));
 /* ------------------------------------------------------------------------ */
 
 /**
- * Starts Shelf on the library in its own profile, dark, films it while the
+ * Starts Shelfed on the library in its own profile, dark, films it while the
  * scene plays, then frames it into an MP4, a GIF and a poster.
  */
 async function scene(name, play, { settings = {}, kindle = false } = {}) {
@@ -160,6 +160,13 @@ function render(name, film) {
     "-filter_complex", "fps=18,scale=900:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff:max_colors=220[p];[b][p]paletteuse=dither=sierra2_4a:diff_mode=rectangle",
     join(OUT.docs, `${name}.gif`),
   ]);
+  // Big ones, like the Kindle's glowing welcome, get fewer frames and colours, so GitHub shows them.
+  if (statSync(join(OUT.docs, `${name}.gif`)).size > 5_000_000)
+    execFileSync("ffmpeg", [
+      "-y", "-loglevel", "error", "-i", framed,
+      "-filter_complex", "fps=12,scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff:max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle",
+      join(OUT.docs, `${name}.gif`),
+    ]);
   console.log(`Recorded ${name}, ${length} s`);
 }
 

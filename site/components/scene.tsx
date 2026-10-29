@@ -11,7 +11,7 @@ type Chapter = { clip: string; label: string; title: ReactNode; line?: string; f
 const CHAPTERS: Chapter[] = [
   {
     clip: "views",
-    label: "Shelf showing a library as covers, a list, shelves and a 3D bookcase",
+    label: "Shelfed showing a library as covers, a list, shelves and a 3D bookcase",
     title: (
       <>
         A quiet home for your <span className="font-serif font-normal italic tracking-[-0.02em]">books</span>.
@@ -22,7 +22,7 @@ const CHAPTERS: Chapter[] = [
   { clip: "reader", label: "Turning the pages of Pride and Prejudice", title: "Opens where you stopped.", line: "One calm reader for every format, with highlights and notes.", facts: ["Light, sepia, dark or black", "Bookmarks and search", "PDFs and comics too"] },
   { clip: "kindle-plug", label: "A Kindle plugged in, the window's edges lighting up", title: "It knows your Kindle by name.", line: "From a Kindle 2 to a Colorsoft, in 3D, in its own colour.", facts: ["Each model since the Kindle 2", "Read from its serial number", "Its highlights come back"] },
   { clip: "kindle-drop", label: "A book dropped onto the Kindle and copied across", title: "Drop a book on it. It's there.", line: "Copied by cable, or sent by email to any Kindle, anywhere.", facts: ["Kindle file made for you", "From your own mail account", "Gmail, Outlook and iCloud ready"] },
-  { clip: "icons", label: "Settings switching between Shelf's app icons", title: "And make it yours.", line: "Light or dark, and eight app icons to choose from.", facts: ["A colour for every spine", "Ribbons in the books you're reading", "Paper, oak, walnut or slate"] },
+  { clip: "icons", label: "Settings switching between Shelfed's app icons", title: "And make it yours.", line: "Light or dark, and eight app icons to choose from.", facts: ["A colour for every spine", "Ribbons in the books you're reading", "Paper, oak, walnut or slate"] },
 ];
 
 /**
@@ -68,7 +68,7 @@ export function Scene() {
 
   const chapter = CHAPTERS[active];
   return (
-    <section ref={section} style={{ height: `${CHAPTERS.length * 90}svh` }} aria-label="What Shelf does">
+    <section ref={section} style={{ height: `${CHAPTERS.length * 90}svh` }} aria-label="What Shelfed does">
       <div className="sticky top-0 flex h-svh flex-col items-center overflow-hidden px-5 pt-[clamp(112px,17svh,168px)] sm:px-8">
         {/* The words, one chapter at a time. */}
         <div className="relative flex h-[clamp(196px,27svh,250px)] w-full max-w-[60rem] flex-col items-center text-center">

@@ -1,6 +1,6 @@
-# Third-party software in Shelf
+# Third-party software in Shelfed
 
-Shelf is built on these projects, each under its own licence. Their licence
+Shelfed is built on these projects, each under its own licence. Their licence
 texts ship inside the app with each package.
 
 | Project | Licence | Used for |

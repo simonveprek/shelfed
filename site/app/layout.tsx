@@ -9,12 +9,12 @@ const description =
 
 export const metadata: Metadata = {
   // The address the site is hosted at, for links shared on social sites.
-  metadataBase: new URL(process.env.SITE_URL ?? "https://simonveprek.github.io"),
-  title: "Shelf, a quiet home for your books",
+  metadataBase: new URL(process.env.SITE_URL ?? "https://shelfed.simonveprek.cz"),
+  title: "Shelfed, a quiet home for your books",
   description,
   icons: { icon: asset("icon.svg") },
-  openGraph: { title: "Shelf", description, images: [asset("media/social.jpg")], type: "website" },
-  twitter: { card: "summary_large_image", title: "Shelf", description, images: [asset("media/social.jpg")] },
+  openGraph: { title: "Shelfed", description, images: [asset("media/social.jpg")], type: "website" },
+  twitter: { card: "summary_large_image", title: "Shelfed", description, images: [asset("media/social.jpg")] },
 };
 
 export const viewport: Viewport = {

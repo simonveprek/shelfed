@@ -101,7 +101,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
           <Empty
             icon={MailSend01Icon}
             title="Set up sending once"
-            description="Shelf mails books to your Kindle address from your own mail account. After that every book is one click."
+            description="Shelfed mails books to your Kindle address from your own mail account. After that every book is one click."
             action={<Button variant="primary" onClick={() => useStore.setState({ dialog: { kind: "settings", tab: "sending" } })}>Set up Kindle</Button>}
           />
         )}
@@ -140,7 +140,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
           (devices === null ? (
             <div className="flex justify-center py-10"><Spinner /></div>
           ) : devices.length === 0 ? (
-            <Empty icon={TabletConnectedUsbIcon} title="Plug in your Kindle" description="Connect it with a USB cable and unlock it. Shelf finds it on its own." />
+            <Empty icon={TabletConnectedUsbIcon} title="Plug in your Kindle" description="Connect it with a USB cable and unlock it. Shelfed finds it on its own." />
           ) : (
             <>
               <RadioGroup
@@ -152,7 +152,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
               />
               <p className="text-label text-muted">
                 {cablePlans.some((p) => !p)
-                  ? "Shelf can't read some of these to make Kindle files from them."
+                  ? "Shelfed can't read some of these to make Kindle files from them."
                   : cablePlans.some((p) => p?.convert)
                     ? "Books without a Kindle file get an AZW3 made first. Eject the Kindle before you unplug it."
                     : "Copies the Kindle files straight to the device. Eject it before you unplug it."}

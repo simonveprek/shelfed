@@ -9,7 +9,7 @@ const pretend = () => (import.meta.env.DEV ? (window as unknown as { __fakeKindl
 
 /**
  * Watches the USB bus for Kindles, for the whole app, from one place. The
- * first one Shelf recognises becomes your Kindle, unless you picked one by
+ * first one Shelfed recognises becomes your Kindle, unless you picked one by
  * hand, and plugging one in gets it a welcome.
  */
 export function useKindleWatch() {
@@ -26,7 +26,7 @@ export function useKindleWatch() {
       const now = Boolean(usb.length || drives.length);
       useStore.setState({
         kindlePort: { usb, drives },
-        // Not for one already plugged in when Shelf opens, only for one arriving.
+        // Not for one already plugged in when Shelfed opens, only for one arriving.
         ...(before && now && !was ? { kindleArrived: Date.now() } : {}),
       });
       const known = kindleById(usb.find((k) => k.model)?.model ?? drives.find((d) => d.model)?.model);

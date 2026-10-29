@@ -89,7 +89,7 @@ function LibrarySection() {
   const parts = path.split(/[\\/]/).filter(Boolean);
   return (
     <>
-      <Title title="Library">Your books live in a plain folder, one folder for each author, so they stay yours and readable without Shelf.</Title>
+      <Title title="Library">Your books live in a plain folder, one folder for each author, so they stay yours and readable without Shelfed.</Title>
       <Group>
         <div className="flex items-center gap-4 px-4 py-4">
           <Point shape="squircle" mood={mood ?? "idle"} size={44} look="pointer" energy={0.8} className="shrink-0" />
@@ -127,7 +127,7 @@ function LibrarySection() {
         </div>
       </Group>
       <Group label="The first time">
-        <Row label="The welcome" hint="The short story about reading Shelf opens with.">
+        <Row label="The welcome" hint="The short story about reading Shelfed opens with.">
           <Button size="sm" onClick={() => useStore.setState({ dialog: null, onboarding: true })}>Show it again</Button>
         </Row>
       </Group>
@@ -208,7 +208,7 @@ function AppearanceSection() {
       </div>
       <h3 className="mt-9 mb-1 text-label font-medium">App icon</h3>
       <p className="mb-4 text-caption text-muted">
-        {isMac ? "Shows in the Dock while Shelf is open." : "Shows on the taskbar while Shelf is open."}
+        {isMac ? "Shows in the Dock while Shelfed is open." : "Shows on the taskbar while Shelfed is open."}
       </p>
       <div className="grid grid-cols-4 gap-x-8 gap-y-5 px-4">
         {APP_ICONS.map((icon) => (
@@ -303,7 +303,7 @@ function KindleSection() {
 
   return (
     <>
-      <Title title="Kindle">Plug your Kindle in and Shelf recognises it. Or pick it here, and choose its colour.</Title>
+      <Title title="Kindle">Plug your Kindle in and Shelfed recognises it. Or pick it here, and choose its colour.</Title>
       <div className="mb-6 flex flex-wrap items-center gap-8 rounded-[18px] border border-border bg-well px-7 py-7">
         <div className="flex w-[190px] shrink-0 justify-center">
           {model ? (
@@ -320,7 +320,7 @@ function KindleSection() {
             <p className="mt-1.5 flex flex-wrap items-center gap-2 text-caption text-muted">
               {model && <span>{model.year}, {model.screen}″ {model.colour ? "colour " : ""}screen</span>}
               {plugged && <Badge tone="success">Plugged in</Badge>}
-              {stranger && <Badge>A Kindle Shelf doesn't know is plugged in</Badge>}
+              {stranger && <Badge>A Kindle Shelfed doesn't know is plugged in</Badge>}
             </p>
           </div>
           <Select
@@ -411,7 +411,7 @@ function SendingSection() {
   return (
     <>
       <Title title="Sending by email">
-        Every Kindle has an email address. Shelf mails books to it from your own account, and Amazon puts them on all your Kindles and Kindle apps.
+        Every Kindle has an email address. Shelfed mails books to it from your own account, and Amazon puts them on all your Kindles and Kindle apps.
       </Title>
       <div className="mb-6 flex items-center gap-3 rounded-[16px] border border-border bg-well px-4 py-3">
         <span className={cx("size-2 shrink-0 rounded-full", ready ? "bg-success" : "bg-line-strong")} />
@@ -507,7 +507,7 @@ function ConvertingSection() {
   return (
     <>
       <Title title="Converting">
-        All built in, with nothing to install. Shelf reads EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, web pages and text, and makes EPUB, AZW3 for
+        All built in, with nothing to install. Shelfed reads EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, web pages and text, and makes EPUB, AZW3 for
         Kindle, PDF, Word, FB2, plain text and web pages.
       </Title>
       <Group label="PDF pages">
@@ -545,8 +545,8 @@ function Updates() {
     checking: "Looking for a new version…",
     none: "This is the latest version.",
     downloading: update.state === "downloading" && `Downloading ${update.version}, ${Math.round(update.progress * 100)}%`,
-    ready: update.state === "ready" && `Shelf ${update.version} is ready to go in.`,
-    available: update.state === "available" && `Shelf ${update.version} is out.`,
+    ready: update.state === "ready" && `Shelfed ${update.version} is ready to go in.`,
+    available: update.state === "available" && `Shelfed ${update.version} is out.`,
     failed: update.state === "failed" && update.error,
   };
   return (
@@ -574,7 +574,7 @@ function AboutSection() {
       <span className="relative block size-24 overflow-hidden rounded-[22.5%] shadow-[0_10px_28px_rgba(0,0,0,0.22),0_0_0_1px_rgba(0,0,0,0.04)]">
         <img src={iconSrc(icon)} alt="" draggable={false} className={cx("absolute inset-0 size-full", isMac && "scale-[1.243]")} />
       </span>
-      <h2 className="mt-5 text-[26px] font-medium tracking-[-0.02em]">Shelf</h2>
+      <h2 className="mt-5 text-[26px] font-medium tracking-[-0.02em]">Shelfed</h2>
       <p className="mt-1 text-label text-muted">Version {version}</p>
       <Updates />
       <p className="serif mt-5 max-w-[30ch] text-[17px] leading-snug">A quiet home for your books.</p>
@@ -594,7 +594,7 @@ function AboutSection() {
               onChange={(on) => setSetting({ updates: on })}
             />
           </div>
-          <Row label="Log" hint="What Shelf noted while running, for a bug report.">
+          <Row label="Log" hint="What Shelfed noted while running, for a bug report.">
             <Button size="sm" onClick={() => api.showLog()}>{revealLabel}</Button>
           </Row>
         </Group>
@@ -617,7 +617,7 @@ const SECTIONS: Array<{ id: SettingsSection; label: string; icon: IconLike; tint
   { id: "kindle", label: "Kindle", icon: Tablet01Icon, tint: "#2b2b2e", render: () => <KindleSection /> },
   { id: "sending", label: "Sending", icon: MailSend01Icon, tint: "#2b6fff", render: () => <SendingSection /> },
   { id: "converting", label: "Converting", icon: ArrowDataTransferHorizontalIcon, tint: "#a23bff", render: () => <ConvertingSection /> },
-  { id: "about", label: "About Shelf", icon: InformationCircleIcon, tint: "#8c857c", render: () => <AboutSection /> },
+  { id: "about", label: "About Shelfed", icon: InformationCircleIcon, tint: "#8c857c", render: () => <AboutSection /> },
 ];
 
 export function SettingsDialog({ tab }: { tab?: SettingsSection }) {

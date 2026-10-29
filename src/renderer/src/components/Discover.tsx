@@ -14,7 +14,7 @@ import { norm } from "@/lib/util";
 /*
  * Free books, inside the app. Standard Ebooks makes careful, beautiful
  * editions of public domain books. Project Gutenberg keeps the largest
- * library of them. Adding one downloads its EPUB into Shelf.
+ * library of them. Adding one downloads its EPUB into Shelfed.
  */
 
 const SOURCES = {
@@ -58,7 +58,7 @@ function FreeCard({ book, owned, onAdd, busy, index }: { book: FreeBook; owned: 
             onClick={onAdd}
             className="shadow-float"
           >
-            {owned ? "In Shelf" : busy ? "Adding" : "Add"}
+            {owned ? "In Shelfed" : busy ? "Adding" : "Add"}
           </Button>
         </div>
       </div>
@@ -96,7 +96,7 @@ function KindredItem({ title, author, why, after, owned, busy, onAdd }: {
       </span>
       <IconButton
         className="shrink-0"
-        label={have ? `${title} is in Shelf` : `Add ${title}`}
+        label={have ? `${title} is in Shelfed` : `Add ${title}`}
         icon={!free || adding ? <Spinner size="sm" /> : have ? Tick02Icon : Add01Icon}
         disabled={!free || have || adding}
         onClick={() => free && onAdd(free)}

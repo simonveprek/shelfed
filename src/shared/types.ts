@@ -6,7 +6,7 @@ export type Annotation = {
   id: string;
   /** A highlight made here, a bookmarked page, or a highlight brought over from a Kindle. */
   kind: "highlight" | "bookmark" | "kindle";
-  /** Where it sits in the book. Kindle highlights have no place Shelf can open. */
+  /** Where it sits in the book. Kindle highlights have no place Shelfed can open. */
   cfi?: string;
   /** The book's section it is in, so it can be drawn when that section loads. */
   index?: number;
@@ -81,7 +81,7 @@ export type Book = {
   annotations?: Annotation[];
   /** When it was marked finished. */
   finishedAt?: number;
-  /** Seconds spent reading it in Shelf. */
+  /** Seconds spent reading it in Shelfed. */
   readSeconds?: number;
   /** Its spine colour in the bookcase, when picked by hand. */
   spine?: string;
@@ -170,7 +170,7 @@ export type Settings = {
   icon?: string;
 };
 
-/** Where finding and getting a new version of Shelf has got to. */
+/** Where finding and getting a new version of Shelfed has got to. */
 export type UpdateState =
   | { state: "idle" }
   | { state: "checking" }

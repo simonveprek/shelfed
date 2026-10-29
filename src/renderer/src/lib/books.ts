@@ -31,7 +31,7 @@ const fromMap = (x: LangMap) => (!x ? "" : typeof x === "string" ? x : (Object.v
 const fromContributor = (c: Contributor) => (typeof c === "string" ? c : fromMap(c?.name));
 const list = <T,>(x: T | T[] | undefined | null): T[] => (x == null ? [] : Array.isArray(x) ? x : [x]);
 
-/** Shelf's fields from foliate's metadata. */
+/** Shelfed's fields from foliate's metadata. */
 function readMetadata(m: Record<string, any> = {}): Partial<Book> {
   const isbn = [...list<any>(m.identifier), ...list<any>(m.altIdentifier)]
     .map((x) => String(typeof x === "string" ? x : (x?.value ?? "")))
@@ -322,7 +322,7 @@ async function htmlToChapters(html: string, content: Content, fallback: string) 
 }
 
 /**
- * Reads any book Shelf understands into Content. Foliate's own section
+ * Reads any book Shelfed understands into Content. Foliate's own section
  * loader handles e-books, so MOBI, AZW3, FB2 and comics come out the way
  * an EPUB does, pictures and all.
  */
@@ -435,5 +435,5 @@ export async function extractContent(book: Book, ext: string, onProgress?: (shar
     content.chapters = await htmlToChapters(await api.docxHtml(book.id), content, book.title);
     return content;
   }
-  throw new Error(`Shelf cannot read ${ext.toUpperCase()} files on its own.`);
+  throw new Error(`Shelfed cannot read ${ext.toUpperCase()} files on its own.`);
 }

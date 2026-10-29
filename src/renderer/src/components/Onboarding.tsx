@@ -7,7 +7,7 @@ import { isMac, isWin } from "@/lib/api";
 import { setSetting, useStore } from "@/lib/store";
 
 /*
- * The first thing Shelf shows. A short walk through what happened to
+ * The first thing Shelfed shows. A short walk through what happened to
  * reading, told slowly, the way a book would. Each scene waits a few
  * seconds, or moves on with a click, the space bar or an arrow.
  */

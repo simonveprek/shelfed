@@ -1,4 +1,4 @@
-// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelf. See LICENSE-FRAGMS-PERSONAL.md.
+// Fragms Personal kit, (c) 2026 Šimon Vepřek. Not MIT: only for use as part of Shelfed. See LICENSE-FRAGMS-PERSONAL.md.
 import type { ElementType, ReactNode } from "react";
 import Link from "next/link";
 import { cx } from "./cx";

@@ -5,7 +5,7 @@
  * Older Kindles put a two digit hex code after the first two characters of
  * the serial (B024…), newer ones a three character code after the first
  * three (G090G1…). The codes come from the Kindle hacking community's lists;
- * a Kindle Shelf doesn't know yet can still be picked by hand.
+ * a Kindle Shelfed doesn't know yet can still be picked by hand.
  */
 
 export type KindleShape =
@@ -86,7 +86,7 @@ export const KINDLES: KindleModel[] = [
 
 export const kindleById = (id?: string) => KINDLES.find((k) => k.id === id);
 
-/** The model a serial number belongs to, when Shelf knows it. */
+/** The model a serial number belongs to, when Shelfed knows it. */
 export function kindleFromSerial(serial: string): KindleModel | undefined {
   const s = serial.toUpperCase().replace(/\s/g, "");
   const newer = s.slice(3, 6);

@@ -1,6 +1,6 @@
 # azw3
 
-Turns an EPUB into a Kindle AZW3, for Shelf's Kindle by cable. Shelf runs it
+Turns an EPUB into a Kindle AZW3, for Shelfed's Kindle by cable. Shelfed runs it
 as WebAssembly from `resources/azw3.wasm`, so nothing needs installing.
 
 The conversion in `internal/` is [seapy/kindle-cli](https://github.com/seapy/kindle-cli)'s

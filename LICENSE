@@ -2,7 +2,7 @@ MIT License
 
 Copyright (c) 2026 Šimon Vepřek
 
-This licence covers Shelf's own code: everything in this repository except
+This licence covers Shelfed's own code: everything in this repository except
 the Fragms Personal kit, which has its own licence (see below).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,7 +29,7 @@ Not covered by this licence: the Fragms Personal kit
 
 These files are the Fragms Personal UI kit. They are not MIT licensed. They
 are licensed under LICENSE-FRAGMS-PERSONAL.md, which lets you use them only as
-part of Shelf:
+part of Shelfed:
 
   src/renderer/src/components/ui/
   src/renderer/src/components/bits.tsx

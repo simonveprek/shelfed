@@ -12,7 +12,7 @@ import { safeName } from "./library";
  * nothing else is needed.
  */
 
-const UA = { "User-Agent": "Shelf/1.0 (open source book library)" };
+const UA = { "User-Agent": "Shelfed/1.0 (open source book library)" };
 
 async function text(url: string) {
   const res = await net.fetch(url, { headers: UA });
@@ -73,7 +73,7 @@ export const freeBooks = (source: "standard" | "gutenberg", query: string) =>
 
 /** Fetches a free book to a temporary file, ready to be added like any other. */
 export async function downloadBook(url: string, name: string) {
-  if (!/^https:\/\/(standardebooks\.org|www\.gutenberg\.org)\//.test(url)) throw new Error("Shelf only downloads from Standard Ebooks and Project Gutenberg.");
+  if (!/^https:\/\/(standardebooks\.org|www\.gutenberg\.org)\//.test(url)) throw new Error("Shelfed only downloads from Standard Ebooks and Project Gutenberg.");
   const res = await net.fetch(url, { headers: UA });
   if (!res.ok) throw new Error(`The download stopped with ${res.status}`);
   const dir = await mkdtemp(join(tmpdir(), "shelf-"));

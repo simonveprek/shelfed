@@ -1,4 +1,4 @@
-/** Shelf's mark: two plain spines and the one you're reading, leaning, in the aurora. */
+/** Shelfed's mark: two plain spines and the one you're reading, leaning, in the aurora. */
 export function Mark({ size = 24 }: { size?: number }) {
   return (
     <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden className="shrink-0 overflow-visible">

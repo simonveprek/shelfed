@@ -436,7 +436,7 @@ function Page() {
       <Centered>
         <Empty point={{ shape: "squircle", mood: "reading" }}>
           <p className="text-heading text-foreground">A home for your books</p>
-          <p className="mt-2">Add EPUB, Kindle, PDF, comic and text files. Shelf reads their covers and details and keeps them in one tidy folder.</p>
+          <p className="mt-2">Add EPUB, Kindle, PDF, comic and text files. Shelfed reads their covers and details and keeps them in one tidy folder.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <Button variant="primary" icon={FileAddIcon} onClick={() => pickAndImport(false)}>Add books</Button>
             <Button icon={FolderAddIcon} onClick={() => pickAndImport(true)}>Add a folder</Button>
