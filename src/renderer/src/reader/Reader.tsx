@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeft01Icon, ArrowRight01Icon, Bookmark01Icon, Menu01Icon, MinusSignIcon, PlusSignIcon, Search01Icon, TextFontIcon,
+  ArrowLeft01Icon, ArrowRight01Icon, Bookmark01Icon, Cancel01Icon, HeadphonesIcon, Menu01Icon, MinusSignIcon, NextIcon, PauseIcon,
+  PlayIcon, PlusSignIcon, PreviousIcon, Search01Icon, TextFontIcon,
 } from "@hugeicons/core-free-icons";
 import type { Annotation, Book, ReaderPrefs } from "../../../shared/types";
 import {
-  cx, EASE, Icon, NavItem, Popover, Segmented, Sheet, Slider, Spinner, Toolbar, ToolbarButton, ToolbarDivider, toast,
+  cx, EASE, Icon, IconButton, NavItem, Popover, Segmented, Select, Sheet, Slider, Spinner, Toolbar, ToolbarButton, ToolbarDivider, toast,
 } from "@/components/ui";
 import { Point } from "@/components/fragms/points";
 import { api, isMac, isWin } from "@/lib/api";
@@ -19,6 +20,7 @@ import { addAnnotation, bookmarksOf, newAnnotationId, removeAnnotation } from "@
 import { AnnotationCard, MARKS, NotesList, SearchPanel, SelectionBar, Tab, useReadingTime, type SearchHit } from "./Notes";
 import { authorsOf, debounce, fetchFile, FOLIATE } from "@/lib/util";
 import { t, tc } from "../../../shared/i18n";
+import { useReadAloud, type Speaking } from "./aloud";
 
 /** The page itself. These are the paper, not the app, so they keep their own colours. Labels are English here and translated where shown. */
 const PAPERS: Record<ReaderPrefs["theme"], { bg: string; fg: string; link: string; dark: boolean; label: string }> = {
@@ -167,7 +169,7 @@ export type Panel = "contents" | "notes" | "search";
 
 function Frame({
   book, prefs, setPrefs, toc, current, onGo, footer, children, pdf, loading, error, onPrev, onNext,
-  panel, setPanel, notes, search, bookmarked, onBookmark, overlay,
+  panel, setPanel, notes, search, bookmarked, onBookmark, overlay, aloud,
 }: {
   book: Book;
   prefs: ReaderPrefs;
@@ -191,6 +193,8 @@ function Frame({
   onBookmark?: () => void;
   /** Floating things over the page, like the bar over selected words. */
   overlay?: ReactNode;
+  /** Reading aloud: whether it's going, and the button that starts and stops it. */
+  aloud?: { on: boolean; toggle: () => void };
 }) {
   const paper = PAPERS[prefs.theme];
   const chrome = useChrome();
@@ -237,6 +241,14 @@ function Frame({
               <span className="text-muted">, {authorsOf(book)}</span>
             </span>
             <ToolbarDivider />
+            {aloud && (
+              <ToolbarButton
+                label={aloud.on ? t("Stop reading aloud") : t("Read aloud")}
+                icon={HeadphonesIcon}
+                onClick={aloud.toggle}
+                className={aloud.on ? "text-accent" : undefined}
+              />
+            )}
             {onBookmark && (
               <ToolbarButton
                 label={bookmarked ? t("Remove bookmark") : t("Bookmark this page")}
@@ -361,6 +373,44 @@ function screenRect(range: Range) {
   return { x: (frame?.left ?? 0) + rect.left + rect.width / 2, top: (frame?.top ?? 0) + rect.top, bottom: (frame?.top ?? 0) + rect.bottom };
 }
 
+const SPEEDS = [0.8, 1, 1.2, 1.5, 2];
+
+/** The bar while reading aloud: a paragraph back, play or pause, a paragraph on, speed, voice, stop. */
+function AloudBar({ aloud, prefs, setPrefs }: { aloud: ReturnType<typeof useReadAloud>; prefs: ReaderPrefs; setPrefs: (p: Partial<ReaderPrefs>) => void }) {
+  const voice = aloud.voices.find((v) => v.voiceURI === prefs.voice) ?? aloud.voices[0];
+  return (
+    <motion.div
+      className="absolute bottom-20 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-card/95 py-1.5 pr-2 pl-1.5 shadow-float backdrop-blur-xl"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.22, ease: EASE }}
+    >
+      <IconButton label={t("A paragraph back")} icon={PreviousIcon} onClick={() => aloud.skip(-1)} />
+      <IconButton label={aloud.playing ? t("Pause") : t("Read on")} icon={aloud.playing ? PauseIcon : PlayIcon} onClick={aloud.playing ? aloud.pause : aloud.play} />
+      <IconButton label={t("A paragraph on")} icon={NextIcon} onClick={() => aloud.skip(1)} />
+      <span className="mx-1 h-5 w-px bg-border" />
+      <Select
+        label={t("Speed")}
+        size="sm"
+        value={String(prefs.rate ?? 1)}
+        onChange={(v) => setPrefs({ rate: Number(v) })}
+        options={SPEEDS.map((x) => ({ id: String(x), label: `${x.toLocaleString()}×` }))}
+      />
+      {aloud.voices.length > 1 && (
+        <Select
+          label={t("Voice")}
+          size="sm"
+          value={voice?.voiceURI ?? ""}
+          onChange={(id) => setPrefs({ voice: id })}
+          options={aloud.voices.map((v) => ({ id: v.voiceURI, label: v.name }))}
+        />
+      )}
+      <IconButton label={t("Stop reading aloud")} icon={Cancel01Icon} onClick={aloud.stop} />
+    </motion.div>
+  );
+}
+
 function BookReader({ book, ext }: { book: Book; ext: string }) {
   const [prefs, setPrefs] = usePrefs();
   const live = useStore((s) => s.books.find((b) => b.id === book.id)) ?? book;
@@ -378,6 +428,13 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
   const [picked, setPicked] = useState<Picked | null>(null);
   // The words on screen right now, to tell whether a bookmark is on this page.
   const [shownRange, setShownRange] = useState<{ index: number; range: Range } | null>(null);
+  // Where the page is, for reading aloud from there.
+  const here = useRef<Range | null>(null);
+  const aloud = useReadAloud(view as unknown as React.RefObject<Speaking | null>, here, {
+    lang: book.language ?? "en",
+    voice: prefs.voice,
+    rate: prefs.rate ?? 1,
+  });
   const [open, setOpen] = useState<{ id: string; x: number; y: number } | null>(null);
   const touch = useReadingTime(book.id);
 
@@ -444,6 +501,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
           const d = (e as CustomEvent).detail;
           setWhere({ fraction: d.fraction ?? 0, chapter: d.tocItem?.label?.trim(), href: d.tocItem?.href, cfi: d.cfi });
           if (d.range && d.section) setShownRange({ index: d.section.current, range: d.range });
+          if (d.range) here.current = d.range;
           setPicked(null);
           touch();
           if (d.cfi) saveProgress(book.id, d.fraction ?? 0, d.cfi, ext);
@@ -611,6 +669,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
       onNext={prefs.flow === "paginated" ? () => view.current?.goRight() : undefined}
       panel={panel}
       setPanel={setPanel}
+      aloud={aloud.available ? { on: aloud.active, toggle: () => (aloud.active ? aloud.stop() : aloud.play()) } : undefined}
       bookmarked={Boolean(bookmark)}
       onBookmark={() =>
         bookmark
@@ -652,6 +711,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
             />
           )}
           {opened && open && <AnnotationCard key={open.id} annotation={opened} bookId={book.id} x={open.x} y={open.y} onClose={() => setOpen(null)} />}
+          {aloud.active && <AloudBar key="aloud" aloud={aloud} prefs={prefs} setPrefs={setPrefs} />}
         </AnimatePresence>
       }
       footer={

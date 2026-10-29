@@ -481,8 +481,40 @@ test.describe("in Czech", () => {
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("button", { name: "Vzhled", exact: true }).click();
     await dialog.getByRole("combobox", { name: "Jazyk" }).click();
-    await page.getByRole("option", { name: "English" }).click();
+    await page.getByRole("option", { name: "English", exact: true }).click();
     await expect(page.getByRole("button", { name: "All books", exact: true })).toBeVisible();
   });
+});
+
+test("an empty library starts with a few classics in one click", async ({ shelf }) => {
+  const { page, free } = shelf;
+  const classics: Array<[string, string]> = [
+    ["Pride and Prejudice", "Jane Austen"], ["The Adventures of Sherlock Holmes", "Arthur Conan Doyle"], ["Dracula", "Bram Stoker"],
+    ["The Great Gatsby", "F. Scott Fitzgerald"], ["Frankenstein", "Mary Shelley"], ["Alice's Adventures in Wonderland", "Lewis Carroll"],
+    ["The Picture of Dorian Gray", "Oscar Wilde"], ["R.U.R.", "Karel Capek"],
+  ];
+  for (const [title, author] of classics) writeFileSync(join(free, `${title} - ${author}.epub`), epub({ title, author }));
+  await page.getByRole("button", { name: "Start with a few classics" }).click();
+  await expect(page.getByText("Added 8 books")).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator("header").getByText("8", { exact: true })).toBeVisible();
+  await expect(card(page, "Dracula")).toBeVisible();
+});
+
+test("reads a book aloud from the page, and stops", async ({ shelf }) => {
+  const { page } = shelf;
+  await shelf.add();
+  await card(page, "The Lighthouse Keeper").dblclick();
+  await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+  await page.getByRole("button", { name: "Read aloud" }).click();
+  const bar = page.getByRole("button", { name: "Stop reading aloud" }).last();
+  await expect(bar).toBeVisible();
+  await expect(page.getByRole("button", { name: /^(Pause|Read on)$/ })).toBeVisible();
+  // On CI, where nobody hears it: with any system voice there, a voice is really speaking.
+  if (process.env.CI)
+    await expect.poll(() => page.evaluate(() => speechSynthesis.getVoices().length === 0 || speechSynthesis.speaking || speechSynthesis.pending), { timeout: 10_000 }).toBe(true);
+  await page.getByRole("button", { name: "A paragraph on" }).click();
+  await bar.click();
+  await expect(page.getByRole("button", { name: "A paragraph on" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Read aloud" })).toBeVisible();
 });
 

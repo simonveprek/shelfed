@@ -61,6 +61,8 @@ export type Shelf = {
   restart(): Promise<void>;
   /** The Downloads folder this Shelfed watches. */
   downloads: string;
+  /** A folder of "Title - Author.epub" files standing in for Standard Ebooks. */
+  free: string;
 };
 
 /** Each test gets its own Shelfed, on its own empty library, never yours. */
@@ -88,6 +90,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
     const data = join(dir, "data");
     mkdirSync(data);
     mkdirSync(join(dir, "Downloads"));
+    mkdirSync(join(dir, "free"));
     // Calibre's settings, empty unless the test gives it a library, so the real one is never found.
     mkdirSync(join(dir, "calibre-config"));
     if (calibre) {
@@ -131,6 +134,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
         // A Downloads folder of its own, never the real one.
         SHELF_DOWNLOADS: join(dir, "Downloads"),
         SHELF_CALIBRE_CONFIG: join(dir, "calibre-config"),
+        SHELF_FREE_DIR: join(dir, "free"),
         ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}),
         // On someone's own computer the test books are deleted, not put in their Trash.
         ...(process.env.CI ? {} : { SHELF_NO_TRASH: "1" }),
@@ -155,6 +159,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       },
       errors,
       downloads: join(dir, "Downloads"),
+      free: join(dir, "free"),
       async add(books = BOOKS) {
         const paths = books.map((book) => {
           const path = join(dir, `in-${made++}.epub`);

@@ -52,6 +52,24 @@ const words: Record<string, string> = {
   "Hide Others": "Skrýt ostatní",
   "Show All": "Zobrazit vše",
   "Quit Shelfed": "Ukončit Shelfed",
+
+  // A first shelf of classics.
+  "Start with a few classics": "Pár klasik na začátek",
+  "Fetching classics…": "Stahuji klasiku…",
+  "Fetching a few classics": "Stahuji pár klasik",
+  "{n} of {total}|{n} of {total}": "{n} z {total}|{n} z {total}|{n} z {total}",
+  "Fetched {n} classic|Fetched {n} classics": "Stažena {n} klasika|Staženy {n} klasiky|Staženo {n} klasik",
+  "Couldn't reach Standard Ebooks. Check the internet and try again.": "Standard Ebooks se nepodařilo zastihnout. Zkontrolujte připojení k internetu a zkuste to znovu.",
+
+  // Reading aloud.
+  "Read aloud": "Číst nahlas",
+  "Stop reading aloud": "Přestat číst nahlas",
+  "A paragraph back": "O odstavec zpět",
+  "A paragraph on": "O odstavec dál",
+  Pause: "Pozastavit",
+  "Read on": "Číst dál",
+  Speed: "Rychlost",
+  Voice: "Hlas",
 };
 
 export default words;

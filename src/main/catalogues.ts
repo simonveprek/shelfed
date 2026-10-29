@@ -1,7 +1,7 @@
-import { net } from "electron";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { app, net } from "electron";
+import { copyFile, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import type { FreeBook } from "../shared/types";
 import { t } from "../shared/i18n";
 import { safeName } from "./library";
@@ -69,11 +69,37 @@ async function gutenberg(query: string): Promise<FreeBook[]> {
   });
 }
 
-export const freeBooks = (source: "standard" | "gutenberg", query: string) =>
-  source === "standard" ? standard(query) : gutenberg(query);
+/**
+ * For the app tests: a folder of "Title - Author.epub" files stands in for
+ * Standard Ebooks, so no test needs the internet. Never in an installed app.
+ */
+const standIn = () => (!app.isPackaged && process.env.SHELF_FREE_DIR ? resolve(process.env.SHELF_FREE_DIR) : null);
+
+async function fromStandIn(folder: string, query: string): Promise<FreeBook[]> {
+  const words = query.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+  return (await readdir(folder))
+    .filter((name) => name.endsWith(".epub") && words.every((w) => name.toLowerCase().includes(w)))
+    .map((name) => {
+      const [title, author = ""] = name.replace(/\.epub$/, "").split(" - ");
+      return { id: `test:${name}`, source: "standard" as const, title, author, epub: `file://${join(folder, name)}`, page: "" };
+    });
+}
+
+export const freeBooks = (source: "standard" | "gutenberg", query: string) => {
+  const folder = standIn();
+  if (folder) return fromStandIn(folder, query);
+  return source === "standard" ? standard(query) : gutenberg(query);
+};
 
 /** Fetches a free book to a temporary file, ready to be added like any other. */
 export async function downloadBook(url: string, name: string) {
+  const folder = standIn();
+  if (folder && url.startsWith("file://") && dirname(resolve(url.slice(7))) === folder) {
+    const dir = await mkdtemp(join(tmpdir(), "shelf-"));
+    const path = join(dir, `${safeName(name, 90)}.epub`);
+    await copyFile(url.slice(7), path);
+    return path;
+  }
   if (!/^https:\/\/(standardebooks\.org|www\.gutenberg\.org)\//.test(url)) throw new Error(t("Shelfed only downloads from Standard Ebooks and Project Gutenberg."));
   const res = await net.fetch(url, { headers: UA });
   if (!res.ok) throw new Error(t("The download stopped with {status}", { status: String(res.status) }));

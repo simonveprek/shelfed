@@ -105,6 +105,9 @@ export type ReaderPrefs = {
   width: number;
   flow: "paginated" | "scrolled";
   justify: boolean;
+  /** Reading aloud: the system voice chosen, by its id, and how fast it reads. */
+  voice?: string;
+  rate?: number;
 };
 
 /** How the 3D bookcase looks and sorts its shelves. */

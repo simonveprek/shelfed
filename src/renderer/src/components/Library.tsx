@@ -3,7 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { motion } from "framer-motion";
 import {
   ArrowDataTransferHorizontalIcon, ArrowRight01Icon, BookOpen01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
-  FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, Layers01Icon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon, Tablet01Icon,
+  FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, Layers01Icon, LibraryIcon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon, Tablet01Icon,
 } from "@hugeicons/core-free-icons";
 import type { Book } from "../../../shared/types";
 import { Badge, Button, ContextMenu, cx, DataTable, EASE, Icon, MenuItem, MenuLabel, MenuSeparator, Progress, type DataTableColumn } from "@/components/ui";
@@ -12,6 +12,7 @@ import { addToCollection, joinSelected, openReader, pickAndImport, removeFromCol
 import { api, isMac, revealLabel } from "@/lib/api";
 import { newCollection, runAction } from "@/lib/commands";
 import { useCalibre } from "@/lib/findcalibre";
+import { startWithClassics } from "@/lib/free";
 import { useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME, selectBook, targetIds } from "@/lib/select";
 import { useStore } from "@/lib/store";
@@ -438,6 +439,7 @@ export function LibraryView() {
 function Page() {
   const visible = useVisibleBooks();
   const calibre = useCalibre();
+  const [fetching, setFetching] = useState(false);
   const view = useStore((s) => s.settings.view);
   const section = useStore((s) => s.section);
   const total = useStore((s) => s.books.length);
@@ -453,6 +455,16 @@ function Page() {
           <div className="mt-6 flex flex-wrap justify-center gap-2">
             <Button variant="primary" icon={FileAddIcon} onClick={() => pickAndImport(false)}>{t("Add books")}</Button>
             <Button icon={FolderAddIcon} onClick={() => pickAndImport(true)}>{t("Add a folder")}</Button>
+            <Button
+              icon={LibraryIcon}
+              disabled={fetching}
+              onClick={async () => {
+                setFetching(true);
+                await startWithClassics().finally(() => setFetching(false));
+              }}
+            >
+              {fetching ? t("Fetching classics…") : t("Start with a few classics")}
+            </Button>
           </div>
           {calibre && (
             <button
