@@ -3,10 +3,10 @@ import { motion } from "framer-motion";
 import { kindleById } from "../../../shared/kindles";
 import { sendByCable } from "@/lib/actions";
 import { isMac } from "@/lib/api";
-import { useKindlePort, useOnKindle } from "@/lib/kindle";
+import { useFinishedOnKindle, useKindlePort, useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
 import { useStore } from "@/lib/store";
-import { bytes } from "@/lib/util";
+import { bytes, plural } from "@/lib/util";
 import { EASE, Panel } from "@/components/ui";
 import { Portal } from "@/components/ui/portal";
 import { Cover } from "./Cover";
@@ -39,6 +39,7 @@ export function KindleDock() {
   const onBus = Boolean(drive || usb?.length);
   const cable = useStore((s) => s.kindleCable);
   const copied = useOnKindle()?.size ?? 0;
+  const finished = useFinishedOnKindle();
   const model = kindleById(kindle.model ?? drive?.model ?? usb?.find((k) => k.model)?.model) ?? (onBus ? kindleById("pw5") : undefined);
   if (!model) return null;
 
@@ -119,6 +120,15 @@ export function KindleDock() {
                   ? "Drop it here to send it by email"
                   : "Not plugged in. Drop a book on it to email it."}
         </p>
+        {drive && !over && finished && finished.books.length > 0 && (
+          <button
+            type="button"
+            onClick={() => useStore.setState({ confirmTidy: true })}
+            className="mt-2.5 rounded-full bg-control px-3 py-1 text-caption text-muted transition-colors hover:bg-control-hover hover:text-foreground"
+          >
+            {plural(finished.books.length, "finished book")} on it, {bytes(finished.bytes)}. Take off
+          </button>
+        )}
       </div>
     </Panel>
   );

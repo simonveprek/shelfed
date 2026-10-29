@@ -182,6 +182,24 @@ test.describe("a Kindle plugged in as a drive", () => {
     await expect(card(page, "Salt and Ink")).toBeVisible();
     await expect(card(page, "A Winter Orchard")).toHaveCount(0);
   });
+
+  test("takes finished books off it, after asking, and keeps them in the library", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await card(page, "Salt and Ink").click({ button: "right" });
+    await page.getByRole("menuitemradio", { name: "Read it" }).click();
+    await openSettings(page);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Kindle", exact: true }).click();
+    await expect(dialog.getByText("1 book you've finished is still on it", { exact: false })).toBeVisible();
+    await dialog.getByRole("button", { name: "Take them off" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Take them off" }).click();
+    await expect(page.getByText("Took 1 finished book off your Kindle")).toBeVisible();
+    await expect(dialog.getByText("you've finished", { exact: false })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(card(page, "Salt and Ink").getByText("Kindle", { exact: true })).toHaveCount(0);
+    await expect(card(page, "Salt and Ink")).toBeVisible();
+  });
 });
 
 test.describe("a Kindle that connects like a phone", () => {

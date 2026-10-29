@@ -13,7 +13,7 @@ import { api, isMac, revealLabel } from "@/lib/api";
 import { joinCopies } from "@/lib/actions";
 import { findCopies } from "@/lib/copies";
 import { chooseIcon, iconSrc } from "@/lib/icon";
-import { PHONE_LIKE, useKindlePort, useOnKindle } from "@/lib/kindle";
+import { PHONE_LIKE, useFinishedOnKindle, useKindlePort, useOnKindle } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
@@ -338,6 +338,7 @@ function KindleSection() {
   const plugged = found?.find((k) => k.model === model?.id);
   const cable = useStore((s) => s.kindleCable);
   const copied = useOnKindle()?.size ?? 0;
+  const finished = useFinishedOnKindle();
   const stranger = Boolean(found?.length) && !found?.some((k) => k.model);
   const set = (patch: Partial<typeof kindle>) => setSetting({ kindle: { ...useStore.getState().settings.kindle, ...patch } });
   // Settings steps aside first, so the welcome has the whole window.
@@ -369,6 +370,14 @@ function KindleSection() {
               {copied > 0 && <span>{copied} of your books {copied === 1 ? "is" : "are"} on it.</span>}
             </p>
             {cable === "phone" && <p className="mt-2 max-w-[44ch] text-caption text-muted">{PHONE_LIKE}</p>}
+            {finished && finished.books.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <p className="text-caption text-muted">
+                  {plural(finished.books.length, "book")} you've finished {finished.books.length === 1 ? "is" : "are"} still on it, using {bytes(finished.bytes)}.
+                </p>
+                <Button size="sm" onClick={() => useStore.setState({ confirmTidy: true })}>Take them off</Button>
+              </div>
+            )}
           </div>
           <Select
             label="Model"

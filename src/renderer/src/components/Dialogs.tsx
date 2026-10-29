@@ -13,7 +13,7 @@ import { api } from "@/lib/api";
 import { bookById, patchBooks, saveCollections, setSetting, useStore } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { Cover } from "./Cover";
-import { PHONE_LIKE, useOnKindle } from "@/lib/kindle";
+import { PHONE_LIKE, tidyKindle, useFinishedOnKindle, useOnKindle } from "@/lib/kindle";
 
 const close = () => useStore.setState({ dialog: null });
 
@@ -414,3 +414,25 @@ export function RemoveConfirm() {
     />
   );
 }
+
+/* ------------------------------------------------------------------------ */
+/* Taking finished books off the Kindle                                      */
+/* ------------------------------------------------------------------------ */
+
+export function TidyConfirm() {
+  const open = useStore((s) => s.confirmTidy);
+  const finished = useFinishedOnKindle();
+  const count = finished?.books.length ?? 0;
+  return (
+    <AlertDialog
+      open={open && count > 0}
+      onClose={() => useStore.setState({ confirmTidy: false })}
+      tone="danger"
+      title={`Take ${plural(count, "finished book")} off your Kindle?`}
+      description={`That frees ${bytes(finished?.bytes ?? 0)} on it. A Kindle has no Trash, so they go from it for good, with their notes there, but they stay in your library and can go back on any time.`}
+      confirmLabel="Take them off"
+      onConfirm={() => tidyKindle()}
+    />
+  );
+}
+

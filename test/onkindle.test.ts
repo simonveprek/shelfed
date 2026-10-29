@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { connectsLikeAPhone, kindleById } from "../src/shared/kindles";
-import { booksOnKindle } from "../src/renderer/src/lib/onkindle";
+import { booksOnKindle, finishedOnKindle } from "../src/renderer/src/lib/onkindle";
 import { book } from "./helpers";
 
 describe("books already on a Kindle", () => {
@@ -36,3 +36,22 @@ describe("Kindles that connect like a phone", () => {
     expect(connectsLikeAPhone(undefined)).toBe(false);
   });
 });
+
+describe("finished books still on a Kindle", () => {
+  it("are the finished ones among those on it, with their files and the room they take", () => {
+    const done = book({ title: "Dracula", authors: ["Bram Stoker"], status: "finished" });
+    const reading = book({ title: "The Great Gatsby", authors: ["F. Scott Fitzgerald"], status: "reading" });
+    const notThere = book({ title: "Emma", authors: ["Jane Austen"], status: "finished" });
+    const files = [
+      { name: "Dracula - Bram Stoker.azw3", path: "Dracula - Bram Stoker.azw3", size: 1_000 },
+      { name: "Dracula_B00ABCDEFG_EBOK.azw", path: "Amazon/Dracula_B00ABCDEFG_EBOK.azw", size: 500 },
+      { name: "The Great Gatsby - F. Scott Fitzgerald.azw3", path: "The Great Gatsby - F. Scott Fitzgerald.azw3", size: 2_000 },
+      { name: "Notes.txt", path: "Notes.txt", size: 10 },
+    ];
+    const found = finishedOnKindle([done, reading, notThere], files);
+    expect(found.books.map((b) => b.id)).toEqual([done.id]);
+    expect(found.files.map((f) => f.path)).toEqual(["Dracula - Bram Stoker.azw3", "Amazon/Dracula_B00ABCDEFG_EBOK.azw"]);
+    expect(found.bytes).toBe(1_500);
+  });
+});
+

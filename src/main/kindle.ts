@@ -1,11 +1,11 @@
-import { access, copyFile, mkdir, readdir, readFile, stat, statfs } from "node:fs/promises";
+import { access, copyFile, mkdir, readdir, readFile, rm, stat, statfs } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { basename, join } from "node:path";
+import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import nodemailer from "nodemailer";
 import { kindleFromSerial } from "../shared/kindles";
-import type { KindleDevice, KindleOnUsb, KindleSettings } from "../shared/types";
+import type { KindleDevice, KindleFile, KindleOnUsb, KindleSettings } from "../shared/types";
 import { getSmtpPassword } from "./settings";
 
 /** Common mail services, so most people only type their address. */
@@ -191,22 +191,52 @@ export async function readClippings(): Promise<Array<{ device: string; text: str
 /** What a Kindle can read, the files worth matching against a library. */
 const ON_DEVICE = /\.(azw3?|kfx|mobi|prc|pdf|txt|epub|docx)$/i;
 
+/** The Kindle's own file of every highlight and note: never a book, never removed. */
+const CLIPPINGS = /^my clippings\.txt$/i;
+const isBookFile = (path: string) => ON_DEVICE.test(path) && !CLIPPINGS.test(basename(path));
+
 /**
- * The book files in a Kindle's documents folder, by name, a few folders
- * deep. Kindles keep each book's notes in a .sdr folder beside it; those are
- * skipped.
+ * The book files in a Kindle's documents folder, a few folders deep, with
+ * their sizes. Kindles keep each book's notes in a .sdr folder beside it;
+ * those are skipped.
  */
-export async function deviceFiles(device: string): Promise<string[]> {
-  const found: string[] = [];
+export async function deviceFiles(device: string): Promise<KindleFile[]> {
+  const found: KindleFile[] = [];
+  const docs = join(device, "documents");
   const walk = async (dir: string, depth: number) => {
     const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
-      if (entry.isDirectory() && depth < 3 && !entry.name.endsWith(".sdr") && !entry.name.startsWith(".")) await walk(join(dir, entry.name), depth + 1);
-      else if (entry.isFile() && ON_DEVICE.test(entry.name)) found.push(entry.name);
+      const path = join(dir, entry.name);
+      if (entry.isDirectory() && depth < 3 && !entry.name.endsWith(".sdr") && !entry.name.startsWith(".")) await walk(path, depth + 1);
+      else if (entry.isFile() && isBookFile(entry.name)) {
+        const size = (await stat(path).catch(() => null))?.size ?? 0;
+        found.push({ name: entry.name, path: relative(docs, path).split(sep).join("/"), size });
+      }
     }
   };
-  await walk(join(device, "documents"), 0);
+  await walk(docs, 0);
   return found;
+}
+
+/**
+ * Takes books off a Kindle plugged in as a drive, each with the notes folder
+ * the Kindle keeps beside it. Only book files inside its documents folder go;
+ * anything else asked for is left. A Kindle has no Trash, so they're gone
+ * from it, but stay in the library. Returns how many bytes were freed.
+ */
+export async function removeFromDevice(device: string, files: string[]): Promise<number> {
+  const docs = resolve(device, "documents");
+  let freed = 0;
+  for (const file of files) {
+    const path = resolve(docs, file);
+    const inside = relative(docs, path);
+    if (!inside || inside.startsWith("..") || isAbsolute(inside) || !isBookFile(path)) continue;
+    const size = (await stat(path).catch(() => null))?.size ?? 0;
+    await rm(path, { force: true });
+    await rm(path.replace(/\.[^.\\/]+$/, ".sdr"), { recursive: true, force: true });
+    freed += size;
+  }
+  return freed;
 }
 
 export async function copyToDevice(device: string, file: string, name: string) {

@@ -10,7 +10,7 @@ import { hydrate, persist, useStore } from "@/lib/store";
 import { AppSidebar, Header } from "@/components/Shell";
 import { LibraryView } from "@/components/Library";
 import { Inspector } from "@/components/Inspector";
-import { ConvertDialog, EditDialog, RemoveConfirm, RenameCollection, SendDialog } from "@/components/Dialogs";
+import { ConvertDialog, EditDialog, RemoveConfirm, RenameCollection, SendDialog, TidyConfirm } from "@/components/Dialogs";
 import { MetadataDialog } from "@/components/Metadata";
 import { SettingsDialog } from "@/components/Settings";
 import { DropZone, Jobs, Palette } from "@/components/Overlays";
@@ -204,6 +204,7 @@ export function App() {
           <Dialogs />
           <Palette />
           <RemoveConfirm />
+          <TidyConfirm />
           <Jobs />
           <DropZone />
           <Onboarding />

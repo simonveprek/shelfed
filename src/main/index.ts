@@ -11,7 +11,7 @@ import type { Book, BootState, Collection, KindleDevice, KindleOnUsb, MetadataCa
 import { KINDLE_EMAIL, READABLE } from "../shared/types";
 import { epubToAzw3 } from "./azw3";
 import { docxToHtml, htmlToPdf } from "./convert";
-import { copyToDevice, deviceFiles, findDevices, kindlePort, kindlesOnUsb, readClippings, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
+import { copyToDevice, deviceFiles, findDevices, kindlePort, kindlesOnUsb, readClippings, removeFromDevice, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks } from "./catalogues";
@@ -376,6 +376,8 @@ const api = {
 
   /** The book files already on a Kindle plugged in as a drive. */
   deviceFiles: (device: string) => deviceFiles(device),
+  /** Takes book files off a Kindle plugged in as a drive. */
+  removeFromDevice: (device: string, files: string[]) => removeFromDevice(device, files),
 
   async copyToDevice(id: string, ext: string, device: string) {
     const book = library.get(id);

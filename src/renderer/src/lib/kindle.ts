@@ -2,7 +2,9 @@ import { useEffect, useMemo } from "react";
 import type { KindleDevice, KindleOnUsb } from "../../../shared/types";
 import { connectsLikeAPhone, kindleById } from "../../../shared/kindles";
 import { api, isMac, isWin } from "./api";
-import { booksOnKindle } from "./onkindle";
+import { booksOnKindle, finishedOnKindle } from "./onkindle";
+import { toast } from "@/components/ui";
+import { bytes, plural } from "./util";
 import { setSetting, useStore } from "./store";
 
 /** How long a Kindle Shelfed doesn't know may take to open as a drive before it's taken to be one that won't. */
@@ -85,7 +87,26 @@ export const useKindlePort = () => useStore((s) => s.kindlePort);
 export function useOnKindle(): Set<string> | null {
   const files = useStore((s) => s.kindleFiles);
   const books = useStore((s) => s.books);
-  return useMemo(() => (files ? booksOnKindle(books, files) : null), [files, books]);
+  return useMemo(() => (files ? booksOnKindle(books, files.map((f) => f.name)) : null), [files, books]);
+}
+
+/** Finished books still on the Kindle plugged in as a drive, to offer taking them off. */
+export function useFinishedOnKindle() {
+  const files = useStore((s) => s.kindleFiles);
+  const books = useStore((s) => s.books);
+  return useMemo(() => (files ? finishedOnKindle(books, files) : null), [files, books]);
+}
+
+/** Takes the finished books off the Kindle, after asking. They stay in the library. */
+export async function tidyKindle() {
+  const drive = useStore.getState().kindlePort?.drives[0];
+  const files = useStore.getState().kindleFiles;
+  if (!drive || !files) return;
+  const { books, files: theirs } = finishedOnKindle(useStore.getState().books, files);
+  if (!theirs.length) return;
+  const freed = await api.removeFromDevice(drive.path, theirs.map((f) => f.path));
+  await relistKindle();
+  toast.success(`Took ${plural(books.length, "finished book")} off your Kindle`, { description: `${bytes(freed)} free again. They're still in your library.` });
 }
 
 /** Why a Kindle on the cable can't take books that way, said plainly for this system. */

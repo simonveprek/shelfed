@@ -194,6 +194,9 @@ export type BootState = {
 
 export type KindleDevice = { name: string; path: string; free: number; model?: string };
 
+/** A book file on a Kindle plugged in as a drive: its name, where it is inside documents, and its size. */
+export type KindleFile = { name: string; path: string; size: number };
+
 /** A Kindle on the USB bus, mounted as a drive or not. */
 export type KindleOnUsb = { serial: string; model?: string };
 

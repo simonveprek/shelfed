@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Book, BootState, Collection, KindleDevice, KindleOnUsb, Settings, UpdateState } from "../../../shared/types";
+import type { Book, BootState, Collection, KindleDevice, KindleFile, KindleOnUsb, Settings, UpdateState } from "../../../shared/types";
 import type { PointMood } from "@/components/fragms/points-data";
 import { toast } from "@/components/ui";
 import { api } from "./api";
@@ -62,7 +62,9 @@ type State = {
    */
   kindleCable: "drive" | "phone" | "waiting" | null;
   /** The book files on a Kindle plugged in as a drive, or null with none. */
-  kindleFiles: string[] | null;
+  kindleFiles: KindleFile[] | null;
+  /** Asking whether to take finished books off the Kindle. */
+  confirmTidy: boolean;
   /** When a Kindle was last plugged in, for the welcome it gets. */
   kindleArrived: number | null;
   /** The welcome is showing. */
@@ -100,6 +102,7 @@ export const useStore = create<State>(() => ({
   kindlePort: null,
   kindleCable: null,
   kindleFiles: null,
+  confirmTidy: false,
   kindleArrived: null,
   onboarding: false,
   update: { state: "idle" },
