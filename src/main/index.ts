@@ -190,7 +190,8 @@ const send = (channel: string, ...args: unknown[]) => win?.webContents.send(chan
  * For recording demos and tests: SHELF_DEMO_KINDLE=<folder> pretends a Kindle
  * Paperwhite is plugged in, with that folder as its drive, and
  * SHELF_DEMO_KINDLE=phone a Colorsoft, which connects like a phone and opens
- * as no drive. Never in an installed app.
+ * as no drive. Either one stands in for the system's look at the USB bus, and
+ * neither works in an installed app.
  */
 function demoKindle(): { usb: KindleOnUsb; drive?: KindleDevice } | null {
   const folder = !app.isPackaged && process.env.SHELF_DEMO_KINDLE;
@@ -352,11 +353,15 @@ const api = {
     await sendToKindle(getSettings().kindle, library.filePath(book, ext), format.file, book.title);
   },
 
-  devices: async () => [...(demoKindle()?.drive ? [demoKindle()!.drive!] : []), ...(await findDevices())],
-  async kindlePort() {
-    const port = await kindlePort();
+  // The pretend Kindle stands in for the system's own look, which on Windows
+  // takes PowerShell seconds a test can't wait for.
+  devices: async () => {
     const demo = demoKindle();
-    return demo ? { usb: [demo.usb, ...port.usb], drives: [...(demo.drive ? [demo.drive] : []), ...port.drives] } : port;
+    return demo ? (demo.drive ? [demo.drive] : []) : findDevices();
+  },
+  async kindlePort() {
+    const demo = demoKindle();
+    return demo ? { usb: [demo.usb], drives: demo.drive ? [demo.drive] : [] } : kindlePort();
   },
   kindles: () => kindlesOnUsb(),
 

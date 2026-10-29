@@ -95,8 +95,11 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
     let made = 0;
 
     const launch = async () => {
-      // Linux CI can't run Chromium's sandbox.
-      const args = process.platform === "linux" && process.env.CI ? [".", "--no-sandbox"] : ["."];
+      // Linux CI can't run Chromium's sandbox. Windows calls a window hidden when it
+      // thinks something covers it, and Shelfed stops looking for Kindles while hidden.
+      const args = ["."];
+      if (process.platform === "linux" && process.env.CI) args.push("--no-sandbox");
+      if (process.platform === "win32") args.push("--disable-features=CalculateNativeWinOcclusion");
       app = await electron.launch({ args, cwd: root, env: { ...process.env, SHELF_USERDATA: data, ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}) } });
       page = await app.firstWindow();
       page.on("pageerror", (error) => errors.push(error.message));
