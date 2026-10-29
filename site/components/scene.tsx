@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScro
 import { asset } from "@/lib";
 import { DownloadButton } from "./download";
 
-type Chapter = { clip: string; label: string; title: ReactNode; line?: string };
+type Chapter = { clip: string; label: string; title: ReactNode; line?: string; facts?: string[] };
 
 /** What the window shows as you scroll, one idea at a time. */
 const CHAPTERS: Chapter[] = [
@@ -18,11 +18,11 @@ const CHAPTERS: Chapter[] = [
       </>
     ),
   },
-  { clip: "bookcase", label: "The 3D bookcase changing from oak to slate to walnut", title: "Every book where you can see it.", line: "Covers, a list, shelves, or a bookcase in oak, walnut or slate." },
-  { clip: "reader", label: "Turning the pages of Pride and Prejudice", title: "Opens where you stopped.", line: "One calm reader for every format, with highlights and notes." },
-  { clip: "kindle-plug", label: "A Kindle plugged in, the window's edges lighting up", title: "It knows your Kindle by name.", line: "From a Kindle 2 to a Colorsoft, in 3D, in its own colour." },
-  { clip: "kindle-drop", label: "A book dropped onto the Kindle and copied across", title: "Drop a book on it. It's there.", line: "Copied by cable, or sent by email to any Kindle, anywhere." },
-  { clip: "icons", label: "Settings switching between Shelf's app icons", title: "And make it yours.", line: "Light or dark, and eight app icons to choose from." },
+  { clip: "bookcase", label: "The 3D bookcase changing from oak to slate to walnut", title: "Every book where you can see it.", line: "Covers, a list, shelves, or a bookcase in oak, walnut or slate.", facts: ["Plain files, a folder per author", "Details from Open Library", "Collections, ratings, search"] },
+  { clip: "reader", label: "Turning the pages of Pride and Prejudice", title: "Opens where you stopped.", line: "One calm reader for every format, with highlights and notes.", facts: ["Light, sepia, dark or black", "Bookmarks and search", "PDFs and comics too"] },
+  { clip: "kindle-plug", label: "A Kindle plugged in, the window's edges lighting up", title: "It knows your Kindle by name.", line: "From a Kindle 2 to a Colorsoft, in 3D, in its own colour.", facts: ["Each model since the Kindle 2", "Read from its serial number", "Its highlights come back"] },
+  { clip: "kindle-drop", label: "A book dropped onto the Kindle and copied across", title: "Drop a book on it. It's there.", line: "Copied by cable, or sent by email to any Kindle, anywhere.", facts: ["Kindle file made for you", "From your own mail account", "Gmail, Outlook and iCloud ready"] },
+  { clip: "icons", label: "Settings switching between Shelf's app icons", title: "And make it yours.", line: "Light or dark, and eight app icons to choose from.", facts: ["A colour for every spine", "Ribbons in the books you're reading", "Paper, oak, walnut or slate"] },
 ];
 
 /**
@@ -71,7 +71,7 @@ export function Scene() {
     <section ref={section} style={{ height: `${CHAPTERS.length * 90}svh` }} aria-label="What Shelf does">
       <div className="sticky top-0 flex h-svh flex-col items-center overflow-hidden px-5 pt-[clamp(112px,17svh,168px)] sm:px-8">
         {/* The words, one chapter at a time. */}
-        <div className="relative flex h-[clamp(170px,24svh,232px)] w-full max-w-[60rem] flex-col items-center text-center">
+        <div className="relative flex h-[clamp(196px,27svh,250px)] w-full max-w-[60rem] flex-col items-center text-center">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={active}
@@ -87,14 +87,25 @@ export function Scene() {
                   <DownloadButton center />
                 </div>
               ) : (
-                <p className="mt-4 max-w-[34rem] text-[clamp(1rem,1.5vw,1.15rem)] leading-relaxed text-muted">{chapter.line}</p>
+                <>
+                  <p className="mt-4 max-w-[34rem] text-[clamp(1rem,1.5vw,1.15rem)] leading-relaxed text-muted">{chapter.line}</p>
+                  {chapter.facts && (
+                    <ul className="mt-5 flex flex-wrap justify-center gap-2">
+                      {chapter.facts.map((fact) => (
+                        <li key={fact} className="rounded-full border border-border bg-card/60 px-3 py-1 text-[12.5px] text-muted">
+                          {fact}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               )}
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* The window, the same one all the way down. */}
-        <motion.div className="relative w-[min(1180px,92vw,calc((100svh-clamp(112px,17svh,168px)-clamp(170px,24svh,232px)-48px)*1.6))]" style={{ rotateX: tilt, scale, transformPerspective: 1600, transformOrigin: "50% 0%" }}>
+        <motion.div className="relative w-[min(1180px,92vw,calc((100svh-clamp(112px,17svh,168px)-clamp(196px,27svh,250px)-48px)*1.6))]" style={{ rotateX: tilt, scale, transformPerspective: 1600, transformOrigin: "50% 0%" }}>
 
             <div className="relative aspect-[1280/800] overflow-hidden rounded-[15px] bg-card shadow-[var(--shadow-window)] ring-1 ring-line-strong">
               {/* Where macOS draws its traffic lights, which the recordings leave out. */}

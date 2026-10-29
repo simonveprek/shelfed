@@ -7,8 +7,9 @@ import { REPO } from "@/lib";
 
 /*
  * One scene carries the page: the app's window pinned while its story
- * scrolls past. After it, only what a visitor still needs: why it's safe to
- * try, where to get it, and the few honest caveats.
+ * scrolls past. After it, the detail for those who want it: why it's safe to
+ * try, everything it does, the files it handles, where to get it, and the
+ * honest answers.
  */
 export default function Home() {
   return (
@@ -17,8 +18,10 @@ export default function Home() {
       <main>
         <Scene />
         <Why />
+        <Everything />
+        <Formats />
         <Get />
-        <FinePrint />
+        <Questions />
       </main>
       <Footer />
     </>
@@ -93,22 +96,149 @@ function Get() {
   );
 }
 
-/** The honest caveats, small but there before anyone has to ask. */
-function FinePrint() {
-  const notes = [
-    ["Kindles from 2024 on", "connect like phones, not drives, so Shelf sends to them by email for now. Older Kindles also take books by cable."],
-    ["Books with DRM", "won't open, and Shelf doesn't remove it. Books without DRM, from anywhere, open fine."],
-    ["The first time you open it", "your computer warns you, as Shelf isn't signed yet. On a Mac, right-click it and choose Open; on Windows, More info, then Run anyway."],
-    ["Coming from Calibre?", "Drop its library folder on Shelf and the books come in. Calibre's own tags and shelves don't, yet."],
+/** Everything Shelf does, grouped, for the visitor who reads to the end before trying. */
+function Everything() {
+  const groups: Array<[string, string[]]> = [
+    [
+      "Your library",
+      [
+        "Covers, a list, shelves or a 3D bookcase",
+        "Plain files, one folder per author, movable anywhere",
+        "Browse by author, series, tag or format",
+        "Collections, favourites, ratings and reading status",
+        "Covers, descriptions and publishers found online",
+        "Removing a book can be undone",
+      ],
+    ],
+    [
+      "Reading",
+      [
+        "Opens every book where you left it",
+        "Highlights, notes and bookmarks, copied out as Markdown",
+        "Search inside the book",
+        "Light, sepia, dark or black pages",
+        "The book's own type, a serif or a sans, at any size",
+        "Pages to turn, or one long scroll",
+      ],
+    ],
+    [
+      "Kindle",
+      [
+        "Recognises every model from the Kindle 2 on",
+        "Copies by cable, making the Kindle file it needs",
+        "Sends by email from your own mail account",
+        "Ready settings for Gmail, Outlook and iCloud",
+        "Brings your Kindle highlights back from My Clippings",
+        "PDFs laid out to fit a Kindle's screen",
+      ],
+    ],
+    [
+      "Converting",
+      [
+        "EPUB, AZW3, PDF, Word, FB2, text or a web page",
+        "From any format Shelf can open",
+        "PDF pages in A4, A5, Letter or Kindle size",
+        "All built in, with nothing else to install",
+        "The new file sits beside the old one",
+      ],
+    ],
+    [
+      "Finding books",
+      [
+        "Thousands of free classics from Standard Ebooks",
+        "And from Project Gutenberg, a click each",
+        "Suggestions from what you own, worked out on your computer",
+        "Drop files or whole folders anywhere on the window",
+        "Opens books straight from Finder or Explorer",
+      ],
+    ],
+    [
+      "Yours",
+      [
+        "Light, dark, or following your system",
+        "Eight app icons to choose from",
+        "A spine colour and a ribbon for every book",
+        "No account, no tracking, works offline",
+        "Updates itself, if you let it",
+      ],
+    ],
   ];
   return (
-    <section className="mx-auto max-w-[1080px] px-5 pb-24 sm:px-8">
-      <div className="grid gap-x-10 gap-y-6 border-t border-border pt-10 sm:grid-cols-2">
-        {notes.map(([lead, rest]) => (
-          <p key={lead} className="text-[14px] leading-relaxed text-muted">
-            <span className="text-foreground">{lead}</span> {rest}
-          </p>
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-[1080px] px-5 py-24 sm:px-8 sm:py-32">
+        <h2 className="max-w-[18ch] text-[clamp(2rem,4vw,3rem)] leading-[1.02] font-medium tracking-[-0.04em]">Everything in it.</h2>
+        <div className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {groups.map(([title, items]) => (
+            <div key={title} className="border-t border-border pt-5">
+              <h3 className="text-[15px] font-medium">{title}</h3>
+              <ul className="mt-4 flex flex-col gap-2.5">
+                {items.map((item) => (
+                  <li key={item} className="text-[14.5px] leading-snug text-muted">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** What it takes in and what it gives back, the first question of anyone with a pile of ebooks. */
+function Formats() {
+  const rows: Array<[string, string[]]> = [
+    ["Opens", ["EPUB", "MOBI", "AZW3", "AZW", "PRC", "FB2", "CBZ", "PDF", "Word", "Markdown", "HTML", "Text"]],
+    ["Makes", ["EPUB", "AZW3", "PDF", "Word", "FB2", "Text", "Web page"]],
+  ];
+  return (
+    <section className="border-t border-border bg-well">
+      <div className="mx-auto flex max-w-[1080px] flex-col gap-6 px-5 py-14 sm:px-8">
+        {rows.map(([label, formats]) => (
+          <div key={label} className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:gap-8">
+            <span className="w-20 shrink-0 text-[14px] font-medium">{label}</span>
+            <ul className="flex flex-wrap gap-2">
+              {formats.map((format) => (
+                <li key={format} className="rounded-full border border-border bg-card px-3 py-1 font-mono text-[12.5px] text-muted">
+                  {format}
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+/** The honest answers, all open, before anyone has to ask. */
+function Questions() {
+  const questions: Array<[string, string]> = [
+    ["Is it really free?", "Yes. Shelf is open source under the MIT licence, with no paid version, no account and nothing to subscribe to."],
+    [
+      "Which Kindles does it work with?",
+      "Every Kindle, by email. By cable, the ones that show up as a drive when plugged in, which is most made before 2024. Newer ones, like the 2024 Paperwhite and the Colorsoft, connect the way phones do, so Shelf sends to them by email for now.",
+    ],
+    ["Can it open books I bought on Amazon?", "Not if they have DRM, as most do, and Shelf doesn't remove it. Books without DRM, from anywhere, open fine."],
+    ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelf and every book comes in, with the details stored inside each file. Calibre's own tags and shelves don't come across yet."],
+    ["Where are my books kept?", "In a Shelf Library folder in your Documents, a folder for each author, as ordinary files. Move it anywhere from Settings."],
+    ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
+    ["Why does my computer warn me the first time?", "Shelf isn't signed with a paid certificate yet. On a Mac, right-click it in Applications and choose Open. On Windows, choose More info, then Run anyway."],
+    ["What does it run on?", "macOS on Apple silicon or Intel, and Windows 10 or 11 on x64 or ARM. On Linux it runs built from the source."],
+  ];
+  return (
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-[1080px] px-5 py-24 sm:px-8 sm:py-28">
+        <h2 className="text-[clamp(2rem,4vw,3rem)] leading-[1.02] font-medium tracking-[-0.04em]">Good to know.</h2>
+        <dl className="mt-12 grid gap-x-12 gap-y-9 sm:grid-cols-2">
+          {questions.map(([question, answer]) => (
+            <div key={question}>
+              <dt className="text-[15.5px] font-medium">{question}</dt>
+              <dd className="mt-2 text-[14.5px] leading-relaxed text-muted">{answer}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );
