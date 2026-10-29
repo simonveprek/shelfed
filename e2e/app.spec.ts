@@ -157,7 +157,9 @@ test.describe("a Kindle plugged in as a drive", () => {
     await expect(page.locator("aside").getByText("1 of your books is on it", { exact: false })).toBeVisible();
     await expect(card(page, "Salt and Ink").getByText("Kindle", { exact: true })).toBeVisible();
     await expect(card(page, "A Winter Orchard").getByText("Kindle", { exact: true })).toHaveCount(0);
-    // The sidebar names the place; selecting the book adds its badge.
+    // The sidebar names the place; selecting the book adds its badge. A book
+    // not on it is picked first, as the last one imported starts selected.
+    await card(page, "A Winter Orchard").click();
     await expect(page.getByText("On your Kindle", { exact: true })).toHaveCount(1);
     await card(page, "Salt and Ink").click();
     await expect(page.getByText("On your Kindle", { exact: true })).toHaveCount(2);
