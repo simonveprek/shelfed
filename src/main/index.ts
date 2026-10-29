@@ -337,9 +337,7 @@ const api = {
     if (!path) return null;
     await library.settle();
     setSettings({ libraryPath: path });
-    library = await new Library(path).open();
-    library.onSaveError = () => send("save-failed");
-  library.report = (message, error) => (error ? log.warn(message, error) : log.info(message));
+    library = await openLibrary(path);
     return boot();
   },
 
@@ -629,14 +627,21 @@ app.on("web-contents-created", (_event, contents) => {
   });
 });
 
+/** The library at a path, telling the window when saving fails and the log what it does with folders. */
+async function openLibrary(path: string) {
+  const opened = new Library(path);
+  opened.onSaveError = () => send("save-failed");
+  opened.report = (message, error) => (error ? log.warn(message, error) : log.info(message));
+  return opened.open();
+}
+
 app.whenReady().then(async () => {
   if (!primary) return;
   session.defaultSession.setPermissionRequestHandler((_wc, _permission, done) => done(false));
   queued.push(...process.argv.slice(1).filter(isBook));
   // While developing, the dock shows Shelfed's icon instead of Electron's.
   if (isMac && !app.isPackaged) app.dock?.setIcon(join(here, "../../build/icon.png"));
-  library = await new Library(getSettings().libraryPath).open();
-  library.onSaveError = () => send("save-failed");
+  library = await openLibrary(getSettings().libraryPath);
   serve();
   speak();
   buildMenu();
