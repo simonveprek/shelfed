@@ -198,6 +198,23 @@ export class Library {
     return join(this.root, book.dir);
   }
 
+  /**
+   * A book's folder, for sending to the Trash, only when it's safe to: a folder
+   * inside the library, not the library itself, and holding no other book.
+   * Anything else throws, and nothing is removed.
+   */
+  private ownFolder(book: Book) {
+    const dir = resolve(this.bookDir(book));
+    const inside = relative(resolve(this.root), dir);
+    if (!book.dir || !inside || inside.startsWith("..") || isAbsolute(inside)) throw new Error(`Not a book's own folder: ${dir}`);
+    for (const other of this.books.values()) {
+      if (other.id === book.id) continue;
+      const theirs = relative(dir, resolve(this.bookDir(other)));
+      if (!theirs || !theirs.startsWith("..")) throw new Error(`${dir} also holds ${other.title}`);
+    }
+    return dir;
+  }
+
   filePath(book: Book, ext?: string) {
     const format = ext ? book.formats.find((f) => f.ext === ext) : book.formats[0];
     if (!format) throw new Error(`This book has no ${ext?.toUpperCase()} file.`);
@@ -414,8 +431,9 @@ export class Library {
       await this.addFormat(into, format.ext, join(this.bookDir(source), format.file));
     }
     // Only once every file is safely copied does the old folder go, and to the Trash.
-    await shell.trashItem(this.bookDir(source)).catch(() => rm(this.bookDir(source), { recursive: true, force: true, maxRetries: 5 }));
-    await this.tidy(dirname(this.bookDir(source)));
+    const dir = this.ownFolder(source);
+    await shell.trashItem(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }));
+    await this.tidy(dirname(dir));
     this.books.delete(from);
     this.save();
     return target;
@@ -443,8 +461,17 @@ export class Library {
     const book = this.books.get(id);
     this.pending.delete(id);
     if (!book) return;
+    let dir: string;
+    try {
+      dir = this.ownFolder(book);
+    } catch (error) {
+      // The book leaves the library; its folder, shared or strange, stays where it is.
+      console.error("Kept the folder of a removed book", error);
+      this.books.delete(id);
+      this.save();
+      return;
+    }
     this.books.delete(id);
-    const dir = this.bookDir(book);
     await shell.trashItem(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }).catch((error) => console.error("Could not remove", dir, error)));
     await this.tidy(dirname(dir));
     this.save();

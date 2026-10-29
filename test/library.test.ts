@@ -319,3 +319,30 @@ describe("a book in several formats", () => {
   });
 });
 
+describe("sending a folder to the Trash", () => {
+  it("never takes a folder another book is in", async () => {
+    const lib = await new Library(root).open();
+    const [a, b] = await files(2);
+    const one = (await lib.importFile(a)).book;
+    const two = (await lib.importFile(b)).book;
+    // A broken entry pointing at the library itself, or at a folder holding another book.
+    for (const dir of ["", ".", "..", two.dir.split("/")[0]]) {
+      one.dir = dir;
+      await expect(lib.merge(one.id, two.id)).rejects.toThrow();
+      expect(existsSync(lib.filePath(two))).toBe(true);
+    }
+  });
+
+  it("keeps the folder when removing a book whose folder isn't its own", async () => {
+    const lib = await new Library(root).open();
+    const [a, b] = await files(2);
+    const one = (await lib.importFile(a)).book;
+    const two = (await lib.importFile(b)).book;
+    one.dir = "";
+    lib.remove([one.id], 0);
+    await lib.settle();
+    expect(lib.list().map((x) => x.id)).toEqual([two.id]);
+    expect(existsSync(lib.filePath(two))).toBe(true);
+  });
+});
+
