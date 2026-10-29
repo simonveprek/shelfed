@@ -1,6 +1,7 @@
 name: Release
 
-# Push a tag like v0.2.0 to build installers into a draft release.
+# Push a tag like v0.2.0 to build installers into a draft release, then publish
+# the release on GitHub when it looks right.
 on:
   push:
     tags: ["v*"]
@@ -9,8 +10,22 @@ permissions:
   contents: write
 
 jobs:
+  # The draft release, made once before the builds start. Three builds that each
+  # made their own at the same moment could leave three drafts.
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Draft the release, unless it's already there
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --draft --title "Shelfed ${TAG#v}" --notes-file build/release-notes.md
+
   build:
     name: ${{ matrix.name }}
+    needs: draft
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

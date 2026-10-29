@@ -135,6 +135,8 @@ A book is untrusted input, often from somewhere unknown, so the window treats it
 - **Locked-down navigation.** No new windows and no webviews. Sub-frames can only navigate to `blob:`, `data:` or `about:blank`. Every permission request (camera, notifications and so on) is denied. Links open in your browser, and only `https:` ones.
 - **Narrow downloads.** The main process refuses to download anything but `https:` URLs.
 
+Found a hole? Please report it privately, as [SECURITY.md](SECURITY.md) explains.
+
 ## Privacy
 
 No account, no analytics, no telemetry. Shelfed goes online only:
@@ -176,6 +178,7 @@ npm run dev
 | `npm run dev` | Runs Shelfed, reloading as you edit |
 | `npm run check` | Typechecks, then runs the unit tests |
 | `npm run test:app` | Builds Shelfed and drives it with Playwright |
+| `SHELF_APP=<app> npx playwright test` | Drives a packaged app instead, e.g. `dist/mac-arm64/Shelfed.app/Contents/MacOS/Shelfed` |
 | `npm run dist:mac` / `dist:win` | Makes the installer in `dist` |
 | `npm run build:azw3` | Rebuilds `resources/azw3.wasm` from `tools/azw3` |
 | `npm run site` | Runs the website at localhost:4173 |

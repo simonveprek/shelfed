@@ -148,6 +148,7 @@ test("makes Kindle, Word and FB2 files with nothing else installed", async ({ sh
 });
 
 test.describe("a Kindle plugged in as a drive", () => {
+  test.skip(Boolean(process.env.SHELF_APP), "An installed app never pretends a Kindle is plugged in");
   test.use({ kindle: "drive", onKindle: ["Salt and Ink - Ada Marsh.azw3", "Notes.txt"] });
 
   test("shows which books are already on it", async ({ shelf }) => {
@@ -170,6 +171,7 @@ test.describe("a Kindle plugged in as a drive", () => {
 });
 
 test.describe("a Kindle that connects like a phone", () => {
+  test.skip(Boolean(process.env.SHELF_APP), "An installed app never pretends a Kindle is plugged in");
   test.use({ kindle: "phone" });
 
   test("says plainly it can't take books by cable", async ({ shelf }) => {

@@ -4,7 +4,7 @@ The first release of Shelfed: a quiet home for your books, on Mac and Windows. F
 
 - **Your library as plain files.** One folder per author in `Documents/Shelf Library`, readable with or without Shelfed. Covers, a list, shelves, or a 3D bookcase in paper, oak, walnut or slate.
 - **A reader for every format.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens every book where you stopped.
-- **Your Kindle, by name.** Plug one in and Shelfed recognises the model, from the Kindle 2 to the Colorsoft and Scribe, and shows it in 3D. Drag a book onto it to copy it across by cable, or send it by email from your own mail account.
+- **Your Kindle, by name.** Plug one in and Shelfed recognises the model, from the Kindle 2 to the Colorsoft and Scribe, and shows it in 3D. Drag a book onto it to copy it across by cable, or send it by email from your own mail account. Books already on it get a badge, and a list of their own.
 - **Converting, built in.** EPUB, AZW3 for Kindle, PDF, Word, FB2, plain text and web pages, with nothing else to install.
 - **Finding books.** Thousands of free classics from Standard Ebooks and Project Gutenberg, suggestions worked out from what you own, and details from Open Library and Google Books.
 - **Yours.** Light and dark, eight app icons, a spine colour and a ribbon for every book. No account and no tracking.
@@ -29,7 +29,10 @@ Shelfed isn't signed with a paid certificate yet, so your computer asks before o
 
 ## Good to know
 
-- **Kindles from 2024 on** (the 2024 Paperwhite, Colorsoft and Kindle) connect the way phones do, not as a drive, so Shelfed sends to them by email for now. Older Kindles also take books by cable.
+What's coming next is in the [roadmap](https://github.com/simonveprek/shelfed/blob/main/ROADMAP.md).
+
+
+- **Kindles from 2024 on** (the 2024 Paperwhite, Colorsoft and Kindle) connect the way phones do, not as a drive, so Shelfed sends to them by email for now, and says so when you plug one in. Older Kindles also take books by cable.
 - **Books with DRM**, as most bought from Amazon are, won't open. Shelfed doesn't remove DRM.
 - **Coming from Calibre:** drop its library folder on Shelfed and the books come in. Calibre's own tags and shelves don't come across yet.
 - **Kindle files made by Shelfed** (AZW3) are new in this release. If one doesn't look right on your Kindle, please open an issue.

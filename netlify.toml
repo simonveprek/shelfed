@@ -1,0 +1,11 @@
+# The website, for Netlify: connect this repository and it builds from here.
+# Caching headers are in site/public/_headers.
+[build]
+  base = "site"
+  command = "npm run build"
+  publish = "out"
+  # The site changes only when site/ does.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- ."
+
+[build.environment]
+  NODE_VERSION = "22"

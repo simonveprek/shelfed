@@ -100,7 +100,11 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       const args = ["."];
       if (process.platform === "linux" && process.env.CI) args.push("--no-sandbox");
       if (process.platform === "win32") args.push("--disable-features=CalculateNativeWinOcclusion");
-      app = await electron.launch({ args, cwd: root, env: { ...process.env, SHELF_USERDATA: data, ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}) } });
+      const env = { ...process.env, SHELF_USERDATA: data, ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}) };
+      // SHELF_APP=<the packaged app's executable> tests an installer's app instead of the build.
+      app = process.env.SHELF_APP
+        ? await electron.launch({ executablePath: process.env.SHELF_APP, args: args.slice(1), env })
+        : await electron.launch({ args, cwd: root, env });
       page = await app.firstWindow();
       page.on("pageerror", (error) => errors.push(error.message));
       page.on("console", (message) => message.type() === "error" && errors.push(message.text()));

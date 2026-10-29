@@ -1,7 +1,8 @@
 name: Site
 
 # Builds the site in site/ with Next.js and publishes it to GitHub Pages
-# whenever it changes on main.
+# whenever it changes on main, if the site lives there (see below). Netlify
+# uses netlify.toml instead.
 on:
   push:
     branches: [main]
@@ -19,8 +20,9 @@ concurrency:
 
 jobs:
   deploy:
-    # Pages needs a public repo on GitHub's free plan; until then this waits.
-    if: ${{ !github.event.repository.private }}
+    # Only when the site is hosted on GitHub Pages rather than Netlify: turn Pages
+    # on in the repository settings and set the variable SITE_ON_PAGES to true.
+    if: ${{ vars.SITE_ON_PAGES == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
