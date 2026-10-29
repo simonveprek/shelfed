@@ -44,7 +44,9 @@ export function speakable(ssml: string) {
     }
   };
   walk(doc.documentElement);
-  return { text: text.trimEnd(), marks };
+  // The paragraph says what language it's in, which beats what the book's details claim.
+  const lang = doc.documentElement.getAttribute("xml:lang") ?? doc.documentElement.getAttributeNS("http://www.w3.org/XML/1998/namespace", "lang") ?? "";
+  return { text: text.trimEnd(), marks, lang };
 }
 
 /** The mark for a place in the words: the last one at or before it. */
@@ -57,8 +59,36 @@ export function markAt(marks: Array<[number, string]>, at: number) {
   return found;
 }
 
-/** The system's voices, the ones for this language first, then the rest. */
-export function useVoices(lang: string) {
+/** ISO 639-2 codes, as Calibre and many books write a language, to the two letters voices use. */
+const THREE: Record<string, string> = {
+  eng: "en", ces: "cs", cze: "cs", slk: "sk", slo: "sk", deu: "de", ger: "de", fra: "fr", fre: "fr", spa: "es", ita: "it",
+  pol: "pl", rus: "ru", ukr: "uk", por: "pt", nld: "nl", dut: "nl", hun: "hu", swe: "sv", dan: "da", nor: "no", fin: "fi",
+  jpn: "ja", zho: "zh", chi: "zh", kor: "ko", ell: "el", gre: "el", tur: "tr", heb: "he", ara: "ar",
+};
+
+/** A language as two letters, from "en-GB", "eng" or "English" alike; "" when there's nothing to go on. */
+export function languageOf(code?: string | null) {
+  const base = (code ?? "").trim().toLowerCase().split(/[-_]/)[0];
+  if (base === "english") return "en";
+  if (base === "czech" || base === "čeština") return "cs";
+  return THREE[base] ?? base;
+}
+
+/** The voices for a language, the best first; every voice when the language is unknown or has none. */
+export function voicesFor(all: SpeechSynthesisVoice[], lang?: string | null) {
+  const base = languageOf(lang);
+  const own = base ? all.filter((v) => languageOf(v.lang) === base) : [];
+  return [...(own.length ? own : all)].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+}
+
+/** The voice for a paragraph: the one chosen, if it speaks its language, or else the best that does. */
+export function pickVoice(all: SpeechSynthesisVoice[], lang: string | null | undefined, chosen?: string) {
+  const voices = voicesFor(all, lang);
+  return voices.find((v) => v.voiceURI === chosen) ?? voices[0] ?? null;
+}
+
+/** Every voice the system has, kept up to date as it loads them. */
+export function useVoices() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>(() => (typeof speechSynthesis === "undefined" ? [] : speechSynthesis.getVoices()));
   useEffect(() => {
     if (typeof speechSynthesis === "undefined") return;
@@ -67,9 +97,7 @@ export function useVoices(lang: string) {
     speechSynthesis.addEventListener("voiceschanged", update);
     return () => speechSynthesis.removeEventListener("voiceschanged", update);
   }, []);
-  const base = lang.toLowerCase().split("-")[0];
-  const own = voices.filter((v) => v.lang.toLowerCase().startsWith(base));
-  return [...(own.length ? own : voices)].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+  return voices;
 }
 
 /** macOS's joke voices, never the one a book starts with. */
@@ -96,9 +124,11 @@ export function useReadAloud(view: RefObject<Speaking | null>, where: RefObject<
   const current = useRef<SpeechSynthesisUtterance | null>(null);
   const opts = useRef(options);
   opts.current = options;
-  const voices = useVoices(options.lang);
-  const voicesRef = useRef(voices);
-  voicesRef.current = voices;
+  const all = useVoices();
+  const voicesRef = useRef(all);
+  voicesRef.current = all;
+  // The voices offered: those for the book's language.
+  const voices = voicesFor(all, options.lang);
 
   const say = useCallback(async (ssml: string | undefined, mine: number) => {
     const v = view.current;
@@ -113,12 +143,13 @@ export function useReadAloud(view: RefObject<Speaking | null>, where: RefObject<
       if (!v.tts || v.tts.doc === chapter) return finish(mine);
       return say(v.tts.start(), mine);
     }
-    const { text, marks } = speakable(ssml);
+    const { text, marks, lang: spoken } = speakable(ssml);
     if (!text.trim()) return say(v.tts.next(), mine);
     const words = new SpeechSynthesisUtterance(text);
     const { voice, rate, lang } = opts.current;
-    words.voice = voicesRef.current.find((x) => x.voiceURI === voice) ?? voicesRef.current[0] ?? null;
-    words.lang = words.voice?.lang ?? lang;
+    const language = languageOf(spoken) || languageOf(lang);
+    words.voice = pickVoice(voicesRef.current, language, voice);
+    words.lang = words.voice?.lang ?? language;
     words.rate = rate;
     if (marks[0]) v.tts.setMark(marks[0][1]);
     words.onboundary = (e) => {
