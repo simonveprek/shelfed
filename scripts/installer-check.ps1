@@ -45,8 +45,15 @@ Start-Sleep -Seconds 6
 Shot "1-opened"
 
 # 2. Installing again while Shelfed is open: after a few seconds it asks to close it.
-$second = Install "2-while-open" 9
+# The installer's check rests on Windows refusing to open a running program for writing.
+try { [System.IO.File]::Open($app, "Open", "Write").Dispose(); Write-Host "::error::Shelfed.exe opened for writing while running"; $failed = $true }
+catch { Write-Host "While Shelfed runs, Shelfed.exe can't be opened for writing, as the check expects." }
+$before = (Get-Item $app).LastWriteTime
+$second = Install "2-while-open" 16
 Shot "2-asks-to-close"
+if ((Get-Item $app).LastWriteTime -ne $before) { Write-Host "::error::The installer replaced Shelfed.exe while it was running"; $failed = $true }
+$prompt = Get-Process -Id $second.Id -ErrorAction SilentlyContinue | Select-Object -ExpandProperty MainWindowTitle
+Write-Host "While Shelfed was open, the installer's window said: $prompt"
 if ($second.HasExited) { Write-Host "::error::The installer went ahead while Shelfed was open" ; $failed = $true }
 Stop-Process -Id $second.Id -Force -ErrorAction SilentlyContinue
 
