@@ -249,7 +249,7 @@ function Questions() {
     ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelfed and every book comes in, with the details stored inside each file. Calibre's own tags and shelves don't come across yet."],
     ["Where are my books kept?", "In a Shelf Library folder in your Documents, a folder for each author, as ordinary files. Move it anywhere from Settings."],
     ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
-    ["Why does my computer warn me the first time?", "Shelfed isn't signed with a paid certificate yet. On a Mac, right-click it in Applications and choose Open. On Windows, choose More info, then Run anyway."],
+    ["Why does my computer warn me the first time?", "Shelfed isn't signed with a paid certificate yet. On a Mac, open it once, then go to System Settings, Privacy & Security, and click Open Anyway; on macOS 14 or earlier, right-click it and choose Open instead. On Windows, choose More info, then Run anyway."],
     ["What does it run on?", "macOS on Apple silicon or Intel, and Windows 10 or 11 on x64 or ARM. On Linux it runs built from the source."],
   ];
   return (

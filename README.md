@@ -66,7 +66,9 @@ Download the installer for your system from [the latest release](https://github.
 
 The builds aren't signed yet:
 
-- **macOS:** the first time, right-click Shelfed in Applications and choose **Open**. If macOS says the app is damaged, run `xattr -cr /Applications/Shelfed.app` once.
+- **macOS 15 and later:** open Shelfed once and choose **Done** at the warning. Then go to **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to Shelfed, and enter your password. It opens normally from then on.
+- **macOS 14 and earlier:** the first time, right-click Shelfed in Applications and choose **Open**.
+- **If macOS says the app is damaged,** run `xattr -cr /Applications/Shelfed.app` once in Terminal.
 - **Windows:** if SmartScreen says it protected your PC, choose **More info**, then **Run anyway**.
 
 Shelfed looks for new versions on GitHub every few hours, and you can turn that off in Settings → About Shelfed. On Windows an update downloads quietly and goes in the next time Shelfed starts. On macOS and Linux Shelfed tells you a new version is out and links to it, since an app that isn't signed can't replace itself on a Mac.
