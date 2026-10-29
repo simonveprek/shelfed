@@ -327,6 +327,7 @@ const api = {
     setSettings({ libraryPath: path });
     library = await new Library(path).open();
     library.onSaveError = () => send("save-failed");
+  library.report = (message, error) => (error ? log.warn(message, error) : log.info(message));
     return boot();
   },
 
@@ -548,10 +549,10 @@ app.on("open-file", (event, path) => {
 app.on("second-instance", (_event, argv, workingDirectory) => {
   // Explorer may pass paths relative to where it started the second copy.
   openFiles(argv.slice(1).filter(isBook).map((file) => resolve(workingDirectory, file)));
-  if (win) {
-    if (win.isMinimized()) win.restore();
-    win.focus();
-  }
+  // Its window closed and it never quit: a new window, rather than nothing at all.
+  if (!win || win.isDestroyed()) return createWindow();
+  if (win.isMinimized()) win.restore();
+  win.focus();
 });
 
 // Every page the app makes stays put: frames may only show the book pages it
@@ -594,7 +595,8 @@ app.on("before-quit", async (event) => {
   if (quitting) return;
   event.preventDefault();
   quitting = true;
-  await library?.settle().catch(() => {});
+  // Whatever is still going gets a few seconds; Shelfed never stays running unseen.
+  await Promise.race([library?.settle().catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
   app.quit();
 });
 
