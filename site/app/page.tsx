@@ -1,5 +1,8 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import { GithubIcon } from "@hugeicons/core-free-icons";
+import {
+  ArrowDataTransferHorizontalIcon, BookOpen01Icon, FileExportIcon, FileImportIcon, GithubIcon, Globe02Icon, LibraryIcon, PackageIcon,
+  PaintBoardIcon, SourceCodeIcon, SquareLock02Icon, Tablet01Icon,
+} from "@hugeicons/core-free-icons";
 import { DownloadButton, OtherBuilds } from "@/components/download";
 import { Mark } from "@/components/mark";
 import { Scene } from "@/components/scene";
@@ -28,6 +31,15 @@ export default function Home() {
   );
 }
 
+/** An icon on a soft square, the way the app's settings show theirs. */
+function Tile({ icon, small = false }: { icon: typeof LibraryIcon; small?: boolean }) {
+  return (
+    <span className={`grid shrink-0 place-items-center bg-control text-foreground ${small ? "size-8 rounded-[10px]" : "size-11 rounded-[13px]"}`}>
+      <HugeiconsIcon icon={icon} size={small ? 16 : 20} />
+    </span>
+  );
+}
+
 function Nav() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-background via-background/80 to-transparent">
@@ -52,16 +64,17 @@ function Nav() {
 /** Three reasons to try it, each said once. */
 function Why() {
   const reasons = [
-    ["Free and open source.", "No account, no subscription, no paid version."],
-    ["Your books stay yours.", "Plain files on your computer. Nothing is tracked, and Shelf only goes online when you ask."],
-    ["Nothing else to install.", "Reading, converting and sending to your Kindle are all built in."],
+    { icon: SourceCodeIcon, title: "Free and open source.", text: "No account, no subscription, no paid version." },
+    { icon: SquareLock02Icon, title: "Your books stay yours.", text: "Plain files on your computer. Nothing is tracked, and Shelf only goes online when you ask." },
+    { icon: PackageIcon, title: "Nothing else to install.", text: "Reading, converting and sending to your Kindle are all built in." },
   ];
   return (
     <section className="mx-auto max-w-[1080px] px-5 py-28 sm:px-8 sm:py-40">
       <div className="grid gap-12 sm:grid-cols-3 sm:gap-10">
-        {reasons.map(([title, text]) => (
+        {reasons.map(({ icon, title, text }) => (
           <div key={title}>
-            <h3 className="text-[clamp(1.35rem,2.2vw,1.65rem)] leading-tight font-medium tracking-[-0.03em]">{title}</h3>
+            <Tile icon={icon} />
+            <h3 className="mt-6 text-[clamp(1.35rem,2.2vw,1.65rem)] leading-tight font-medium tracking-[-0.03em]">{title}</h3>
             <p className="mt-3 text-[15.5px] leading-relaxed text-muted">{text}</p>
           </div>
         ))}
@@ -98,8 +111,9 @@ function Get() {
 
 /** Everything Shelf does, grouped, for the visitor who reads to the end before trying. */
 function Everything() {
-  const groups: Array<[string, string[]]> = [
+  const groups: Array<[typeof LibraryIcon, string, string[]]> = [
     [
+      LibraryIcon,
       "Your library",
       [
         "Covers, a list, shelves or a 3D bookcase",
@@ -111,6 +125,7 @@ function Everything() {
       ],
     ],
     [
+      BookOpen01Icon,
       "Reading",
       [
         "Opens every book where you left it",
@@ -122,6 +137,7 @@ function Everything() {
       ],
     ],
     [
+      Tablet01Icon,
       "Kindle",
       [
         "Recognises every model from the Kindle 2 on",
@@ -133,6 +149,7 @@ function Everything() {
       ],
     ],
     [
+      ArrowDataTransferHorizontalIcon,
       "Converting",
       [
         "EPUB, AZW3, PDF, Word, FB2, text or a web page",
@@ -143,6 +160,7 @@ function Everything() {
       ],
     ],
     [
+      Globe02Icon,
       "Finding books",
       [
         "Thousands of free classics from Standard Ebooks",
@@ -153,6 +171,7 @@ function Everything() {
       ],
     ],
     [
+      PaintBoardIcon,
       "Yours",
       [
         "Light, dark, or following your system",
@@ -168,9 +187,12 @@ function Everything() {
       <div className="mx-auto max-w-[1080px] px-5 py-24 sm:px-8 sm:py-32">
         <h2 className="max-w-[18ch] text-[clamp(2rem,4vw,3rem)] leading-[1.02] font-medium tracking-[-0.04em]">Everything in it.</h2>
         <div className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-          {groups.map(([title, items]) => (
+          {groups.map(([icon, title, items]) => (
             <div key={title} className="border-t border-border pt-5">
-              <h3 className="text-[15px] font-medium">{title}</h3>
+              <h3 className="flex items-center gap-3 text-[15px] font-medium">
+                <Tile icon={icon} small />
+                {title}
+              </h3>
               <ul className="mt-4 flex flex-col gap-2.5">
                 {items.map((item) => (
                   <li key={item} className="text-[14.5px] leading-snug text-muted">
@@ -188,16 +210,19 @@ function Everything() {
 
 /** What it takes in and what it gives back, the first question of anyone with a pile of ebooks. */
 function Formats() {
-  const rows: Array<[string, string[]]> = [
-    ["Opens", ["EPUB", "MOBI", "AZW3", "AZW", "PRC", "FB2", "CBZ", "PDF", "Word", "Markdown", "HTML", "Text"]],
-    ["Makes", ["EPUB", "AZW3", "PDF", "Word", "FB2", "Text", "Web page"]],
+  const rows: Array<[typeof FileImportIcon, string, string[]]> = [
+    [FileImportIcon, "Opens", ["EPUB", "MOBI", "AZW3", "AZW", "PRC", "FB2", "CBZ", "PDF", "Word", "Markdown", "HTML", "Text"]],
+    [FileExportIcon, "Makes", ["EPUB", "AZW3", "PDF", "Word", "FB2", "Text", "Web page"]],
   ];
   return (
     <section className="border-t border-border bg-well">
       <div className="mx-auto flex max-w-[1080px] flex-col gap-6 px-5 py-14 sm:px-8">
-        {rows.map(([label, formats]) => (
-          <div key={label} className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:gap-8">
-            <span className="w-20 shrink-0 text-[14px] font-medium">{label}</span>
+        {rows.map(([icon, label, formats]) => (
+          <div key={label} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-8">
+            <span className="flex w-28 shrink-0 items-center gap-2.5 text-[14px] font-medium">
+              <HugeiconsIcon icon={icon} size={17} className="text-muted" />
+              {label}
+            </span>
             <ul className="flex flex-wrap gap-2">
               {formats.map((format) => (
                 <li key={format} className="rounded-full border border-border bg-card px-3 py-1 font-mono text-[12.5px] text-muted">
