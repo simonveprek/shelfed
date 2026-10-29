@@ -45,7 +45,10 @@
     overflow: hidden;
     user-select: none;
     cursor: default;
+    animation: arrive 320ms ease-out both;
   }
+  /* The window is already Shelfed's colour; the page fades in over it. */
+  @keyframes arrive { from { opacity: 0; } }
 
   /* The aurora, low and faint, rising behind everything. */
   .glow {

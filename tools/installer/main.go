@@ -53,10 +53,11 @@ var (
 const width, height = 440, 320
 
 var (
-	user32  = windows.NewLazySystemDLL("user32.dll")
-	dwmapi  = windows.NewLazySystemDLL("dwmapi.dll")
-	kernel  = windows.NewLazySystemDLL("kernel32.dll")
-	call    = func(dll *windows.LazyDLL, name string, args ...uintptr) uintptr {
+	user32 = windows.NewLazySystemDLL("user32.dll")
+	gdi32  = windows.NewLazySystemDLL("gdi32.dll")
+	dwmapi = windows.NewLazySystemDLL("dwmapi.dll")
+	kernel = windows.NewLazySystemDLL("kernel32.dll")
+	call   = func(dll *windows.LazyDLL, name string, args ...uintptr) uintptr {
 		r, _, _ := dll.NewProc(name).Call(args...)
 		return r
 	}
@@ -163,6 +164,12 @@ func main() {
 
 func open(data string) {
 	instance := call(kernel, "GetModuleHandleW", 0)
+	dark := darkMode()
+	// Shelfed's background, so the window is the right colour from the first moment.
+	paper := uintptr(0xf1f5f6) // COLORREF is blue, green, red
+	if dark {
+		paper = 0x111111
+	}
 	class, _ := windows.UTF16PtrFromString("ShelfedSetup")
 	// The icon built into this file, Shelfed's.
 	appName, _ := windows.UTF16PtrFromString("APP")
@@ -171,13 +178,14 @@ func open(data string) {
 		icon = call(user32, "LoadImageW", instance, 1, 1, 0, 0, 0x8040)
 	}
 	call(user32, "RegisterClassExW", uintptr(unsafe.Pointer(&wndClass{
-		Size:      uint32(unsafe.Sizeof(wndClass{})),
-		WndProc:   windows.NewCallback(wndproc),
-		Instance:  instance,
-		Icon:      icon,
-		IconSm:    icon,
-		Cursor:    call(user32, "LoadCursorW", 0, 32512), // the arrow
-		ClassName: class,
+		Size:       uint32(unsafe.Sizeof(wndClass{})),
+		WndProc:    windows.NewCallback(wndproc),
+		Instance:   instance,
+		Icon:       icon,
+		IconSm:     icon,
+		Cursor:     call(user32, "LoadCursorW", 0, 32512), // the arrow
+		Background: call(gdi32, "CreateSolidBrush", paper),
+		ClassName:  class,
 	})))
 
 	// The size in points, scaled for the screen, in the middle of it.
@@ -198,7 +206,6 @@ func open(data string) {
 	call(user32, "SendMessageW", hwnd, wmSetIcon, 0, icon)
 	call(user32, "SendMessageW", hwnd, wmSetIcon, 1, icon)
 
-	dark := darkMode()
 	// Windows 11: rounded corners, and a border drawn for light or dark.
 	round, on := uint32(2), uint32(0)
 	if dark {
@@ -208,16 +215,15 @@ func open(data string) {
 	call(dwmapi, "DwmSetWindowAttribute", hwnd, 20, uintptr(unsafe.Pointer(&on)), 4)    // DWMWA_USE_IMMERSIVE_DARK_MODE
 	margins := [4]int32{0, 0, 1, 0}
 	call(dwmapi, "DwmExtendFrameIntoClientArea", hwnd, uintptr(unsafe.Pointer(&margins)))
-	// Apply the frame change before anything is drawn.
+	// Apply the frame change, then show the window at once, in its colour, while
+	// WebView2 starts, which takes a moment the first time.
 	call(user32, "SetWindowPos", hwnd, 0, 0, 0, 0, 0, 0x0027) // SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_FRAMECHANGED
+	raise()
 
 	browser = edge.NewChromium()
 	browser.DataPath = data
 	browser.MessageCallback = heard
 	browser.NavigationCompletedCallback = func(*edge.ICoreWebView2, *edge.ICoreWebView2NavigationCompletedEventArgs) {
-		// Shown once the page has drawn, so it never flashes white first.
-		call(user32, "ShowWindow", hwnd, swShow)
-		call(user32, "SetForegroundWindow", hwnd)
 		state.Lock()
 		first := !state.started
 		state.started = true
@@ -249,6 +255,16 @@ func open(data string) {
 	browser.Init("window.SHELFED_VERSION=" + string(quoted))
 	html := strings.Replace(page, `url("geist.woff2")`, `url("data:font/woff2;base64,`+base64.StdEncoding.EncodeToString(font)+`")`, 1)
 	browser.NavigateToString(html)
+}
+
+// raise shows the window above the others. Windows doesn't let a program bring
+// itself to the front whenever it likes, but it may put itself on top for a moment.
+func raise() {
+	const noMoveOrSize = 0x0001 | 0x0002 | 0x0040 // SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW
+	call(user32, "ShowWindow", hwnd, swShow)
+	call(user32, "SetWindowPos", hwnd, ^uintptr(0), 0, 0, 0, 0, noMoveOrSize) // HWND_TOPMOST
+	call(user32, "SetWindowPos", hwnd, ^uintptr(1), 0, 0, 0, 0, noMoveOrSize) // HWND_NOTOPMOST
+	call(user32, "SetForegroundWindow", hwnd)
 }
 
 func wndproc(window, message, wparam, lparam uintptr) uintptr {
