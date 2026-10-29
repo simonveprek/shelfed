@@ -6,6 +6,7 @@ import { relistKindle } from "./kindle";
 import { extractContent, parseBook, saveCover } from "./books";
 import { readCalibreOpf } from "./calibre";
 import { findCopies, inherit } from "./copies";
+import { seriesFix } from "../../../shared/series";
 import { buildDocx } from "./docx";
 import { buildEpub, buildHtml, buildText } from "./epub";
 import { buildFb2 } from "./fb2";
@@ -34,6 +35,9 @@ async function finishImport(book: Book, calibre?: Partial<Book>, calibreCover?: 
     // An unreadable file still joins the library, named after its file.
   }
   patch = { ...patch, ...calibre };
+  // A series written into the title becomes the book's series, and the title its own again.
+  const series = seriesFix({ title: patch.title ?? book.title, series: patch.series, seriesIndex: patch.seriesIndex });
+  if (series) patch = { ...patch, ...series };
   cover = calibreCover ?? cover;
   // The same book in another format joins the one already here, but only when
   // the ISBN proves it. Two books can share a title and an author and still be
@@ -159,7 +163,12 @@ export async function joinBooks(keepId: string, copyIds: string[]) {
 export async function joinCopies(among?: Set<string>) {
   const into = new Map<string, string>();
   for (const { keep, copies } of findCopies(get().books, among)) {
-    if (!(await joinBooks(keep.id, copies.map((c) => c.id)).catch(() => null))) continue;
+    const joined = await joinBooks(keep.id, copies.map((c) => c.id)).catch((error) => {
+      // In the log, for when someone tells us joining went wrong.
+      console.error(`Couldn't join copies of ${keep.title}:`, error instanceof Error ? error.message : error);
+      return null;
+    });
+    if (!joined) continue;
     for (const copy of copies) into.set(copy.id, keep.id);
   }
   return into;

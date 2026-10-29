@@ -34,6 +34,6 @@ What's coming next is in the [roadmap](https://github.com/simonveprek/shelfed/bl
 
 - **Kindles from 2024 on** (the 2024 Paperwhite, Colorsoft and Kindle) connect the way phones do, not as a drive, so Shelfed sends to them by email for now, and says so when you plug one in. Older Kindles also take books by cable.
 - **Books with DRM**, as most bought from Amazon are, won't open. Shelfed doesn't remove DRM.
-- **Coming from Calibre:** drop its library folder on Shelfed. Each book comes in once, with all its formats, its cover, and the title, authors, series, tags and rating you gave it in Calibre, even one Calibre kept twice in two formats. Calibre's custom columns don't come across.
+- **Coming from Calibre:** drop its library folder on Shelfed. Each book comes in once, with all its formats, its cover, and the title, authors, series, tags and rating you gave it in Calibre, even one Calibre kept twice in two formats. A series written into a title, like “The King of the West (Path of the Ranger Book 7)”, becomes the book's series. Calibre's custom columns don't come across.
 - **Kindle files made by Shelfed** (AZW3) are new in this release. If one doesn't look right on your Kindle, please open an issue.
 - **Updates:** on Windows, new versions download and install on restart. On a Mac, Shelfed tells you when one is out and links to it.

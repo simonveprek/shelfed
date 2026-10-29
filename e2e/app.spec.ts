@@ -351,10 +351,11 @@ test.describe("a library that came in from Calibre before copies joined up", () 
     await page.keyboard.press("Escape");
     await expect(page.locator("header").getByText(String(PAIRS + SINGLES), { exact: true })).toBeVisible();
 
-    // Every joined book holds both files.
-    await page.getByPlaceholder("Search your books").fill("Ranger Book 20");
-    await card(page, "The King of the West: (Path of the Ranger Book 20)").click();
-    await expect(page.locator("aside").getByText("MOBI", { exact: true })).toBeVisible();
+    // Every joined book holds both files, and its series came out of its title.
+    await card(page, "The King of the West").click();
+    const details = page.locator("aside");
+    await expect(details.getByText("MOBI", { exact: true })).toBeVisible();
+    await expect(details.getByText("Path of the Ranger", { exact: false }).first()).toBeVisible();
 
     // And it starts again, on the joined library.
     await shelf.restart();

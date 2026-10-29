@@ -346,3 +346,18 @@ describe("sending a folder to the Trash", () => {
   });
 });
 
+describe("a series kept in the title", () => {
+  it("becomes the book's series when the library opens, and the folder its clean title", async () => {
+    const lib = await new Library(root).open();
+    const [path] = await files(1);
+    const { book } = await lib.importFile(path);
+    await lib.update(book.id, { title: "The King of the West: (Path of the Ranger Book 7)", authors: ["Pedro Urvi"] }, true);
+    lib.flushNow();
+    const again = await new Library(root).open();
+    const fixed = again.get(book.id);
+    expect(fixed).toMatchObject({ title: "The King of the West", series: "Path of the Ranger", seriesIndex: 7 });
+    expect(fixed.dir).toMatch(/^Pedro Urvi\/The King of the West \(/);
+    expect(existsSync(again.filePath(fixed))).toBe(true);
+  });
+});
+

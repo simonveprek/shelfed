@@ -55,4 +55,12 @@ describe("copies of one book", () => {
       status: "reading", progress: 0.4, location: "epubcfi(/6/4)", readFormat: "mobi", annotations: [copy.annotations![0]], readSeconds: 600,
     });
   });
+
+  it("aren't two books of one series, even with one title", () => {
+    const three = book({ title: "Untitled", authors: ["Pedro Urvi"], series: "Path of the Ranger", seriesIndex: 3, formats: [epub] });
+    const seven = book({ title: "Untitled", authors: ["Pedro Urvi"], series: "Path of the Ranger", seriesIndex: 7, formats: [mobi] });
+    expect(sameBook(three, seven)).toBe(false);
+    expect(findCopies([three, seven])).toEqual([]);
+  });
 });
+

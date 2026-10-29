@@ -6,6 +6,7 @@ import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 
 import type { Book, Collection } from "../shared/types";
 import { READABLE } from "../shared/types";
 import { personNames } from "../shared/names";
+import { seriesFix } from "../shared/series";
 
 type Data = { version: 1; books: Book[]; collections: Collection[] };
 
@@ -78,6 +79,25 @@ async function withFolder<T>(step: () => Promise<T>): Promise<T> {
  */
 const toTrash = (dir: string) => (process.env.SHELF_NO_TRASH ? rm(dir, { recursive: true, force: true }) : shell.trashItem(dir));
 
+/**
+ * Sends a folder to the Trash, giving up after a while: on Windows a move to
+ * the Recycle Bin can wait forever on a file something else holds. A folder
+ * that won't go is left where it is, never deleted outright.
+ */
+async function trashOrLeave(dir: string, report: (message: string, error?: unknown) => void, ms = 15_000) {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    await Promise.race([
+      toTrash(dir),
+      new Promise((_, reject) => (timer = setTimeout(() => reject(new Error(`No answer from the Trash after ${ms / 1000} s`)), ms))),
+    ]);
+  } catch (error) {
+    report(`Left ${dir} in the library; it couldn't go to the Trash`, error);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** A path inside the library as it's stored, with forward slashes on every system, so a library moves between Mac and PC. */
 const stored = (...parts: string[]) => parts.join("/");
 
@@ -108,6 +128,8 @@ export class Library {
   /** Files being copied in right now, by content, so the same file twice at once is one book. */
   private importing = new Map<string, Promise<{ book: Book; duplicate: boolean }>>();
   onSaveError?: (error: unknown) => void;
+  /** Where the library notes what it did and what went wrong, for the log. */
+  report: (message: string, error?: unknown) => void = (message, error) => console.warn(message, error ?? "");
   private saving = Promise.resolve();
 
   constructor(root: string) {
@@ -137,12 +159,21 @@ export class Library {
     if (data) {
       for (const book of data.books) this.books.set(book.id, book);
       this.collections = data.collections ?? [];
-      // Books added before names were turned round, put right once, folders and all.
+      // Books added before names were turned round, or with their series still in
+      // the title, put right once, folders and all.
       const turned = data.books.filter((book) => {
+        let changed = false;
         const names = personNames(book.authors);
-        if (names.join("\n") === book.authors.join("\n")) return false;
-        book.authors = names;
-        return true;
+        if (names.join("\n") !== book.authors.join("\n")) {
+          book.authors = names;
+          changed = true;
+        }
+        const series = seriesFix(book);
+        if (series) {
+          Object.assign(book, series);
+          changed = true;
+        }
+        return changed;
       });
       for (const book of turned) await this.place(book).catch(() => {});
       if (turned.length) this.save();
@@ -439,7 +470,8 @@ export class Library {
     }
     // Only once every file is safely copied does the old folder go, and to the Trash.
     const dir = this.ownFolder(source);
-    await toTrash(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }));
+    this.report(`Joining ${source.dir} into ${target.dir}`);
+    await trashOrLeave(dir, this.report);
     await this.tidy(dirname(dir));
     this.books.delete(from);
     this.save();
@@ -473,19 +505,21 @@ export class Library {
       dir = this.ownFolder(book);
     } catch (error) {
       // The book leaves the library; its folder, shared or strange, stays where it is.
-      console.error("Kept the folder of a removed book", error);
+      this.report("Kept the folder of a removed book", error);
       this.books.delete(id);
       this.save();
       return;
     }
     this.books.delete(id);
-    await toTrash(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }).catch((error) => console.error("Could not remove", dir, error)));
-    await this.tidy(dirname(dir));
     this.save();
+    await trashOrLeave(dir, this.report);
+    await this.tidy(dirname(dir));
   }
 
   /** Settles everything waiting, for when the app quits. */
   async settle() {
+    // Saved first, so a slow Trash can never cost the library file.
+    this.flushNow();
     for (const [id, timer] of this.pending) {
       clearTimeout(timer);
       await this.purge(id);

@@ -1,3 +1,4 @@
+import { plainWords } from "../../../shared/series";
 import type { Book, ReadStatus } from "../../../shared/types";
 
 /*
@@ -9,11 +10,8 @@ import type { Book, ReadStatus } from "../../../shared/types";
  * be EPUBs.
  */
 
-/** Words alone, without case, accents or punctuation, for telling whether two names are the same. */
-export const plainWords = (text: string) =>
-  text.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-
-const key = (book: Book) => `${plainWords(book.title)}\n${book.authors.map(plainWords).sort().join(";")}`;
+/** Title, authors and place in a series: books 3 and 7 of a series are never copies of each other. */
+const key = (book: Book) => `${plainWords(book.title)}\n${book.authors.map(plainWords).sort().join(";")}\n${book.seriesIndex ?? ""}`;
 
 /** Whether two books are one book in different files. */
 export function sameBook(a: Book, b: Book) {
