@@ -1,5 +1,5 @@
-import { plainWords } from "../../../shared/series";
-import type { Book, ReadStatus } from "../../../shared/types";
+import { plainWords } from "./series";
+import type { Book, ReadStatus } from "./types";
 
 /*
  * The same book, twice: an EPUB here and a MOBI there, each a book of its own.

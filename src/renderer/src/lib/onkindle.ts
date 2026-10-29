@@ -7,23 +7,31 @@ const words = (file: string) =>
     file
       .replace(/\.[^.]+$/, "")
       .replace(/_(EBOK|PDOC|EBSP)$/i, "")
-      .replace(/_B0[0-9A-Z]{8}$/i, ""),
+      .replace(/_(?=[0-9A-Z]*\d)[0-9A-Z]{10}$/i, ""),
   );
 
 /** Whether a file on a Kindle, by its name as words, is this book. */
 function isTheBook(book: Book, name: string) {
   const title = norm(book.title);
   if (!title || !name) return false;
-  const full = norm(`${book.title} ${book.authors[0] ?? ""}`);
-  return book.formats.some((f) => words(f.file) === name) || name === full || name === title || (title.length >= 4 && name.startsWith(`${title} `));
+  if (book.formats.some((f) => words(f.file) === name) || name === title) return true;
+  // After the title, only a writer of it may follow: "Dune Frank Herbert" is
+  // Dune, "Dune Messiah Frank Herbert" isn't.
+  if (!name.startsWith(`${title} `)) return false;
+  const rest = name.slice(title.length + 1);
+  return book.authors.some((author) => {
+    const whole = norm(author);
+    const surname = whole.split(" ").at(-1) ?? "";
+    return rest === whole || rest === surname || rest.startsWith(`${whole} `);
+  });
 }
 
 /**
  * Which books are already on a Kindle, from the names of the files on it.
  * Shelfed names what it copies "Title - Author", as Calibre does, and books
- * sent by email keep their title first, so a file whose name begins with a
- * book's title counts. Titles shorter than four letters only count when the
- * whole name matches, so "It" doesn't claim every file.
+ * sent by email keep their title, so a file counts when its name is the
+ * title, alone or followed by one of the book's writers. "Dune" never claims
+ * "Dune Messiah", nor "It" every file that starts with it.
  */
 export function booksOnKindle(books: Book[], files: string[]): Set<string> {
   const names = files.map(words).filter(Boolean);

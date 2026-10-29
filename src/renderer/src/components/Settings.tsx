@@ -13,7 +13,7 @@ import { api, isMac, revealLabel } from "@/lib/api";
 import { bringCalibreOver, joinCopies } from "@/lib/actions";
 import { useCalibre } from "@/lib/findcalibre";
 import { fromLocale, LANGUAGES, t, tn, type Language, tc } from "../../../shared/i18n";
-import { findCopies } from "@/lib/copies";
+import { findCopies } from "../../../shared/copies";
 import { chooseIcon, iconSrc } from "@/lib/icon";
 import { PHONE_LIKE, useFinishedOnKindle, useKindlePort, useOnKindle } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";

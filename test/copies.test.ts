@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findCopies, inherit, sameBook } from "../src/renderer/src/lib/copies";
+import { findCopies, inherit, sameBook } from "../src/shared/copies";
 import { book } from "./helpers";
 
 const epub = { ext: "epub", file: "a.epub", size: 1 };

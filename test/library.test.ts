@@ -224,6 +224,7 @@ describe("authors' names", () => {
     await rename(join(root, old.dir), join(root, "Flanagan, John", basename(old.dir)));
     old.dir = `Flanagan, John/${basename(old.dir)}`;
     old.authors = ["Flanagan, John"];
+    delete data.tidied;
     await writeFile(db, JSON.stringify(data));
 
     const again = await new Library(root).open();
@@ -308,6 +309,28 @@ describe("a book in several formats", () => {
     expect(lib.get(book.id).formats).toHaveLength(3);
   });
 
+  it("keeps the notes and progress of a copy it folds in", async () => {
+    await calibre();
+    const lib = await new Library(root).open();
+    const [first, ...others] = (await lib.collectBooks([source])).find((files) => files.length === 3)!;
+    const { book: mobi } = await lib.importFile(others.at(-1)!);
+    const note = { id: "n1", kind: "highlight", cfi: "epubcfi(/6/2)", text: "a line", color: "yellow" } as NonNullable<Book["annotations"]>[number];
+    await lib.update(mobi.id, { progress: 0.6, rating: 4, annotations: [note] });
+    const { book } = await lib.importFile(first);
+    const { folded } = await lib.joinFile(book.id, others.at(-1)!);
+    expect(folded).toBe(mobi.id);
+    expect(lib.get(book.id)).toMatchObject({ progress: 0.6, rating: 4 });
+    expect(lib.get(book.id).annotations).toHaveLength(1);
+  });
+
+  it("takes a folder of several books with a metadata.opf among them as books side by side", async () => {
+    for (const name of ["Emma.epub", "Persuasion.epub", "Dracula.mobi"]) await writeFile(join(source, name), name);
+    await writeFile(join(source, "metadata.opf"), "<package/>");
+    const lib = await new Library(root).open();
+    const books = (await lib.collectBooks([source])).map((files) => files.map((file) => basename(file)));
+    expect(books).toHaveLength(3);
+  });
+
   it("reads Calibre's details and cover beside a book, and nothing else", async () => {
     const dir = await calibre();
     const lib = await new Library(root).open();
@@ -353,11 +376,27 @@ describe("a series kept in the title", () => {
     const { book } = await lib.importFile(path);
     await lib.update(book.id, { title: "The King of the West: (Path of the Ranger Book 7)", authors: ["Pedro Urvi"] }, true);
     lib.flushNow();
+    // As a library saved before series were read from titles.
+    const db = join(root, "library.json");
+    const data = JSON.parse(readFileSync(db, "utf8"));
+    delete data.tidied;
+    await writeFile(db, JSON.stringify(data));
     const again = await new Library(root).open();
     const fixed = again.get(book.id);
     expect(fixed).toMatchObject({ title: "The King of the West", series: "Path of the Ranger", seriesIndex: 7 });
     expect(fixed.dir).toMatch(/^Pedro Urvi\/The King of the West \(/);
     expect(existsSync(again.filePath(fixed))).toBe(true);
+  });
+
+  it("stays in a title written that way on purpose, once the library has been put right", async () => {
+    const lib = await new Library(root).open();
+    const [path] = await files(1);
+    const { book } = await lib.importFile(path);
+    await lib.update(book.id, { title: "Collected Works (Discworld Book 1)" });
+    lib.flushNow();
+    const again = await new Library(root).open();
+    expect(again.get(book.id).title).toBe("Collected Works (Discworld Book 1)");
+    expect(again.get(book.id).series).toBeUndefined();
   });
 });
 

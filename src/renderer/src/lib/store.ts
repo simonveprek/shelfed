@@ -155,6 +155,7 @@ export async function patchBooks(ids: string[], patch: (book: Book) => Partial<B
     books: s.books.map((b) => {
       if (!ids.includes(b.id)) return b;
       const p = patch(b);
+      if (["title", "authors", "series", "seriesIndex"].some((field) => field in p)) p.edited = Date.now();
       // The day a book is finished is kept, for the year's count.
       if (p.status === "finished" && b.status !== "finished") p.finishedAt ??= Date.now();
       changes.set(b.id, p);

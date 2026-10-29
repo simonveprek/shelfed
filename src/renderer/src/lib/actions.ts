@@ -5,7 +5,7 @@ import { api, isMac } from "./api";
 import { relistKindle } from "./kindle";
 import { extractContent, parseBook, saveCover } from "./books";
 import { readCalibreOpf } from "./calibre";
-import { findCopies, inherit } from "./copies";
+import { findCopies, inherit } from "../../../shared/copies";
 import { seriesFix } from "../../../shared/series";
 import { buildDocx } from "./docx";
 import { buildEpub, buildHtml, buildText } from "./epub";
@@ -105,7 +105,8 @@ export async function importPaths(paths: string[], open = false, from?: string):
         let current: Book;
         if (duplicate) {
           skipped++;
-          const { title, authors, series, seriesIndex } = calibre ?? {};
+          // Calibre's details put right what was read from the file, but not what someone set by hand here.
+          const { title, authors, series, seriesIndex } = book.edited ? {} : (calibre ?? {});
           const fix = Object.fromEntries(Object.entries({ title, authors, series, seriesIndex }).filter(([, v]) => v !== undefined));
           current = Object.keys(fix).length ? await api.update(book.id, fix, true) : book;
         } else {
@@ -115,9 +116,14 @@ export async function importPaths(paths: string[], open = false, from?: string):
           added++;
         }
         for (const path of others) {
-          const { book: grown, folded } = await api.joinFile(current.id, path).catch(() => ({ book: current, folded: undefined }));
+          const { book: grown, folded } = await api.joinFile(current.id, path).catch((error) => {
+            // The book is in without this format; the log says which file and why.
+            console.error(`Couldn't add ${path} to ${current.title}:`, error instanceof Error ? error.message : error);
+            return { book: current, folded: undefined };
+          });
           if (folded) {
             drop([folded]);
+            touched.delete(folded);
             joined++;
           }
           current = grown;

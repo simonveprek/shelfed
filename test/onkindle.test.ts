@@ -23,6 +23,13 @@ describe("books already on a Kindle", () => {
     expect(booksOnKindle([it_], ["It.azw3"])).toEqual(new Set([it_.id]));
   });
 
+  it("doesn't take a longer title that starts with a book's for the book", () => {
+    const dune = book({ title: "Dune", authors: ["Frank Herbert"] });
+    expect(booksOnKindle([dune], ["Dune Messiah - Frank Herbert.azw3", "Dune Messiah_B00ABCDEFG_EBOK.azw"]).size).toBe(0);
+    expect(booksOnKindle([dune], ["Dune - Frank Herbert.azw3"])).toEqual(new Set([dune.id]));
+    expect(booksOnKindle([dune], ["Dune - Herbert.mobi"])).toEqual(new Set([dune.id]));
+  });
+
   it("finds nothing on an empty Kindle", () => {
     expect(booksOnKindle([pride, dracula], []).size).toBe(0);
   });
@@ -52,6 +59,16 @@ describe("finished books still on a Kindle", () => {
     expect(found.books.map((b) => b.id)).toEqual([done.id]);
     expect(found.files.map((f) => f.path)).toEqual(["Dracula - Bram Stoker.azw3", "Amazon/Dracula_B00ABCDEFG_EBOK.azw"]);
     expect(found.bytes).toBe(1_500);
+  });
+
+  it("never include an unfinished sequel whose title begins with a finished book's", () => {
+    const dune = book({ title: "Dune", authors: ["Frank Herbert"], status: "finished" });
+    const messiah = book({ title: "Dune Messiah", authors: ["Frank Herbert"], status: "unread" });
+    const files = [
+      { name: "Dune - Frank Herbert.azw3", path: "Dune - Frank Herbert.azw3", size: 1 },
+      { name: "Dune Messiah - Frank Herbert.azw3", path: "Dune Messiah - Frank Herbert.azw3", size: 1 },
+    ];
+    expect(finishedOnKindle([dune, messiah], files).files.map((f) => f.path)).toEqual(["Dune - Frank Herbert.azw3"]);
   });
 });
 

@@ -437,7 +437,16 @@ export function TidyConfirm() {
       description={t("That frees {size} on it. A Kindle has no Trash, so they go from it for good, with their notes there, but they stay in your library and can go back on any time.", { size: bytes(finished?.bytes ?? 0) })}
       confirmLabel={t("Take them off")}
       onConfirm={() => tidyKindle()}
-    />
+    >
+      {/* The files themselves, so nothing goes from the Kindle unseen. */}
+      <ul className="max-h-40 overflow-y-auto text-caption text-muted">
+        {finished?.files.map((file) => (
+          <li key={file.path} className="truncate" title={file.path}>
+            {file.name}
+          </li>
+        ))}
+      </ul>
+    </AlertDialog>
   );
 }
 

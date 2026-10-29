@@ -7,9 +7,13 @@ import type { Book, Collection } from "../shared/types";
 import { READABLE } from "../shared/types";
 import { personNames } from "../shared/names";
 import { seriesFix } from "../shared/series";
+import { inherit } from "../shared/copies";
 import { t } from "../shared/i18n";
 
-type Data = { version: 1; books: Book[]; collections: Collection[] };
+/** `tidied`: which of the one-off fixes in open() a library has had. */
+type Data = { version: 1; tidied?: number; books: Book[]; collections: Collection[] };
+/** Names turned round and series out of titles; raised when open() learns another. */
+const TIDIED = 1;
 
 const DB = "library.json";
 /** A copy of the library file from the last good start, at most a day old. */
@@ -161,8 +165,9 @@ export class Library {
       for (const book of data.books) this.books.set(book.id, book);
       this.collections = data.collections ?? [];
       // Books added before names were turned round, or with their series still in
-      // the title, put right once, folders and all.
-      const turned = data.books.filter((book) => {
+      // the title, put right once, folders and all. Only once: a title written
+      // that way on purpose afterwards stays as it was written.
+      const turned = (data.tidied ?? 0) >= TIDIED ? [] : data.books.filter((book) => {
         let changed = false;
         const names = personNames(book.authors);
         if (names.join("\n") !== book.authors.join("\n")) {
@@ -177,7 +182,7 @@ export class Library {
         return changed;
       });
       for (const book of turned) await this.place(book).catch(() => {});
-      if (turned.length) this.save();
+      if ((data.tidied ?? 0) < TIDIED) this.save();
       // A fresh backup once a day, from a file that just loaded cleanly.
       const age = existsSync(backup) ? Date.now() - statSync(backup).mtimeMs : Infinity;
       if (age > 86_400_000 && existsSync(path)) await copyFile(path, backup).catch(() => {});
@@ -204,7 +209,7 @@ export class Library {
   flush() {
     if (this.saveTimer) clearTimeout(this.saveTimer);
     this.saveTimer = null;
-    const data: Data = { version: 1, books: this.list(), collections: this.collections };
+    const data: Data = { version: 1, tidied: TIDIED, books: this.list(), collections: this.collections };
     const json = JSON.stringify(data);
     const path = join(this.root, DB);
     this.saving = this.saving
@@ -226,7 +231,7 @@ export class Library {
     this.saveTimer = null;
     const path = join(this.root, DB);
     try {
-      writeFileSync(path + ".tmp", JSON.stringify({ version: 1, books: this.list(), collections: this.collections } satisfies Data));
+      writeFileSync(path + ".tmp", JSON.stringify({ version: 1, tidied: TIDIED, books: this.list(), collections: this.collections } satisfies Data));
       renameSync(path + ".tmp", path);
     } catch (error) {
       console.error("Could not save the library", error);
@@ -267,12 +272,18 @@ export class Library {
    * and so are files sharing a name in one folder, like Emma.epub and Emma.mobi.
    */
   async collectBooks(paths: string[]): Promise<string[][]> {
+    const byDir = new Map<string, string[]>();
+    for (const file of await this.collect(paths)) byDir.set(dirname(file), [...(byDir.get(dirname(file)) ?? []), file]);
     const groups = new Map<string, string[]>();
-    for (const file of await this.collect(paths)) {
-      const dir = dirname(file);
-      const calibre = existsSync(join(dir, "metadata.opf"));
-      const key = calibre ? `${dir}\0` : join(dir, basename(file, extname(file)).toLowerCase());
-      groups.set(key, [...(groups.get(key) ?? []), file]);
+    for (const [dir, files] of byDir) {
+      // A Calibre book's folder holds one book, at most one file of each format;
+      // a folder with two EPUBs and a metadata.opf is books side by side.
+      const exts = files.map((file) => extname(file).toLowerCase());
+      const calibre = new Set(exts).size === exts.length && existsSync(join(dir, "metadata.opf"));
+      for (const file of files) {
+        const key = calibre ? `${dir}\0` : join(dir, basename(file, extname(file)).toLowerCase());
+        groups.set(key, [...(groups.get(key) ?? []), file]);
+      }
     }
     const rank = (file: string) => {
       const at = PREFERRED.indexOf(extname(file).slice(1).toLowerCase());
@@ -430,8 +441,12 @@ export class Library {
     const book = this.get(id);
     const ext = formatOf(src);
     const hash = await hashFile(src);
-    const twin = [...this.books.values()].find((b) => b.id !== id && b.hash === hash);
-    if (twin) return { book: await this.merge(twin.id, id), folded: twin.id };
+    const twin = this.list().find((b) => b.id !== id && b.hash === hash);
+    if (twin) {
+      // The twin's notes, progress and the rest come along, as when copies are joined by hand.
+      await this.update(id, inherit(book, [twin]));
+      return { book: await this.merge(twin.id, id), folded: twin.id };
+    }
     if (book.formats.some((f) => f.ext === ext)) return { book };
     return { book: await this.addFormat(id, ext, src) };
   }

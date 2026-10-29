@@ -117,11 +117,6 @@ const PHONE_LIKE_OTHER = "This Kindle connects like a phone, not as a drive, so 
 
 /**
  * Why a Kindle on the cable can't take books that way, said plainly for this
- * system. Always English, since it is set when the file loads; phoneLike() gives it in the chosen language.
+ * system. Always English, since it is set when the file loads; shown as t(PHONE_LIKE).
  */
 export const PHONE_LIKE = isMac ? PHONE_LIKE_MAC : PHONE_LIKE_OTHER;
-
-/** PHONE_LIKE in the chosen language, asked for when it is shown. */
-export const phoneLike = () => t(isMac ? PHONE_LIKE_MAC : PHONE_LIKE_OTHER);
-/** The same as phoneLike(), under another name. */
-export const PHONE_LIKE_TEXT = phoneLike;

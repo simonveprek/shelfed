@@ -67,6 +67,8 @@ export type Book = {
   tint?: string;
   added: number;
   modified: number;
+  /** When someone last changed its title, authors or series by hand; an import then leaves them be. */
+  edited?: number;
   opened?: number;
   /** Reading progress from 0 to 1. */
   progress?: number;

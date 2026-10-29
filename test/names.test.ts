@@ -36,6 +36,13 @@ describe("names on spines", () => {
     expect(personNames(["Austen, Jane; Brontë, Charlotte"])).toEqual(["Jane Austen", "Charlotte Brontë"]);
   });
 
+  it("takes apart whole names a comma separates, but not a name turned round", () => {
+    expect(personNames(["Terry Pratchett, Neil Gaiman"])).toEqual(["Terry Pratchett", "Neil Gaiman"]);
+    expect(personNames(["Le Guin, Ursula K."])).toEqual(["Ursula K. Le Guin"]);
+    expect(personNames(["Doyle, Arthur Conan"])).toEqual(["Arthur Conan Doyle"]);
+    expect(personNames(["King, Martin Luther, Jr."])).toEqual(["Martin Luther King Jr."]);
+  });
+
   it("keeps a name with & in it together when it's two single words", () => {
     expect(splitNames("Simon & Schuster")).toEqual(["Simon & Schuster"]);
     expect(splitNames("Mary Shelley")).toEqual(["Mary Shelley"]);

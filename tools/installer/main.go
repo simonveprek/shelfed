@@ -235,6 +235,8 @@ func open(data string) {
 	if !browser.Embed(hwnd) {
 		call(user32, "DestroyWindow", hwnd)
 		_ = exec.Command(setup).Run()
+		// os.Exit skips main's deferred clean-up, so the unpacked installer goes here.
+		_ = os.RemoveAll(filepath.Dir(setup))
 		os.Exit(0)
 	}
 	if settings, err := browser.GetSettings(); err == nil {

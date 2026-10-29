@@ -21,14 +21,26 @@ export function personName(raw: string) {
   return [first, last, suffix].filter(Boolean).join(" ");
 }
 
+/** A name written first name first: two words or more, each capitalised, the last not an initial. */
+const wholeName = (part: string) => {
+  const words = part.split(/\s+/);
+  return words.length >= 2 && words.every((word) => /^\p{Lu}/u.test(word)) && !/^\p{L}\.?$/u.test(words.at(-1)!);
+};
+
 /**
  * Several writers given as one name, as many files and Calibre's own file names
  * do: "Terry Pratchett & Neil Gaiman", "Austen, Jane; Brontë, Charlotte". Two
- * single words, like "Simon & Schuster", are taken to be one name.
+ * single words, like "Simon & Schuster", are taken to be one name. A comma
+ * between whole names, "Terry Pratchett, Neil Gaiman", parts them too; one
+ * between a surname and a first name, "Le Guin, Ursula K.", doesn't.
  */
 export function splitNames(raw: string) {
   const parts = raw.split(/\s*;\s*|\s+&\s+/).map((part) => part.trim()).filter(Boolean);
-  return parts.length > 1 && parts.every((part) => !/[\s,]/.test(part)) ? [raw.trim()] : parts;
+  if (parts.length > 1 && parts.every((part) => !/[\s,]/.test(part))) return [raw.trim()];
+  return parts.flatMap((part) => {
+    const names = part.split(/\s*,\s*/).filter(Boolean);
+    return names.length > 1 && names.every(wholeName) ? names : [part];
+  });
 }
 
 /** What files say when they don't know who wrote them. */
