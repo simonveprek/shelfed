@@ -159,6 +159,7 @@ export function App() {
     const offs = [
       on("command", runCommand),
       on("open-files", (paths: string[]) => importPaths(paths, paths.length === 1)),
+      on("downloaded", (paths: string[]) => importPaths(paths, false, "your Downloads")),
       on("save-failed", () => toast.error("Shelfed could not save your library", { description: "Your changes are kept and it will try again. Check the disk has room." })),
       on("update", announce),
     ];

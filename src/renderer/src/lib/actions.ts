@@ -74,12 +74,16 @@ async function pool<T>(items: T[], limit: number, task: (item: T) => Promise<voi
  * Brought in again, a Calibre library also joins up books that came in as
  * separate copies before, and its details put right what was read from files.
  */
-export async function importPaths(paths: string[], open = false) {
-  if (!paths.length) return;
+/** What an import did, for whoever asked for it. */
+export type Imported = { added: number; skipped: number; joined: number; ids: string[] };
+
+export async function importPaths(paths: string[], open = false, from?: string): Promise<Imported | null> {
+  if (!paths.length) return null;
   const books = await api.collect(paths);
   if (!books.length) {
-    toast.error("No books there that Shelfed can read");
-    return;
+    // Nothing worth saying about a download that turned out not to be a book.
+    if (!from) toast.error("No books there that Shelfed can read");
+    return null;
   }
   const job = startJob(books.length === 1 ? "Adding a book" : `Adding ${books.length.toLocaleString()} books`);
   set({ mood: "reading" });
@@ -130,14 +134,17 @@ export async function importPaths(paths: string[], open = false) {
     if (last && into.has((last as Book).id)) last = bookById(into.get((last as Book).id)!) ?? null;
     set({ mood: null });
     const notes = [skipped && `${skipped} already here`, joined && `${plural(joined, "copy", "copies")} joined to ${joined === 1 ? "its book" : "their books"}`].filter(Boolean).join(", ");
-    job.done(added ? `Added ${plural(added, "book")}${notes ? `, ${notes}` : ""}` : joined ? `Joined ${plural(joined, "copy", "copies")} to ${joined === 1 ? "its book" : "their books"}` : "Those books are already here");
+    const source = from ? ` from ${from}` : "";
+    job.done(added ? `Added ${plural(added, "book")}${source}${notes ? `, ${notes}` : ""}` : joined ? `Joined ${plural(joined, "copy", "copies")} to ${joined === 1 ? "its book" : "their books"}` : "Those books are already here");
     const book = last as Book | null;
     // A single file handed over opens; a folder, even of one book, doesn't.
     if (book && open && paths.length === 1 && books.length === 1 && books[0][0] === paths[0]) openReader(book.id);
     else if (book) set({ selection: [book.id], anchor: book.id });
+    return { added, skipped, joined, ids: [...touched].map((id) => into.get(id) ?? id).filter((id, i, all) => all.indexOf(id) === i) };
   } catch (error) {
     set({ mood: null });
     job.fail(error);
+    return null;
   }
 }
 

@@ -15,6 +15,7 @@ import { copyToDevice, deviceFiles, findDevices, kindlePort, kindlesOnUsb, readC
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks } from "./catalogues";
+import { watchDownloads } from "./downloads";
 import { getSettings, setSettings, setSmtpPassword } from "./settings";
 import { checkForUpdates, installUpdate, updateState, watchUpdates } from "./updates";
 
@@ -318,7 +319,11 @@ const api = {
     if (/^https:\/\//.test(url)) shell.openExternal(url);
   },
 
-  settings: (patch: Partial<Settings>) => setSettings(patch),
+  settings: (patch: Partial<Settings>) => {
+    const settings = setSettings(patch);
+    if ("downloads" in patch) followDownloads();
+    return settings;
+  },
 
   async moveLibrary() {
     const [path] = await api.pickFolder("Choose Where Your Library Lives");
@@ -432,6 +437,7 @@ const api = {
     listening = true;
     const files = queued.splice(0);
     if (files.length) send("open-files", files);
+    followDownloads();
   },
 };
 
@@ -533,6 +539,23 @@ function buildMenu() {
 /* ------------------------------------------------------------------------ */
 
 const isBook = (arg: string) => !arg.startsWith("-") && READABLE.includes(extname(arg).slice(1).toLowerCase());
+
+let stopDownloads: (() => void) | null = null;
+
+/**
+ * Ebooks arriving in Downloads come in by themselves while Shelfed is open,
+ * unless that's turned off. SHELF_DOWNLOADS points the tests at a folder of their own.
+ */
+function followDownloads() {
+  stopDownloads?.();
+  stopDownloads = null;
+  if (getSettings().downloads === false) return;
+  const folder = process.env.SHELF_DOWNLOADS ?? app.getPath("downloads");
+  stopDownloads = watchDownloads(folder, (paths) => {
+    log.info(`From Downloads: ${paths.length} book${paths.length === 1 ? "" : "s"}`);
+    send("downloaded", paths);
+  });
+}
 
 /** Opens books the system handed over, now or once the window can take them. */
 function openFiles(files: string[]) {

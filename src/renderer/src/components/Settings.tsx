@@ -84,6 +84,7 @@ function Choice({ on, label, onClick, children }: { on: boolean; label: string; 
 
 function LibrarySection() {
   const path = useStore((s) => s.settings.libraryPath);
+  const downloads = useStore((s) => s.settings.downloads !== false);
   const books = useStore((s) => s.books);
   const mood = useStore((s) => s.mood);
   const size = useMemo(() => books.reduce((n, b) => n + b.formats.reduce((m, f) => m + f.size, 0), 0), [books]);
@@ -127,6 +128,14 @@ function LibrarySection() {
             </div>
           ))}
         </div>
+      </Group>
+      <Group label="Downloads">
+        <SwitchRow
+          label="Add books you download"
+          hint="New EPUB, MOBI, AZW3, FB2 and comic files in your Downloads folder come in by themselves while Shelfed is open. PDFs and documents stay where they are."
+          checked={downloads}
+          onChange={(on) => setSetting({ downloads: on })}
+        />
       </Group>
       <Copies />
       <Group label="The first time">

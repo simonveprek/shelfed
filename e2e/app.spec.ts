@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BOOKS, card, epub, expect, openSettings, test } from "./shelf";
@@ -362,5 +362,29 @@ test.describe("a library that came in from Calibre before copies joined up", () 
     page = shelf.page;
     await expect(page.locator("header").getByText(String(PAIRS + SINGLES), { exact: true })).toBeVisible();
   });
+});
+
+test("a book downloaded while Shelfed is open comes in by itself, and a PDF doesn't", async ({ shelf }) => {
+  const { page, downloads } = shelf;
+  // As a browser does it: written under a name of its own, renamed when done.
+  const partial = join(downloads, "The Night Ferry.epub.crdownload");
+  writeFileSync(partial, epub({ title: "The Night Ferry", author: "Ada Marsh" }));
+  renameSync(partial, join(downloads, "The Night Ferry.epub"));
+  writeFileSync(join(downloads, "Invoice 2026-10.pdf"), "%PDF-1.4 an invoice");
+  await expect(page.getByText("Added 1 book from your Downloads")).toBeVisible({ timeout: 15_000 });
+  await expect(card(page, "The Night Ferry")).toBeVisible();
+  await expect(page.locator("main [draggable=true]")).toHaveCount(1);
+});
+
+test("downloads stay out when that's turned off", async ({ shelf }) => {
+  const { page, downloads } = shelf;
+  await openSettings(page);
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Library", exact: true }).click();
+  await dialog.getByRole("switch", { name: "Add books you download" }).click();
+  await page.keyboard.press("Escape");
+  writeFileSync(join(downloads, "The Night Ferry.epub"), epub({ title: "The Night Ferry", author: "Ada Marsh" }));
+  await page.waitForTimeout(4000);
+  await expect(page.locator("main [draggable=true]")).toHaveCount(0);
 });
 

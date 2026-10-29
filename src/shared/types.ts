@@ -168,6 +168,8 @@ export type Settings = {
   updates?: boolean;
   /** The app icon chosen in Settings, by its id in shared/icons. */
   icon?: string;
+  /** Ebooks arriving in Downloads come in by themselves. On unless turned off. */
+  downloads?: boolean;
 };
 
 /** Where finding and getting a new version of Shelfed has got to. */

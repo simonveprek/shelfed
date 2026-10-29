@@ -59,6 +59,8 @@ export type Shelf = {
   add(books?: Fake[]): Promise<void>;
   /** Quits and starts again on the same library. */
   restart(): Promise<void>;
+  /** The Downloads folder this Shelfed watches. */
+  downloads: string;
 };
 
 /** Each test gets its own Shelfed, on its own empty library, never yours. */
@@ -79,6 +81,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
     const dir = mkdtempSync(join(tmpdir(), "shelf-e2e-"));
     const data = join(dir, "data");
     mkdirSync(data);
+    mkdirSync(join(dir, "Downloads"));
     writeFileSync(
       join(data, "settings.json"),
       JSON.stringify({ libraryPath: join(dir, "Library"), onboarded: true, inspector: true, sidebar: true, updates: false }),
@@ -110,6 +113,8 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       const env = {
         ...process.env,
         SHELF_USERDATA: data,
+        // A Downloads folder of its own, never the real one.
+        SHELF_DOWNLOADS: join(dir, "Downloads"),
         ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}),
         // On someone's own computer the test books are deleted, not put in their Trash.
         ...(process.env.CI ? {} : { SHELF_NO_TRASH: "1" }),
@@ -133,6 +138,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
         return page;
       },
       errors,
+      downloads: join(dir, "Downloads"),
       async add(books = BOOKS) {
         const paths = books.map((book) => {
           const path = join(dir, `in-${made++}.epub`);
