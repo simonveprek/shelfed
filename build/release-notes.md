@@ -16,10 +16,10 @@ The first release of Shelfed: a quiet home for your books, on Mac and Windows. F
 
 | | |
 | --- | --- |
-| Mac with Apple silicon (M1 and later) | `Shelfed-0.1.0-mac-arm64.dmg` |
-| Mac with Intel | `Shelfed-0.1.0-mac-x64.dmg` |
-| Windows, most PCs | `Shelfed-0.1.0-win-x64.exe` |
-| Windows on ARM | `Shelfed-0.1.0-win-arm64.exe` |
+| Mac with Apple silicon (M1 and later) | `Shelfed-0.1.1-mac-arm64.dmg` |
+| Mac with Intel | `Shelfed-0.1.1-mac-x64.dmg` |
+| Windows, most PCs | `Shelfed-0.1.1-win-x64.exe` |
+| Windows on ARM | `Shelfed-0.1.1-win-arm64.exe` |
 
 ## Opening it the first time
 
