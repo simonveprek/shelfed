@@ -36,10 +36,10 @@ function useSystem(): Found {
 const NAMES = { mac: { arm64: "Apple silicon", x64: "Intel" }, win: { x64: "x64", arm64: "ARM" } };
 
 /** The one button the hero needs: this visitor's installer, or the choices below. */
-export function DownloadButton() {
+export function DownloadButton({ center = false }: { center?: boolean }) {
   const found = useSystem();
   return (
-    <div className="flex flex-col items-start gap-2">
+    <div className={`flex flex-col gap-2.5 ${center ? "items-center" : "items-start"}`}>
       <a
         href={found ? installer(found.os, found.arch) : "#download"}
         className="inline-flex h-12 items-center gap-2.5 rounded-full bg-foreground px-6 text-[15px] font-medium text-background transition-transform duration-200 ease-smooth hover:-translate-y-0.5 active:translate-y-0"
@@ -47,7 +47,7 @@ export function DownloadButton() {
         <HugeiconsIcon icon={found?.os === "win" ? WindowsNewIcon : found?.os === "mac" ? AppleIcon : Download04Icon} size={18} />
         {found ? `Download for ${found.os === "mac" ? "Mac" : "Windows"}` : "Download Shelf"}
       </a>
-      <p className="pl-1 text-[13px] text-muted">
+      <p className={`text-[13px] text-muted ${center ? "" : "pl-1"}`}>
         {found ? `${NAMES[found.os][found.arch]}, version ${VERSION}. ` : `Version ${VERSION}, for Mac and Windows. `}
         <a href="#download" className="underline decoration-line-strong underline-offset-4 hover:text-foreground">
           Other downloads
@@ -57,63 +57,24 @@ export function DownloadButton() {
   );
 }
 
-/** Both systems, every build, for anyone the button guessed wrong for. */
-export function DownloadCards() {
-  const found = useSystem();
-  const systems: Array<{ os: System; title: string; icon: typeof AppleIcon; builds: Array<{ arch: Arch; label: string; note: string }> }> = [
-    {
-      os: "mac",
-      title: "macOS",
-      icon: AppleIcon,
-      builds: [
-        { arch: "arm64", label: "Apple silicon", note: "M1 and later" },
-        { arch: "x64", label: "Intel", note: "Macs from before 2021" },
-      ],
-    },
-    {
-      os: "win",
-      title: "Windows",
-      icon: WindowsNewIcon,
-      builds: [
-        { arch: "x64", label: "x64", note: "Most PCs" },
-        { arch: "arm64", label: "ARM", note: "Snapdragon laptops" },
-      ],
-    },
+/** Every build, in a line, for anyone the button guessed wrong for. */
+export function OtherBuilds() {
+  const builds: Array<[System, Arch, string]> = [
+    ["mac", "arm64", "Mac, Apple silicon"],
+    ["mac", "x64", "Mac, Intel"],
+    ["win", "x64", "Windows, x64"],
+    ["win", "arm64", "Windows, ARM"],
   ];
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {systems.map((system) => (
-        <div key={system.os} className="rounded-[22px] border border-border bg-card p-6 shadow-[var(--shadow-card)]">
-          <div className="flex items-center gap-2.5">
-            <HugeiconsIcon icon={system.icon} size={20} />
-            <h3 className="text-[17px] font-medium">{system.title}</h3>
-          </div>
-          <div className="mt-5 flex flex-col gap-2">
-            {system.builds.map((build) => {
-              const yours = found?.os === system.os && found.arch === build.arch;
-              return (
-                <a
-                  key={build.arch}
-                  href={installer(system.os, build.arch)}
-                  className={`group flex items-center justify-between rounded-[14px] px-4 py-3 transition-colors duration-150 ${yours ? "bg-foreground text-background" : "bg-control hover:bg-control-hover"}`}
-                >
-                  <span>
-                    <span className="block text-[15px] font-medium">{build.label}</span>
-                    <span className={`block text-[13px] ${yours ? "opacity-70" : "text-muted"}`}>{yours ? "Looks like yours" : build.note}</span>
-                  </span>
-                  <HugeiconsIcon icon={Download04Icon} size={18} className="transition-transform duration-200 group-hover:translate-y-0.5" />
-                </a>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-      <p className="text-[13px] text-muted sm:col-span-2">
-        Version {VERSION}.{" "}
-        <a href={RELEASES} className="underline decoration-line-strong underline-offset-4 hover:text-foreground">
-          What's new, and every release
+    <p className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[14px] text-muted">
+      {builds.map(([os, arch, label]) => (
+        <a key={label} href={installer(os, arch)} className="underline decoration-line-strong underline-offset-4 transition-colors hover:text-foreground">
+          {label}
         </a>
-      </p>
-    </div>
+      ))}
+      <a href={RELEASES} className="underline decoration-line-strong underline-offset-4 transition-colors hover:text-foreground">
+        Every release
+      </a>
+    </p>
   );
 }
