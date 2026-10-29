@@ -32,14 +32,17 @@ win:
   # The release builds x64 and arm64 one at a time, so each installer holds only its own app.
   target: nsis
   icon: build/icon.png
+# One click: a small window with Shelfed's icon and a progress bar, then Shelfed
+# opens. Installed for this user only, so Windows doesn't ask for an admin.
+# build/installer.nsh replaces the check for a running Shelfed.
 nsis:
-  oneClick: false
+  oneClick: true
   perMachine: false
-  allowToChangeInstallationDirectory: true
+  runAfterFinish: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: Shelfed
-  license: LICENSE
+  deleteAppDataOnUninstall: false
 publish:
   provider: github
   owner: simonveprek
