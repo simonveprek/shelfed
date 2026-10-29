@@ -24,11 +24,13 @@ import { hasKindred, Kindred } from "./Suggestions";
 import { KindleDock, useHasKindle } from "./KindleDock";
 import { Cover } from "./Cover";
 import { annotationsMarkdown, highlightsOf } from "@/lib/annotations";
+import { language as uiLanguage, t, tn, tc } from "../../../shared/i18n";
 
-const LANGS = new Intl.DisplayNames("en", { type: "language" });
+/** A language's name, in the language the app speaks: "English", or "Angličtina". */
 const language = (code?: string) => {
   try {
-    return code ? (LANGS.of(code) ?? code) : "";
+    const name = code ? (new Intl.DisplayNames(uiLanguage(), { type: "language" }).of(code) ?? code) : "";
+    return name.charAt(0).toLocaleUpperCase() + name.slice(1);
   } catch {
     return code ?? "";
   }
@@ -53,17 +55,17 @@ const shared = (books: Book[], key: "spine" | "ribbon") => (books.every((b) => b
 function Look({ books }: { books: Book[] }) {
   const ids = books.map((b) => b.id);
   return (
-    <Block title="In the bookcase">
+    <Block title={t("In the bookcase")}>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <span className="text-caption text-muted">Spine</span>
-          <ColourPicker auto="As the bookcase colours it" value={shared(books, "spine")} options={SPINES} onChange={(spine) => patchBooks(ids, () => ({ spine }))} />
+          <span className="text-caption text-muted">{t("Spine")}</span>
+          <ColourPicker auto={t("As the bookcase colours it")} value={shared(books, "spine")} options={SPINES} onChange={(spine) => patchBooks(ids, () => ({ spine }))} />
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-caption text-muted">Ribbon</span>
+          <span className="text-caption text-muted">{t("Ribbon")}</span>
           <ColourPicker
-            auto="Only while reading, in the bookcase's colour"
-            none="No ribbon"
+            auto={t("Only while reading, in the bookcase's colour")}
+            none={t("No ribbon")}
             value={shared(books, "ribbon")}
             options={RIBBONS}
             onChange={(ribbon) => patchBooks(ids, () => ({ ribbon }))}
@@ -78,17 +80,17 @@ function Look({ books }: { books: Book[] }) {
 function Details({ book }: { book: Book }) {
   const year = book.published?.match(/^\d{4}/)?.[0];
   const tiles = [
-    year && { value: year, label: "Published" },
-    book.language && { value: language(book.language), label: "Language" },
-    (book.readSeconds ?? 0) >= 60 && { value: duration(book.readSeconds ?? 0), label: "Read for" },
+    year && { value: year, label: t("Published") },
+    book.language && { value: language(book.language), label: t("Language") },
+    (book.readSeconds ?? 0) >= 60 && { value: duration(book.readSeconds ?? 0), label: t("Read for") },
   ].filter(Boolean) as Array<{ value: string; label: string }>;
   const rows = [
-    book.publisher && { icon: Building03Icon, label: "Publisher", value: book.publisher },
+    book.publisher && { icon: Building03Icon, label: t("Publisher"), value: book.publisher },
     // The full date, when the book knows more than its year.
-    book.published && book.published.length > 4 && { icon: Calendar03Icon, label: "Published", value: published(book.published) },
+    book.published && book.published.length > 4 && { icon: Calendar03Icon, label: t("Published"), value: published(book.published) },
     book.isbn && { icon: BarCode02Icon, label: "ISBN", value: <Isbn value={book.isbn} /> },
-    { icon: CalendarAdd01Icon, label: "Added", value: date(book.added) },
-    book.opened && { icon: Clock01Icon, label: "Last opened", value: ago(book.opened) },
+    { icon: CalendarAdd01Icon, label: t("Added"), value: date(book.added) },
+    book.opened && { icon: Clock01Icon, label: t("Last opened"), value: ago(book.opened) },
   ].filter(Boolean) as Array<{ icon: IconLike; label: string; value: ReactNode }>;
 
   return (
@@ -139,13 +141,13 @@ export function Stars({ value, onChange }: { value: number; onChange: (v: number
   const [hover, setHover] = useState(0);
   const shown = hover || value;
   return (
-    <div className="inline-flex" onMouseLeave={() => setHover(0)} role="radiogroup" aria-label="Rating">
+    <div className="inline-flex" onMouseLeave={() => setHover(0)} role="radiogroup" aria-label={t("Rating")}>
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
           role="radio"
           aria-checked={n === value}
-          aria-label={`${n} stars`}
+          aria-label={tn(n, "{n} stars", "{n} stars")}
           onMouseEnter={() => setHover(n)}
           onClick={() => onChange(n === value ? 0 : n)}
           className={cx(
@@ -168,7 +170,7 @@ function Description({ text }: { text: string }) {
       <p className={cx("selectable serif text-[14px] leading-relaxed whitespace-pre-line", !open && long && "line-clamp-6")}>{text}</p>
       {long && (
         <button onClick={() => setOpen(!open)} className="mt-1.5 text-label font-medium text-accent">
-          {open ? "Less" : "More"}
+          {open ? t("Less") : t("More")}
         </button>
       )}
     </div>
@@ -184,11 +186,11 @@ function Tags({ book }: { book: Book }) {
           <span className="max-w-[200px] truncate">{tag.replace(/\s*--\s*/g, ", ")}</span>
           <span
             role="button"
-            aria-label={`Remove ${tag}`}
+            aria-label={t("Remove {tag}", { tag })}
             className="-mr-1 ml-0.5 flex text-muted hover:text-foreground"
             onClick={(e) => {
               e.stopPropagation();
-              patchBooks([book.id], (b) => ({ tags: b.tags.filter((t) => t !== tag) }));
+              patchBooks([book.id], (b) => ({ tags: b.tags.filter((other) => other !== tag) }));
             }}
           >
             <Icon icon={Cancel01Icon} size={11} />
@@ -199,7 +201,7 @@ function Tags({ book }: { book: Book }) {
         <input
           autoFocus
           className="h-8 w-28 rounded-full bg-control px-3 text-label outline-none"
-          placeholder="Tag"
+          placeholder={t("Tag")}
           onBlur={(e) => {
             const tag = e.target.value.trim();
             if (tag) patchBooks([book.id], (b) => ({ tags: [...new Set([...b.tags, tag])] }));
@@ -211,7 +213,7 @@ function Tags({ book }: { book: Book }) {
           }}
         />
       ) : (
-        <Chip size="sm" icon={Add01Icon} onClick={() => setAdding(true)}>Tag</Chip>
+        <Chip size="sm" icon={Add01Icon} onClick={() => setAdding(true)}>{t("Tag")}</Chip>
       )}
     </div>
   );
@@ -224,14 +226,14 @@ function Collections({ book }: { book: Book }) {
       {collections
         .filter((c) => book.collections.includes(c.id))
         .map((c) => (
-          <Chip key={c.id} size="sm" active icon={Folder01Icon} onClick={() => removeFromCollection([book.id], c.id)} aria-label={`Take out of ${c.name}`}>
+          <Chip key={c.id} size="sm" active icon={Folder01Icon} onClick={() => removeFromCollection([book.id], c.id)} aria-label={t("Take out of {name}", { name: c.name })}>
             {c.name}
           </Chip>
         ))}
       <Menu
-        label="Add to a collection"
+        label={t("Add to a collection")}
         width={220}
-        trigger={({ props }) => <Chip {...props} size="sm" icon={Add01Icon} onClick={props.onClick}>Collection</Chip>}
+        trigger={({ props }) => <Chip {...props} size="sm" icon={Add01Icon} onClick={props.onClick}>{t("Collection")}</Chip>}
       >
         {collections.map((c) => (
           <MenuItem key={c.id} icon={Folder01Icon} selected={book.collections.includes(c.id)} onSelect={() => addToCollection([book.id], c.id)}>
@@ -239,12 +241,13 @@ function Collections({ book }: { book: Book }) {
           </MenuItem>
         ))}
         {collections.length > 0 && <MenuSeparator />}
-        <MenuItem icon={FolderAddIcon} onSelect={() => newCollection([book.id])}>New collection</MenuItem>
+        <MenuItem icon={FolderAddIcon} onSelect={() => newCollection([book.id])}>{t("New collection")}</MenuItem>
       </Menu>
     </div>
   );
 }
 
+// English here, made Czech where it's shown: this runs before the language is set.
 const STATUS: Array<{ id: ReadStatus; label: string }> = [
   { id: "unread", label: "To read" },
   { id: "reading", label: "Reading" },
@@ -260,9 +263,9 @@ function One({ book }: { book: Book }) {
   const takeCover = async (blob: Blob) => {
     try {
       upsert(await saveCover(book.id, blob));
-      toast.success("Cover changed");
+      toast.success(t("Cover changed"));
     } catch {
-      toast.error("That picture could not be used as a cover");
+      toast.error(t("That picture could not be used as a cover"));
     }
   };
 
@@ -275,7 +278,7 @@ function One({ book }: { book: Book }) {
           <button
             className={cx("group relative w-[150px] transition-transform duration-250 ease-smooth hover:-translate-y-1", dropping && "scale-[1.03]")}
             onClick={() => openReader(book.id)}
-            aria-label="Read"
+            aria-label={t("Read")}
             onDragOver={(e) => {
               if (!e.dataTransfer.types.includes("Files")) return;
               e.preventDefault();
@@ -295,7 +298,7 @@ function One({ book }: { book: Book }) {
             <Cover book={book} large style={{ boxShadow: dropping ? "0 0 0 3px var(--accent), var(--shadow-book-hover)" : "var(--shadow-book-hover)" }} />
             <span className="absolute inset-0 flex items-center justify-center rounded-[6px] bg-black/0 opacity-0 transition-all duration-150 group-hover:bg-black/25 group-hover:opacity-100">
               <span className="flex h-8 items-center gap-1.5 rounded-full bg-card px-3.5 text-label font-medium text-foreground shadow-float">
-                <Icon icon={BookOpen01Icon} size={14} /> Read
+                <Icon icon={BookOpen01Icon} size={14} /> {t("Read")}
               </span>
             </span>
           </button>
@@ -313,20 +316,20 @@ function One({ book }: { book: Book }) {
           {book.series && (
             <p className="mt-0.5 text-caption text-muted">
               {book.series}
-              {book.seriesIndex ? `, book ${book.seriesIndex}` : ""}
+              {book.seriesIndex ? t(", book {n}", { n: book.seriesIndex }) : ""}
             </p>
           )}
           {onKindle && (
             <div className="mt-2.5 flex justify-center">
-              <Badge tone="success">On your Kindle</Badge>
+              <Badge tone="success">{t("On your Kindle")}</Badge>
             </div>
           )}
           <div className="mt-2 flex items-center justify-center gap-1">
             <Stars value={book.rating} onChange={(rating) => patchBooks([book.id], () => ({ rating }))} />
-            <Tooltip content={book.favorite ? "In favorites" : "Add to favorites"}>
+            <Tooltip content={book.favorite ? t("In favorites") : t("Add to favorites")}>
               <button
                 onClick={() => toggleFavorite([book.id])}
-                aria-label="Favorite"
+                aria-label={t("Favorite")}
                 className={cx("flex size-7 items-center justify-center transition-transform duration-150 hover:scale-110", book.favorite ? "text-danger [&_path]:fill-current" : "text-line-strong")}
               >
                 <Icon icon={FavouriteIcon} size={16} />
@@ -336,14 +339,14 @@ function One({ book }: { book: Book }) {
 
           <div className="mt-4 flex flex-col gap-2">
             <Button variant="primary" icon={BookOpen01Icon} onClick={() => openReader(book.id)} className="w-full">
-              {book.status === "reading" && progress >= 0.01 ? `Continue at ${Math.round(progress * 100)}%` : book.status === "finished" ? "Read again" : "Read"}
+              {book.status === "reading" && progress >= 0.01 ? t("Continue at {n}%", { n: Math.round(progress * 100) }) : book.status === "finished" ? t("Read again") : t("Read")}
             </Button>
             <div className="flex gap-2">
-              <Button size="sm" icon={MailSend01Icon} className="flex-1" onClick={() => runAction("send", [book.id])}>Kindle</Button>
-              <Button size="sm" icon={ArrowDataTransferHorizontalIcon} className="flex-1" onClick={() => runAction("convert", [book.id])}>Convert</Button>
-              <Menu label="More" align="end" width={230} trigger={({ props }) => <IconButton {...props} variant="secondary" label="More" icon={MoreHorizontalIcon} />}>
-                <MenuItem icon={MagicWand01Icon} onSelect={() => runAction("metadata", [book.id])}>Find details online</MenuItem>
-                <MenuItem icon={PencilEdit02Icon} onSelect={() => runAction("edit", [book.id])}>Edit details</MenuItem>
+              <Button size="sm" icon={MailSend01Icon} className="flex-1" onClick={() => runAction("send", [book.id])}>{t("Kindle")}</Button>
+              <Button size="sm" icon={ArrowDataTransferHorizontalIcon} className="flex-1" onClick={() => runAction("convert", [book.id])}>{t("Convert")}</Button>
+              <Menu label={t("More")} align="end" width={230} trigger={({ props }) => <IconButton {...props} variant="secondary" label={t("More")} icon={MoreHorizontalIcon} />}>
+                <MenuItem icon={MagicWand01Icon} onSelect={() => runAction("metadata", [book.id])}>{t("Find details online")}</MenuItem>
+                <MenuItem icon={PencilEdit02Icon} onSelect={() => runAction("edit", [book.id])}>{t("Edit details")}</MenuItem>
                 <MenuItem
                   icon={Image01Icon}
                   onSelect={async () => {
@@ -351,11 +354,11 @@ function One({ book }: { book: Book }) {
                     if (picked) takeCover(new Blob([picked as BlobPart]));
                   }}
                 >
-                  Change cover
+                  {t("Change cover")}
                 </MenuItem>
-                <MenuItem icon={FolderOpenIcon} onSelect={() => api.reveal(book.id)}>{revealLabel}</MenuItem>
+                <MenuItem icon={FolderOpenIcon} onSelect={() => api.reveal(book.id)}>{t(revealLabel)}</MenuItem>
                 <MenuSeparator />
-                <MenuItem icon={Delete02Icon} danger onSelect={() => runAction("remove", [book.id])}>Remove from library</MenuItem>
+                <MenuItem icon={Delete02Icon} danger onSelect={() => runAction("remove", [book.id])}>{t("Remove from library")}</MenuItem>
               </Menu>
             </div>
           </div>
@@ -364,37 +367,37 @@ function One({ book }: { book: Book }) {
 
       <Panel className="mb-3 p-3">
         <Segmented
-          label="Reading status"
+          label={t("Reading status")}
           size="sm"
           block
           value={book.status}
           onChange={(status) => patchBooks([book.id], () => ({ status, ...(status === "finished" ? { progress: 1 } : status === "unread" ? { progress: 0, location: undefined } : {}) }))}
-          options={STATUS}
+          options={STATUS.map((s) => ({ ...s, label: tc("status", s.label) }))}
         />
-        {book.status === "reading" && <Progress className="mt-3 px-1" size="sm" value={progress * 100} label="Read so far" showValue />}
+        {book.status === "reading" && <Progress className="mt-3 px-1" size="sm" value={progress * 100} label={t("Read so far")} showValue />}
       </Panel>
 
       {book.description && (
-        <Block title="About">
+        <Block title={t("About")}>
           <Description text={book.description} />
         </Block>
       )}
 
-      <Block title="Details" action={<Button size="sm" variant="ghost" className="-my-1 -mr-2 h-7" onClick={() => runAction("edit", [book.id])}>Edit</Button>}>
+      <Block title={t("Details")} action={<Button size="sm" variant="ghost" className="-my-1 -mr-2 h-7" onClick={() => runAction("edit", [book.id])}>{t("Edit")}</Button>}>
         <Details book={book} />
         {!book.publisher && !book.isbn && (
           <Button size="sm" variant="outline" icon={MagicWand01Icon} className="mt-2 w-full" onClick={() => runAction("metadata", [book.id])}>
-            Find details online
+            {t("Find details online")}
           </Button>
         )}
       </Block>
 
       {highlightsOf(book).length > 0 && (
         <Block
-          title={`Highlights, ${highlightsOf(book).length}`}
+          title={t("Highlights, {n}", { n: highlightsOf(book).length })}
           action={
-            <Button size="sm" variant="ghost" className="-my-1 -mr-2 h-7" onClick={() => { navigator.clipboard.writeText(annotationsMarkdown(book)); toast.success("Copied as Markdown"); }}>
-              Copy
+            <Button size="sm" variant="ghost" className="-my-1 -mr-2 h-7" onClick={() => { navigator.clipboard.writeText(annotationsMarkdown(book)); toast.success(t("Copied as Markdown")); }}>
+              {t("Copy")}
             </Button>
           }
         >
@@ -407,28 +410,28 @@ function One({ book }: { book: Book }) {
             ))}
           </div>
           {highlightsOf(book).length > 4 && (
-            <Button size="sm" variant="outline" className="mt-3 w-full" onClick={() => openReader(book.id)}>See all in the book</Button>
+            <Button size="sm" variant="outline" className="mt-3 w-full" onClick={() => openReader(book.id)}>{t("See all in the book")}</Button>
           )}
         </Block>
       )}
 
       {kindred && (
-        <Block title="You may also like">
+        <Block title={t("You may also like")}>
           <Kindred book={book} />
         </Block>
       )}
 
-      <Block title="Files">
+      <Block title={t("Files")}>
         <div className="-mx-2 flex flex-col">
           {book.formats.map((f) => (
             <div key={f.ext} className="group flex h-10 items-center gap-3 rounded-item px-2 hover:bg-control">
               <Badge>{f.ext.toUpperCase()}</Badge>
               <span className="flex-1 text-label text-muted tabular-nums">{bytes(f.size)}</span>
               <span className="flex opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                {canRead(f.ext) && <IconButton label={`Read the ${f.ext.toUpperCase()}`} icon={BookOpen01Icon} onClick={() => openReader(book.id, f.ext)} />}
-                <IconButton label={revealLabel} icon={FolderOpenIcon} onClick={() => api.reveal(book.id, f.ext)} />
+                {canRead(f.ext) && <IconButton label={t("Read the {format}", { format: f.ext.toUpperCase() })} icon={BookOpen01Icon} onClick={() => openReader(book.id, f.ext)} />}
+                <IconButton label={t(revealLabel)} icon={FolderOpenIcon} onClick={() => api.reveal(book.id, f.ext)} />
                 {book.formats.length > 1 && (
-                  <IconButton label={`Remove the ${f.ext.toUpperCase()}`} icon={Delete02Icon} onClick={async () => upsert(await api.removeFormat(book.id, f.ext))} />
+                  <IconButton label={t("Remove the {format}", { format: f.ext.toUpperCase() })} icon={Delete02Icon} onClick={async () => upsert(await api.removeFormat(book.id, f.ext))} />
                 )}
               </span>
             </div>
@@ -436,11 +439,11 @@ function One({ book }: { book: Book }) {
         </div>
       </Block>
 
-      <Block title="Collections">
+      <Block title={t("Collections")}>
         <Collections book={book} />
       </Block>
 
-      <Block title="Tags">
+      <Block title={t("Tags")}>
         <Tags book={book} />
       </Block>
 
@@ -474,30 +477,30 @@ function Many({ books }: { books: Book[] }) {
         </div>
         <div className="p-4 text-center">
           <p className="text-heading">{plural(books.length, "book")}</p>
-          <p className="mt-0.5 text-label text-muted">{bytes(size)} together</p>
+          <p className="mt-0.5 text-label text-muted">{t("{size} together", { size: bytes(size) })}</p>
           <div className="mt-4 flex flex-col gap-2">
-            <Button variant="primary" icon={MailSend01Icon} onClick={() => runAction("send", ids)}>Send to Kindle</Button>
+            <Button variant="primary" icon={MailSend01Icon} onClick={() => runAction("send", ids)}>{t("Send to Kindle")}</Button>
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1" icon={ArrowDataTransferHorizontalIcon} onClick={() => runAction("convert", ids)}>Convert</Button>
-              <Button size="sm" className="flex-1" icon={FavouriteIcon} onClick={() => toggleFavorite(ids)}>Favorite</Button>
+              <Button size="sm" className="flex-1" icon={ArrowDataTransferHorizontalIcon} onClick={() => runAction("convert", ids)}>{t("Convert")}</Button>
+              <Button size="sm" className="flex-1" icon={FavouriteIcon} onClick={() => toggleFavorite(ids)}>{t("Favorite")}</Button>
             </div>
             <div className="flex gap-2">
-              <Menu label="Add to a collection" width={220} trigger={({ props }) => <Button {...props} size="sm" className="flex-1" icon={Folder01Icon}>Collection</Button>}>
+              <Menu label={t("Add to a collection")} width={220} trigger={({ props }) => <Button {...props} size="sm" className="flex-1" icon={Folder01Icon}>{t("Collection")}</Button>}>
                 {collections.map((c) => (
                   <MenuItem key={c.id} icon={Folder01Icon} onSelect={() => addToCollection(ids, c.id)}>{c.name}</MenuItem>
                 ))}
                 {collections.length > 0 && <MenuSeparator />}
-                <MenuItem icon={FolderAddIcon} onSelect={() => newCollection(ids)}>New collection</MenuItem>
+                <MenuItem icon={FolderAddIcon} onSelect={() => newCollection(ids)}>{t("New collection")}</MenuItem>
               </Menu>
-              <Menu label="Mark" align="end" width={190} trigger={({ props }) => <Button {...props} size="sm" className="flex-1" icon={CheckmarkCircle02Icon}>Mark</Button>}>
-                <MenuLabel>Mark as</MenuLabel>
+              <Menu label={t("Mark")} align="end" width={190} trigger={({ props }) => <Button {...props} size="sm" className="flex-1" icon={CheckmarkCircle02Icon}>{t("Mark")}</Button>}>
+                <MenuLabel>{t("Mark as")}</MenuLabel>
                 {STATUS.map((s) => (
-                  <MenuItem key={s.id} onSelect={() => runAction(s.id, ids)}>{s.label}</MenuItem>
+                  <MenuItem key={s.id} onSelect={() => runAction(s.id, ids)}>{tc("status", s.label)}</MenuItem>
                 ))}
               </Menu>
             </div>
             <Button size="sm" variant="ghost" icon={Delete02Icon} className="mt-1 text-danger hover:text-danger" onClick={() => runAction("remove", ids)}>
-              Remove {books.length} books
+              {tn(books.length, "Remove {n} books", "Remove {n} books")}
             </Button>
           </div>
         </div>
@@ -519,18 +522,18 @@ function Overview() {
   return (
     <div className="flex flex-col gap-3 p-3">
       <div className="grid grid-cols-2 gap-3">
-        <Stat label="Books" value={books.length.toLocaleString()} hint={`${authors.toLocaleString()} authors`} />
-        <Stat label="Finished" value={finished.toLocaleString()} hint={`${Math.round((finished / books.length) * 100)}% of them`} />
+        <Stat label={t("Books")} value={books.length.toLocaleString()} hint={tn(authors, "{n} authors", "{n} authors")} />
+        <Stat label={t("Finished")} value={finished.toLocaleString()} hint={t("{n}% of them", { n: Math.round((finished / books.length) * 100) })} />
       </div>
-      <Block title="Pick up where you left off">
-        {reading.length === 0 && <p className="text-label text-muted">Books you start reading wait for you here. Double click a cover to open it.</p>}
+      <Block title={t("Pick up where you left off")}>
+        {reading.length === 0 && <p className="text-label text-muted">{t("Books you start reading wait for you here. Double click a cover to open it.")}</p>}
         <div className="-mx-2 flex flex-col">
           {reading.map((book) => (
             <button key={book.id} onClick={() => openReader(book.id)} className="flex items-center gap-3 rounded-item p-2 text-left hover:bg-control">
               <Cover book={book} className="w-9 shrink-0 rounded-[3px] shadow-[var(--shadow-book)]" />
               <span className="min-w-0 flex-1">
                 <span className="line-clamp-1 text-label font-medium">{book.title}</span>
-                <Progress className="mt-2" size="sm" value={(book.progress ?? 0) * 100} aria-label="Progress" />
+                <Progress className="mt-2" size="sm" value={(book.progress ?? 0) * 100} aria-label={t("Progress")} />
               </span>
             </button>
           ))}

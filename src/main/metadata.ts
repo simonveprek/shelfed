@@ -1,9 +1,10 @@
 import { net } from "electron";
 import type { MetadataCandidate } from "../shared/types";
+import { t } from "../shared/i18n";
 
 const get = async (url: string) => {
   const res = await net.fetch(url, { headers: { "User-Agent": "Shelfed/1.0 (book library app)" } });
-  if (!res.ok) throw new Error(`${new URL(url).host} answered ${res.status}`);
+  if (!res.ok) throw new Error(t("{host} answered {status}", { host: new URL(url).host, status: String(res.status) }));
   return res.json();
 };
 
@@ -75,6 +76,6 @@ export async function searchGoogle(q: Query): Promise<MetadataCandidate[]> {
 
 export async function fetchBytes(url: string): Promise<Uint8Array> {
   const res = await net.fetch(url);
-  if (!res.ok) throw new Error(`Could not download from ${new URL(url).host}`);
+  if (!res.ok) throw new Error(t("Could not download from {host}", { host: new URL(url).host }));
   return new Uint8Array(await res.arrayBuffer());
 }

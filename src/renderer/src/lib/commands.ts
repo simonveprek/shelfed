@@ -1,5 +1,6 @@
 import { createCollection, openReader, pickAndImport, toggleFavorite } from "./actions";
 import { patchBooks, setSetting, useStore } from "./store";
+import { t } from "../../../shared/i18n";
 
 const set = useStore.setState;
 const get = useStore.getState;
@@ -32,7 +33,7 @@ export function runAction(action: BookAction, ids: string[]) {
 }
 
 export function newCollection(ids: string[] = []) {
-  const c = createCollection("New collection", ids);
+  const c = createCollection(t("New collection"), ids);
   set({ section: { kind: "collection", id: c.id }, dialog: { kind: "rename-collection", id: c.id } });
 }
 

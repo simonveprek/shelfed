@@ -12,6 +12,7 @@ import { newCollection, runCommand } from "@/lib/commands";
 import { useStore, type Section } from "@/lib/store";
 import { authorsOf } from "@/lib/util";
 import { Cover } from "./Cover";
+import { language, t } from "../../../shared/i18n";
 
 /* ------------------------------------------------------------------------ */
 /* Work in progress, in the corner                                           */
@@ -104,8 +105,8 @@ export function DropZone() {
             <motion.div initial={{ scale: 0.85, y: 8 }} animate={{ scale: 1, y: 0, transition: { duration: 0.4, ease: [0.34, 1.36, 0.64, 1] } }}>
               <Point shape="squircle" mood="excited" size={72} />
             </motion.div>
-            <p className="mt-6 text-heading">Drop to add to your library</p>
-            <p className="mt-1.5 text-label text-muted">Books, or whole folders of them</p>
+            <p className="mt-6 text-heading">{t("Drop to add to your library")}</p>
+            <p className="mt-1.5 text-label text-muted">{t("Books, or whole folders of them")}</p>
           </div>
         </motion.div>
       )}
@@ -121,6 +122,7 @@ export function Palette() {
   const open = useStore((s) => s.palette);
   const books = useStore((s) => s.books);
   const reading = useStore((s) => s.reading);
+  const speaks = language();
 
   const items = useMemo<CommandItem[]>(() => {
     const go = (section: Section) => () => useStore.setState({ section, selection: [], query: "" });
@@ -129,38 +131,39 @@ export function Palette() {
       ...recent.map((b) => ({
         id: `book-${b.id}`,
         label: b.title,
-        group: "Books",
+        group: t("Books"),
         icon: <Cover book={b} className="w-4 rounded-[2px]" />,
         hint: authorsOf(b),
         keywords: [...b.authors, b.series ?? "", ...b.tags],
         onSelect: () => openReader(b.id),
       })),
-      { id: "add", label: "Add books", group: "Do", icon: FileAddIcon, shortcut: `${mod}O`, onSelect: () => pickAndImport(false) },
-      { id: "add-folder", label: "Add a folder of books", group: "Do", icon: FolderAddIcon, onSelect: () => pickAndImport(true) },
-      { id: "collection", label: "New collection", group: "Do", icon: FolderAddIcon, onSelect: () => newCollection(useStore.getState().selection) },
-      { id: "kindle", label: "Set up Send to Kindle", group: "Do", icon: Tablet01Icon, onSelect: () => useStore.setState({ dialog: { kind: "settings", tab: "sending" } }) },
-      { id: "classics", label: "Classics", group: "Go to", icon: Globe02Icon, keywords: ["free books", "public domain", "Gutenberg", "Standard Ebooks"], onSelect: go({ kind: "discover" }) },
-      { id: "clippings", label: "Import Kindle highlights", group: "Do", icon: Tablet01Icon, onSelect: () => runCommand("clippings") },
-      { id: "welcome", label: "Show the welcome again", group: "Do", icon: Book02Icon, onSelect: () => useStore.setState({ onboarding: true }) },
-      { id: "settings", label: "Settings", group: "Do", icon: Settings01Icon, shortcut: `${mod},`, onSelect: () => useStore.setState({ dialog: { kind: "settings" } }) },
-      { id: "all", label: "All books", group: "Go to", icon: Book02Icon, onSelect: go({ kind: "all" }) },
-      { id: "reading", label: "Reading", group: "Go to", icon: BookOpen01Icon, onSelect: go({ kind: "reading" }) },
-      { id: "authors", label: "Authors", group: "Go to", icon: UserIcon, onSelect: go({ kind: "browse", by: "author" }) },
-      { id: "series", label: "Series", group: "Go to", icon: Layers01Icon, onSelect: go({ kind: "browse", by: "series" }) },
-      { id: "grid", label: "Covers", group: "View", icon: GridViewIcon, shortcut: `${mod}1`, onSelect: () => runCommand("view:grid") },
-      { id: "list", label: "List", group: "View", icon: LeftToRightListBulletIcon, shortcut: `${mod}2`, onSelect: () => runCommand("view:list") },
-      { id: "shelves", label: "Shelves", group: "View", icon: Bookshelf01Icon, shortcut: `${mod}3`, onSelect: () => runCommand("view:shelves") },
-      { id: "bookcase", label: "Bookcase in 3D", group: "View", icon: ThreeDViewIcon, shortcut: `${mod}4`, onSelect: () => runCommand("view:bookcase") },
+      { id: "add", label: t("Add books"), group: t("Do"), icon: FileAddIcon, shortcut: `${mod}O`, onSelect: () => pickAndImport(false) },
+      { id: "add-folder", label: t("Add a folder of books"), group: t("Do"), icon: FolderAddIcon, onSelect: () => pickAndImport(true) },
+      { id: "collection", label: t("New collection"), group: t("Do"), icon: FolderAddIcon, onSelect: () => newCollection(useStore.getState().selection) },
+      { id: "kindle", label: t("Set up Send to Kindle"), group: t("Do"), icon: Tablet01Icon, onSelect: () => useStore.setState({ dialog: { kind: "settings", tab: "sending" } }) },
+      { id: "classics", label: t("Classics"), group: t("Go to"), icon: Globe02Icon, keywords: ["free books", "public domain", t("free books"), t("public domain"), "Gutenberg", "Standard Ebooks"], onSelect: go({ kind: "discover" }) },
+      { id: "clippings", label: t("Import Kindle highlights"), group: t("Do"), icon: Tablet01Icon, onSelect: () => runCommand("clippings") },
+      { id: "welcome", label: t("Show the welcome again"), group: t("Do"), icon: Book02Icon, onSelect: () => useStore.setState({ onboarding: true }) },
+      { id: "settings", label: t("Settings"), group: t("Do"), icon: Settings01Icon, shortcut: `${mod},`, onSelect: () => useStore.setState({ dialog: { kind: "settings" } }) },
+      { id: "all", label: t("All books"), group: t("Go to"), icon: Book02Icon, onSelect: go({ kind: "all" }) },
+      { id: "reading", label: t("Reading"), group: t("Go to"), icon: BookOpen01Icon, onSelect: go({ kind: "reading" }) },
+      { id: "authors", label: t("Authors"), group: t("Go to"), icon: UserIcon, onSelect: go({ kind: "browse", by: "author" }) },
+      { id: "series", label: t("Series"), group: t("Go to"), icon: Layers01Icon, onSelect: go({ kind: "browse", by: "series" }) },
+      { id: "grid", label: t("Covers"), group: t("View"), icon: GridViewIcon, shortcut: `${mod}1`, onSelect: () => runCommand("view:grid") },
+      { id: "list", label: t("List"), group: t("View"), icon: LeftToRightListBulletIcon, shortcut: `${mod}2`, onSelect: () => runCommand("view:list") },
+      { id: "shelves", label: t("Shelves"), group: t("View"), icon: Bookshelf01Icon, shortcut: `${mod}3`, onSelect: () => runCommand("view:shelves") },
+      { id: "bookcase", label: t("Bookcase in 3D"), group: t("View"), icon: ThreeDViewIcon, shortcut: `${mod}4`, onSelect: () => runCommand("view:bookcase") },
     ];
-  }, [books]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [books, speaks]);
 
   return (
     <Command
       open={open && !reading}
       onOpenChange={(palette) => useStore.setState({ palette: palette && !useStore.getState().reading })}
       items={items}
-      placeholder="Find a book or do something"
-      empty="Nothing matches"
+      placeholder={t("Find a book or do something")}
+      empty={t("Nothing matches")}
     />
   );
 }

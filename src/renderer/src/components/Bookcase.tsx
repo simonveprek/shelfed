@@ -10,6 +10,7 @@ import { authorsOf, bestFormat, hashString, sortAuthor } from "@/lib/util";
 import { CLOTH, ribbonColour } from "./Colours";
 import { Cover } from "./Cover";
 import { BooksMenu, dragBooks, useKeys } from "./Library";
+import { t } from "../../../shared/i18n";
 
 /*
  * The bookcase. Every book stands spine out on a shelf, in real 3D made of
@@ -94,15 +95,15 @@ function groupBooks(books: Book[], by: BookcasePrefs["group"], collections: { id
   for (const b of books) {
     if (by === "author") {
       const a = b.authors[0];
-      add(a ? `a:${sortAuthor(a)}` : "~", a ?? "Unknown author", a ? { kind: "group", by: "author", value: a } : undefined, b);
+      add(a ? `a:${sortAuthor(a)}` : "~", a ?? t("Unknown author"), a ? { kind: "group", by: "author", value: a } : undefined, b);
     } else if (by === "series") {
-      add(b.series ? `s:${b.series}` : "~", b.series ?? "Not in a series", b.series ? { kind: "group", by: "series", value: b.series } : undefined, b);
+      add(b.series ? `s:${b.series}` : "~", b.series ?? t("Not in a series"), b.series ? { kind: "group", by: "series", value: b.series } : undefined, b);
     } else if (by === "collection") {
       // A book in several collections stands on the first one's shelf.
       const c = collections.find((x) => b.collections.includes(x.id));
-      add(c ? `c:${c.name}` : "~", c?.name ?? "In no collection", c ? { kind: "collection", id: c.id } : undefined, b);
+      add(c ? `c:${c.name}` : "~", c?.name ?? t("In no collection"), c ? { kind: "collection", id: c.id } : undefined, b);
     } else if (by === "status") {
-      add(`${STATUS_ORDER[b.status]}`, STATUS_LABEL[b.status], { kind: b.status }, b);
+      add(`${STATUS_ORDER[b.status]}`, t(STATUS_LABEL[b.status]), { kind: b.status }, b);
     } else {
       const f = (bestFormat(b) ?? "file").toUpperCase();
       add(`f:${f}`, f, { kind: "group", by: "format", value: f }, b);
@@ -372,7 +373,7 @@ function ShelfRow({
                 key={seg.group.key}
                 onClick={() => go && useStore.setState({ section: go, selection: [] })}
                 disabled={!go}
-                title={go ? `Show only ${seg.group.label}` : undefined}
+                title={go ? t("Show only {name}", { name: seg.group.label }) : undefined}
                 style={{ left, maxWidth: Math.max(seg.width, 80) }}
                 className="absolute top-1/2 flex h-6 -translate-y-1/2 items-center gap-2 rounded-full border border-border bg-card px-3 text-caption font-medium whitespace-nowrap text-foreground shadow-float transition-transform duration-150 enabled:hover:-translate-y-[60%]"
               >
@@ -524,7 +525,7 @@ export function Bookcase({ visible }: { visible: Book[] }) {
             <p className="line-clamp-2 text-label leading-snug font-medium">{hover.book.title}</p>
             <p className="line-clamp-1 text-caption text-muted">
               {authorsOf(hover.book)}
-              {hover.book.status === "reading" && hover.book.progress ? `, ${Math.round(hover.book.progress * 100)}% read` : ""}
+              {hover.book.status === "reading" && hover.book.progress ? t(", {n}% read", { n: Math.round(hover.book.progress * 100) }) : ""}
             </p>
           </motion.div>
         )}

@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "./table";
+import { t } from "../../../../shared/i18n";
 
 export type DataTableColumn<Row> = {
   id: string;
@@ -53,7 +54,7 @@ export function DataTable<Row>({
   rowId,
   label,
   searchText,
-  searchPlaceholder = "Search",
+  searchPlaceholder = t("Search"),
   selectable = false,
   selected: held,
   onSelectedChange,
@@ -193,7 +194,7 @@ export function DataTable<Row>({
                 <Checkbox
                   checked={all}
                   onChange={toggleAll}
-                  aria-label="Select all rows"
+                  aria-label={t("Select all rows")}
                   className="align-middle"
                 />
               </TableHead>
@@ -276,7 +277,7 @@ export function DataTable<Row>({
                 className="h-40 text-center text-label text-muted"
               >
                 {empty ??
-                  (needle ? `Nothing matches ${query.trim()}` : "Nothing here yet")}
+                  (needle ? t("Nothing matches {query}", { query: query.trim() }) : t("Nothing here yet"))}
               </TableCell>
             </TableRow>
           )}
@@ -286,17 +287,17 @@ export function DataTable<Row>({
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border py-2.5 pr-3 pl-5 text-caption text-muted">
         <p className="tabular-nums">
           {selectable && tickedFound.length > 0
-            ? `${tickedFound.length} of ${found.length} selected`
-            : `${first} to ${last} of ${sorted.length}`}
+            ? t("{n} of {total} selected", { n: tickedFound.length, total: found.length })
+            : t("{first} to {last} of {total}", { first, last, total: sorted.length })}
         </p>
         <div className="flex items-center gap-3">
           {pageSizes.length > 1 && (
             <div className="flex items-center gap-2">
-              <span className="hidden sm:inline">Rows</span>
+              <span className="hidden sm:inline">{t("Rows")}</span>
               <div className="w-[72px]">
                 <Select
                   size="sm"
-                  label="Rows per page"
+                  label={t("Rows per page")}
                   value={String(size)}
                   onChange={(value) => {
                     setSize(Number(value));
@@ -312,16 +313,16 @@ export function DataTable<Row>({
           )}
           <div className="flex items-center gap-0.5">
             <IconButton
-              label="Previous page"
+              label={t("Previous page")}
               icon={ArrowLeft01Icon}
               disabled={current === 0}
               onClick={() => setPage(current - 1)}
             />
             <span className="min-w-12 text-center tabular-nums">
-              {current + 1} of {pages}
+              {t("{page} of {pages}", { page: current + 1, pages })}
             </span>
             <IconButton
-              label="Next page"
+              label={t("Next page")}
               icon={ArrowRight01Icon}
               disabled={current >= pages - 1}
               onClick={() => setPage(current + 1)}

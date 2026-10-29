@@ -73,6 +73,8 @@ type Options = {
   library: { fill: (folder: string) => void } | undefined;
   /** A Calibre library on this pretend computer, filled by the test, for Shelfed to find. */
   calibre: { fill: (folder: string) => void } | undefined;
+  /** The language Shelfed speaks. English unless a test asks, whatever the computer's own. */
+  language: "en" | "cs";
 };
 
 export const test = base.extend<{ shelf: Shelf } & Options>({
@@ -80,7 +82,8 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
   onKindle: [[], { option: true }],
   library: [undefined, { option: true }],
   calibre: [undefined, { option: true }],
-  shelf: async ({ kindle, onKindle, library, calibre }, use) => {
+  language: ["en", { option: true }],
+  shelf: async ({ kindle, onKindle, library, calibre, language }, use) => {
     const dir = mkdtempSync(join(tmpdir(), "shelf-e2e-"));
     const data = join(dir, "data");
     mkdirSync(data);
@@ -96,7 +99,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
     }
     writeFileSync(
       join(data, "settings.json"),
-      JSON.stringify({ libraryPath: join(dir, "Library"), onboarded: true, inspector: true, sidebar: true, updates: false }),
+      JSON.stringify({ libraryPath: join(dir, "Library"), onboarded: true, inspector: true, sidebar: true, updates: false, language }),
     );
     if (library) {
       mkdirSync(join(dir, "Library"), { recursive: true });
@@ -139,7 +142,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       page = await app.firstWindow();
       page.on("pageerror", (error) => errors.push(error.message));
       page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
-      await expect(page.getByRole("button", { name: "All books" })).toBeVisible();
+      await expect(page.getByRole("button", { name: language === "cs" ? "Všechny knihy" : "All books" })).toBeVisible();
     };
     await launch();
 

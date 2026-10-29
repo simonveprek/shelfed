@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { Button, type ButtonSize, type ButtonVariant } from "./button";
 import { Icon } from "./icon";
+import { t } from "../../../../shared/i18n";
 
 /** Copies, then shows a tick for a moment. Give it text, or a way to get it. */
 function useCopy(value: string | (() => Promise<string> | string)) {
@@ -54,7 +55,7 @@ function CopyIcon({ copied, size }: { copied: boolean; size: number }) {
  */
 export function CopyButton({
   value,
-  label = "Copy",
+  label = t("Copy"),
   showLabel = false,
   variant = "ghost",
   size = "sm",
@@ -79,7 +80,7 @@ export function CopyButton({
         className={className ?? "relative"}
         icon={<CopyIcon copied={copied} size={iconSize} />}
       >
-        {copied ? "Copied" : label}
+        {copied ? t("Copied") : label}
       </Button>
     );
   return (

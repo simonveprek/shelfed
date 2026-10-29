@@ -19,6 +19,7 @@ import { IconButton } from "./button";
 import { cx, EASE } from "./cx";
 import { useFocusTrap } from "./dialog";
 import { Portal } from "./portal";
+import { t } from "../../../../shared/i18n";
 
 type Side = "right" | "left" | "bottom";
 
@@ -143,7 +144,7 @@ export function Sheet({
                     )}
                   </div>
                   <IconButton
-                    label="Close"
+                    label={t("Close")}
                     icon={Cancel01Icon}
                     onClick={onClose}
                     onPointerDown={(event) => event.stopPropagation()}

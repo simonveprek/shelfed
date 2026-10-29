@@ -16,6 +16,7 @@ import { Chevron } from "./accordion";
 import { cx, EASE } from "./cx";
 import { Icon } from "./icon";
 import { Portal } from "./portal";
+import { t } from "../../../../shared/i18n";
 
 export type ComboboxOption<T extends string> = {
   id: T;
@@ -82,7 +83,7 @@ export function Combobox<T extends string>(props: ComboboxProps<T>) {
   const {
     options,
     label,
-    placeholder = "Search",
+    placeholder = t("Search"),
     empty = "No matches",
     size = "md",
     name,

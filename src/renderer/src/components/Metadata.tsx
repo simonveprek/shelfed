@@ -12,6 +12,7 @@ import { saveCover } from "@/lib/books";
 import { flashMood, patchBooks, upsert, useStore } from "@/lib/store";
 import { similarity } from "@/lib/util";
 import { Cover } from "./Cover";
+import { t } from "../../../shared/i18n";
 
 const close = () => useStore.setState({ dialog: null });
 
@@ -21,13 +22,13 @@ type Scored = MetadataCandidate & { score: number; reasons: string[] };
 
 /** How likely a result is the same book, and why. */
 function score(book: Book, c: MetadataCandidate): Scored {
-  if (book.isbn && c.isbn && book.isbn.replace(/-/g, "") === c.isbn) return { ...c, score: 0.98, reasons: ["Same ISBN"] };
-  const t = Math.max(similarity(book.title, c.title), similarity(book.title.split(":")[0], c.title.split(":")[0]));
+  if (book.isbn && c.isbn && book.isbn.replace(/-/g, "") === c.isbn) return { ...c, score: 0.98, reasons: [t("Same ISBN")] };
+  const same = Math.max(similarity(book.title, c.title), similarity(book.title.split(":")[0], c.title.split(":")[0]));
   const a = book.authors.length && c.authors.length ? Math.max(...book.authors.flatMap((x) => c.authors.map((y) => similarity(x, y)))) : 0.5;
-  const reasons = [t > 0.85 ? "Same title" : t > 0.6 ? "Close title" : "Another title"];
-  if (book.authors.length) reasons.push(a > 0.8 ? "same author" : a > 0.5 ? "similar author" : "another author");
-  if (!c.description) reasons.push("no description");
-  return { ...c, score: Math.min(0.97, t * 0.62 + a * 0.33 + (c.description ? 0.03 : 0) + (c.cover ? 0.02 : 0)), reasons };
+  const reasons = [same > 0.85 ? t("Same title") : same > 0.6 ? t("Close title") : t("Another title")];
+  if (book.authors.length) reasons.push(a > 0.8 ? t("same author") : a > 0.5 ? t("similar author") : t("another author"));
+  if (!c.description) reasons.push(t("no description"));
+  return { ...c, score: Math.min(0.97, same * 0.62 + a * 0.33 + (c.description ? 0.03 : 0) + (c.cover ? 0.02 : 0)), reasons };
 }
 
 type Key = "title" | "authors" | "series" | "publisher" | "published" | "language" | "isbn" | "tags" | "description";
@@ -49,7 +50,7 @@ function Match({ value, reasons }: { value: number; reasons: string[] }) {
   const tone = value >= 0.75 ? "success" : "neutral";
   return (
     <Tooltip content={reasons.join(", ")}>
-      <span><Badge tone={tone}>{value >= 0.75 ? "Match" : value >= 0.45 ? "Maybe" : "Unlikely"}</Badge></span>
+      <span><Badge tone={tone}>{value >= 0.75 ? t("Match") : value >= 0.45 ? t("Maybe") : t("Unlikely")}</Badge></span>
     </Tooltip>
   );
 }
@@ -129,19 +130,19 @@ export function MetadataDialog({ id }: { id: string }) {
         // Some services answer a missing cover with a tiny placeholder.
         if (bytes.length > 2000) upsert(await saveCover(id, new Blob([bytes as BlobPart])));
       } catch {
-        toast.error("The new cover could not be downloaded");
+        toast.error(t("The new cover could not be downloaded"));
       }
     }
     flashMood("happy");
-    toast.success("Details updated");
+    toast.success(t("Details updated"));
   };
 
   return (
-    <Dialog open onClose={close} label="Find details online" className="sm:max-w-[680px]">
+    <Dialog open onClose={close} label={t("Find details online")} className="sm:max-w-[680px]">
       <AnimatePresence mode="wait" initial={false}>
         {!picked ? (
           <motion.div key="search" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.25, ease: EASE } }} exit={{ opacity: 0, transition: { duration: 0.15 } }}>
-            <DialogHeader title="Find details online" description="Searches Open Library and Google Books for the description, publisher and a better cover." />
+            <DialogHeader title={t("Find details online")} description={t("Searches Open Library and Google Books for the description, publisher and a better cover.")} />
             <form
               className="flex gap-2 px-6 pt-5"
               onSubmit={(e) => {
@@ -149,9 +150,9 @@ export function MetadataDialog({ id }: { id: string }) {
                 setRun((n) => n + 1);
               }}
             >
-              <Input className="flex-[1.6]" value={query.title} placeholder="Title" onChange={(e) => setQuery({ ...query, title: e.target.value })} />
-              <Input className="flex-1" value={query.author} placeholder="Author" onChange={(e) => setQuery({ ...query, author: e.target.value })} />
-              <Button type="submit" variant="primary" icon={Search01Icon} square aria-label="Search" />
+              <Input className="flex-[1.6]" value={query.title} placeholder={t("Title")} onChange={(e) => setQuery({ ...query, title: e.target.value })} />
+              <Input className="flex-1" value={query.author} placeholder={t("Author")} onChange={(e) => setQuery({ ...query, author: e.target.value })} />
+              <Button type="submit" variant="primary" icon={Search01Icon} square aria-label={t("Search")} />
             </form>
             <div className="scroll max-h-[52vh] px-6 pt-4 pb-6">
               {busy && !results.length ? (
@@ -160,8 +161,8 @@ export function MetadataDialog({ id }: { id: string }) {
                 </div>
               ) : !results.length ? (
                 <Empty point={{ shape: "pebble", mood: "confused" }}>
-                  <p className="text-[15px] font-medium text-foreground">Nothing found</p>
-                  <p className="mt-1">Try a shorter title, or leave the author out.</p>
+                  <p className="text-[15px] font-medium text-foreground">{t("Nothing found")}</p>
+                  <p className="mt-1">{t("Try a shorter title, or leave the author out.")}</p>
                 </Empty>
               ) : (
                 <List inset>
@@ -172,13 +173,13 @@ export function MetadataDialog({ id }: { id: string }) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="line-clamp-1 text-label font-medium">{c.title}</p>
-                        <p className="line-clamp-1 text-caption text-muted">{c.authors.join(", ") || "Unknown author"}</p>
+                        <p className="line-clamp-1 text-caption text-muted">{c.authors.join(", ") || t("Unknown author")}</p>
                         <p className="mt-1 line-clamp-1 text-caption text-muted">
                           {[SOURCES[c.source], c.published?.slice(0, 4), c.publisher].filter(Boolean).join(", ")}
                         </p>
                       </div>
                       <Match value={c.score} reasons={c.reasons} />
-                      <Button size="sm" onClick={() => setPicked(c)}>Review</Button>
+                      <Button size="sm" onClick={() => setPicked(c)}>{t("Review")}</Button>
                     </Row>
                   ))}
                 </List>
@@ -187,28 +188,28 @@ export function MetadataDialog({ id }: { id: string }) {
           </motion.div>
         ) : (
           <motion.div key="review" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0, transition: { duration: 0.25, ease: EASE } }} exit={{ opacity: 0, transition: { duration: 0.15 } }}>
-            <DialogHeader title="Choose what to keep" description={`From ${SOURCES[picked.source]}. Ticked rows replace what the book has now.`} />
+            <DialogHeader title={t("Choose what to keep")} description={t("From {source}. Ticked rows replace what the book has now.", { source: SOURCES[picked.source] })} />
             <div className="scroll flex max-h-[54vh] flex-col gap-4 px-6 pt-5">
               {picked.cover && (
                 <div className="flex items-center gap-4 rounded-field border border-border bg-well p-3">
                   <Cover book={book} className="w-11 shrink-0" />
-                  <span className="text-muted">to</span>
+                  <span className="text-muted">{t("to")}</span>
                   <img src={picked.cover} alt="" className="h-[66px] w-11 shrink-0 rounded-[6px] object-cover shadow-[var(--shadow-book)]" />
                   <div className="min-w-0 flex-1">
-                    <SwitchRow label="Use the new cover" checked={useCover} onChange={setUseCover} />
+                    <SwitchRow label={t("Use the new cover")} checked={useCover} onChange={setUseCover} />
                   </div>
                 </div>
               )}
               {changed.length === 0 ? (
-                <p className="py-6 text-center text-label text-muted">The book already has everything this result knows.</p>
+                <p className="py-6 text-center text-label text-muted">{t("The book already has everything this result knows.")}</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10"><span className="sr-only">Use</span></TableHead>
-                      <TableHead>Field</TableHead>
-                      <TableHead>Now</TableHead>
-                      <TableHead>New</TableHead>
+                      <TableHead className="w-10"><span className="sr-only">{t("Use")}</span></TableHead>
+                      <TableHead>{t("Field")}</TableHead>
+                      <TableHead>{t("Now")}</TableHead>
+                      <TableHead>{t("New")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -216,7 +217,7 @@ export function MetadataDialog({ id }: { id: string }) {
                       <TableRow key={key} selected={chosen.has(key)}>
                         <TableCell>
                           <Checkbox
-                            aria-label={`Use the new ${label.toLowerCase()}`}
+                            aria-label={t("Use the new {field}", { field: t(label).toLowerCase() })}
                             checked={chosen.has(key)}
                             onChange={(on) => setChosen((s) => {
                               const next = new Set(s);
@@ -226,8 +227,8 @@ export function MetadataDialog({ id }: { id: string }) {
                             })}
                           />
                         </TableCell>
-                        <TableCell className="text-muted">{label}</TableCell>
-                        <TableCell className="max-w-[200px] text-muted"><span className="line-clamp-3">{show(book[key]) || "Empty"}</span></TableCell>
+                        <TableCell className="text-muted">{t(label)}</TableCell>
+                        <TableCell className="max-w-[200px] text-muted"><span className="line-clamp-3">{show(book[key]) || t("Empty")}</span></TableCell>
                         <TableCell className="max-w-[240px]"><span className="line-clamp-3">{show(proposed[key])}</span></TableCell>
                       </TableRow>
                     ))}
@@ -236,9 +237,9 @@ export function MetadataDialog({ id }: { id: string }) {
               )}
             </div>
             <DialogFooter>
-              <Button variant="ghost" icon={ArrowLeft01Icon} className="sm:mr-auto" onClick={() => setPicked(null)}>Results</Button>
-              <Button variant="ghost" iconAfter={SquareArrowUpRightIcon} onClick={() => api.openExternal(picked.url)}>Open page</Button>
-              <Button variant="primary" disabled={!chosen.size && !(useCover && picked.cover)} onClick={apply}>Apply</Button>
+              <Button variant="ghost" icon={ArrowLeft01Icon} className="sm:mr-auto" onClick={() => setPicked(null)}>{t("Results")}</Button>
+              <Button variant="ghost" iconAfter={SquareArrowUpRightIcon} onClick={() => api.openExternal(picked.url)}>{t("Open page")}</Button>
+              <Button variant="primary" disabled={!chosen.size && !(useCover && picked.cover)} onClick={apply}>{t("Apply")}</Button>
             </DialogFooter>
           </motion.div>
         )}

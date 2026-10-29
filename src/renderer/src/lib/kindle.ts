@@ -4,7 +4,8 @@ import { connectsLikeAPhone, kindleById } from "../../../shared/kindles";
 import { api, isMac, isWin } from "./api";
 import { booksOnKindle, finishedOnKindle } from "./onkindle";
 import { toast } from "@/components/ui";
-import { bytes, plural } from "./util";
+import { bytes } from "./util";
+import { t, tn } from "../../../shared/i18n";
 import { setSetting, useStore } from "./store";
 
 /** How long a Kindle Shelfed doesn't know may take to open as a drive before it's taken to be one that won't. */
@@ -106,10 +107,21 @@ export async function tidyKindle() {
   if (!theirs.length) return;
   const freed = await api.removeFromDevice(drive.path, theirs.map((f) => f.path));
   await relistKindle();
-  toast.success(`Took ${plural(books.length, "finished book")} off your Kindle`, { description: `${bytes(freed)} free again. They're still in your library.` });
+  toast.success(tn(books.length, "Took {n} finished book off your Kindle", "Took {n} finished books off your Kindle"), {
+    description: t("{size} free again. They're still in your library.", { size: bytes(freed) }),
+  });
 }
 
-/** Why a Kindle on the cable can't take books that way, said plainly for this system. */
-export const PHONE_LIKE = isMac
-  ? "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead."
-  : "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.";
+const PHONE_LIKE_MAC = "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead.";
+const PHONE_LIKE_OTHER = "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.";
+
+/**
+ * Why a Kindle on the cable can't take books that way, said plainly for this
+ * system. Always English, since it is set when the file loads; phoneLike() gives it in the chosen language.
+ */
+export const PHONE_LIKE = isMac ? PHONE_LIKE_MAC : PHONE_LIKE_OTHER;
+
+/** PHONE_LIKE in the chosen language, asked for when it is shown. */
+export const phoneLike = () => t(isMac ? PHONE_LIKE_MAC : PHONE_LIKE_OTHER);
+/** The same as phoneLike(), under another name. */
+export const PHONE_LIKE_TEXT = phoneLike;

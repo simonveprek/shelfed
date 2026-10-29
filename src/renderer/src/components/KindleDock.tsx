@@ -6,7 +6,8 @@ import { isMac } from "@/lib/api";
 import { useFinishedOnKindle, useKindlePort, useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
 import { useStore } from "@/lib/store";
-import { bytes, plural } from "@/lib/util";
+import { bytes } from "@/lib/util";
+import { t, tn } from "../../../shared/i18n";
 import { EASE, Panel } from "@/components/ui";
 import { Portal } from "@/components/ui/portal";
 import { Cover } from "./Cover";
@@ -79,7 +80,7 @@ export function KindleDock() {
           }, 480);
         }}
       >
-        <h3 className="self-start text-label font-medium text-muted">Your Kindle</h3>
+        <h3 className="self-start text-label font-medium text-muted">{t("Your Kindle")}</h3>
         <div ref={device}>
           <Kindle3D
             model={model}
@@ -108,17 +109,19 @@ export function KindleDock() {
         <p className="mt-0.5 max-w-[26ch] text-center text-caption text-muted" style={{ textWrap: "balance" }}>
           {over
             ? drive
-              ? "Let go to copy it on"
-              : "Let go to send it by email"
+              ? t("Let go to copy it on")
+              : t("Let go to send it by email")
             : drive
-              ? `Plugged in, ${bytes(drive.free)} free. ${copied ? `${copied} of your books ${copied === 1 ? "is" : "are"} on it. ` : ""}Drop a book on it to copy it.`
+              ? `${t("Plugged in, {free} free.", { free: bytes(drive.free) })} ${copied ? `${tn(copied, "{n} of your books is on it.", "{n} of your books are on it.")} ` : ""}${t("Drop a book on it to copy it.")}`
               : cable === "phone"
-                ? `It connects like a phone, so ${isMac ? "a Mac" : "Shelfed"} can't copy books to it by cable. Drop a book on it to email it.`
+                ? isMac
+                  ? t("It connects like a phone, so a Mac can't copy books to it by cable. Drop a book on it to email it.")
+                  : t("It connects like a phone, so Shelfed can't copy books to it by cable. Drop a book on it to email it.")
                 : onBus
-                  ? "Plugged in. Waiting for it to open as a drive."
+                  ? t("Plugged in. Waiting for it to open as a drive.")
                   : carrying
-                  ? "Drop it here to send it by email"
-                  : "Not plugged in. Drop a book on it to email it."}
+                  ? t("Drop it here to send it by email")
+                  : t("Not plugged in. Drop a book on it to email it.")}
         </p>
         {drive && !over && finished && finished.books.length > 0 && (
           <button
@@ -126,7 +129,7 @@ export function KindleDock() {
             onClick={() => useStore.setState({ confirmTidy: true })}
             className="mt-2.5 rounded-full bg-control px-3 py-1 text-caption text-muted transition-colors hover:bg-control-hover hover:text-foreground"
           >
-            {plural(finished.books.length, "finished book")} on it, {bytes(finished.bytes)}. Take off
+            {tn(finished.books.length, "{n} finished book on it, {size}. Take off", "{n} finished books on it, {size}. Take off", { size: bytes(finished.bytes) })}
           </button>
         )}
       </div>

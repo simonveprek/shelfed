@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import type { FreeBook } from "../shared/types";
+import { t } from "../shared/i18n";
 import { safeName } from "./library";
 
 /*
@@ -16,7 +17,7 @@ const UA = { "User-Agent": "Shelfed/1.0 (open source book library)" };
 
 async function text(url: string) {
   const res = await net.fetch(url, { headers: UA });
-  if (!res.ok) throw new Error(`${new URL(url).host} answered ${res.status}`);
+  if (!res.ok) throw new Error(t("{host} answered {status}", { host: new URL(url).host, status: String(res.status) }));
   return res.text();
 }
 
@@ -73,9 +74,9 @@ export const freeBooks = (source: "standard" | "gutenberg", query: string) =>
 
 /** Fetches a free book to a temporary file, ready to be added like any other. */
 export async function downloadBook(url: string, name: string) {
-  if (!/^https:\/\/(standardebooks\.org|www\.gutenberg\.org)\//.test(url)) throw new Error("Shelfed only downloads from Standard Ebooks and Project Gutenberg.");
+  if (!/^https:\/\/(standardebooks\.org|www\.gutenberg\.org)\//.test(url)) throw new Error(t("Shelfed only downloads from Standard Ebooks and Project Gutenberg."));
   const res = await net.fetch(url, { headers: UA });
-  if (!res.ok) throw new Error(`The download stopped with ${res.status}`);
+  if (!res.ok) throw new Error(t("The download stopped with {status}", { status: String(res.status) }));
   const dir = await mkdtemp(join(tmpdir(), "shelf-"));
   const path = join(dir, `${safeName(name, 90)}.epub`);
   await writeFile(path, new Uint8Array(await res.arrayBuffer()));

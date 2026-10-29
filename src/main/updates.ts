@@ -3,6 +3,7 @@ import log from "electron-log/main";
 import updater from "electron-updater";
 import type { UpdateState } from "../shared/types";
 import { newer } from "../shared/version";
+import { t } from "../shared/i18n";
 
 const { autoUpdater } = updater;
 
@@ -65,7 +66,7 @@ export function checkForUpdates(quiet = false): Promise<void> {
       else await checkGitHub();
     } catch (error) {
       log.warn("Update check failed", error);
-      if (!quiet) set({ state: "failed", error: "Couldn't reach GitHub. Try again later." });
+      if (!quiet) set({ state: "failed", error: t("Couldn't reach GitHub. Try again later.") });
       else if (state.state === "checking") set({ state: "idle" });
     }
   })().finally(() => (busy = null));

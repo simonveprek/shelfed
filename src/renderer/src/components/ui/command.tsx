@@ -15,6 +15,7 @@ import { Kbd } from "./badge";
 import { cx } from "./cx";
 import { Dialog } from "./dialog";
 import { Icon, type IconLike } from "./icon";
+import { t } from "../../../../shared/i18n";
 
 export type CommandItem = {
   id: string;
@@ -49,8 +50,8 @@ const matches = (item: CommandItem, query: string) => {
 export function CommandList({
   items,
   label = "Commands",
-  placeholder = "Search",
-  empty = "No results",
+  placeholder = t("Search"),
+  empty = t("No results"),
   onPick,
   inputRef,
   autoFocus = false,
@@ -246,7 +247,7 @@ export function Command({
   onOpenChange,
   items,
   label = "Command menu",
-  placeholder = "Search or jump to",
+  placeholder = t("Search or jump to"),
   empty,
   hotkey = "k",
   hints = true,

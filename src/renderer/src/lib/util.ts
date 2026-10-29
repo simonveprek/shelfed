@@ -1,4 +1,5 @@
 import type { Book } from "../../../shared/types";
+import { language, t, tn } from "../../../shared/i18n";
 
 export function bytes(n: number) {
   if (n < 1024) return `${n} B`;
@@ -7,7 +8,7 @@ export function bytes(n: number) {
   return `${(n / 1024 ** 3).toFixed(1)} GB`;
 }
 
-export const authorsOf = (book: Book) => (book.authors.length ? book.authors.join(", ") : "Unknown author");
+export const authorsOf = (book: Book) => (book.authors.length ? book.authors.join(", ") : t("Unknown author"));
 
 export const thumbUrl = (book: Book) => `shelf://thumb/${book.id}?v=${book.cover}`;
 export const coverUrl = (book: Book) => `shelf://cover/${book.id}?v=${book.cover}`;
@@ -17,32 +18,45 @@ export const fileUrl = (book: Book, ext: string) => `shelf://file/${book.id}/${e
 export async function fetchFile(book: Book, ext: string) {
   const format = book.formats.find((f) => f.ext === ext);
   const res = await fetch(fileUrl(book, ext));
-  if (!res.ok) throw new Error("The file is missing from the library folder.");
+  if (!res.ok) throw new Error(t("The file is missing from the library folder."));
   return new File([await res.blob()], format?.file ?? `book.${ext}`);
 }
 
-// Dates in words, the way the rest of Shelfed is written: 17 Jan 2021.
-const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
-const MONTH = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
-export const date = (t?: number) => (t ? DATE.format(t) : "");
+// Dates in words, the way the rest of Shelfed is written: 17 Jan 2021, or 17. 1. 2021 in Czech.
+// Made for the language in use when first asked for, and again if it changes.
+const formats = new Map<string, Intl.DateTimeFormat>();
+const dateFormat = (kind: "day" | "month") => {
+  const locale = language() === "cs" ? "cs-CZ" : "en-GB";
+  const key = `${locale} ${kind}`;
+  let format = formats.get(key);
+  if (!format) {
+    format = new Intl.DateTimeFormat(locale, kind === "day" ? { day: "numeric", month: "short", year: "numeric" } : { month: "long", year: "numeric", timeZone: "UTC" });
+    formats.set(key, format);
+  }
+  return format;
+};
+export const date = (t?: number) => (t ? dateFormat("day").format(t) : "");
 
 /** A published date as books give it, a year, a month or a day, in words. */
 export function published(value?: string) {
   const [, y, m, d] = value?.match(/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/) ?? [];
   if (!y) return value ?? "";
-  if (d) return DATE.format(Date.UTC(+y, +m - 1, +d));
-  if (m) return MONTH.format(Date.UTC(+y, +m - 1));
+  if (d) return dateFormat("day").format(Date.UTC(+y, +m - 1, +d));
+  if (m) return dateFormat("month").format(Date.UTC(+y, +m - 1));
   return y;
 }
 
+/** t() under another name, for where t is a time. */
+const translate = t;
+
 export function ago(t?: number) {
-  if (!t) return "Never";
+  if (!t) return translate("Never");
   const s = (Date.now() - t) / 1000;
-  if (s < 60) return "Just now";
-  if (s < 3600) return Math.floor(s / 60) === 1 ? "A minute ago" : `${Math.floor(s / 60)} minutes ago`;
-  if (s < 86400) return Math.floor(s / 3600) === 1 ? "An hour ago" : `${Math.floor(s / 3600)} hours ago`;
-  if (s < 86400 * 2) return "Yesterday";
-  if (s < 86400 * 7) return `${Math.floor(s / 86400)} days ago`;
+  if (s < 60) return translate("Just now");
+  if (s < 3600) return tn(Math.floor(s / 60), "A minute ago", "{n} minutes ago");
+  if (s < 86400) return tn(Math.floor(s / 3600), "An hour ago", "{n} hours ago");
+  if (s < 86400 * 2) return translate("Yesterday");
+  if (s < 86400 * 7) return tn(Math.floor(s / 86400), "{n} day ago", "{n} days ago");
   return date(t);
 }
 
@@ -89,7 +103,8 @@ export function hashString(s: string) {
   return h >>> 0;
 }
 
-export const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
+/** A count and its noun, in the chosen language: plural(3, "book") is "3 books", or "3 knihy". */
+export const plural = (n: number, one: string, many = `${one}s`) => tn(n, `{n} ${one}`, `{n} ${many}`);
 
 /** Waits for a pause before calling. flush() calls at once with the last arguments, for when the window closes. */
 export function debounce<A extends unknown[]>(fn: (...a: A) => void, ms: number) {
@@ -141,7 +156,7 @@ export function bestFormat(book: Book) {
 
 /** Time read, the way a person says it. */
 export function duration(seconds: number) {
-  if (seconds < 60) return seconds > 0 ? "Under a minute" : "None yet";
+  if (seconds < 60) return seconds > 0 ? t("Under a minute") : t("None yet");
   const h = Math.floor(seconds / 3600);
   const m = Math.round((seconds % 3600) / 60);
   if (!h) return `${m} min`;

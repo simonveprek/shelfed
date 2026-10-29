@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "./button";
 import { cx, EASE } from "./cx";
+import { t, tc } from "../../../../shared/i18n";
 
 type Slot = number | "start" | "end";
 
@@ -58,7 +59,7 @@ export function Pagination({
   size = "md",
   compact = false,
   labels = false,
-  label = "Pages",
+  label = tc("pagination", "Pages"),
   className,
 }: {
   /** The current page, from 1. */
@@ -94,7 +95,7 @@ export function Pagination({
 
   const arrow = (to: number, next: boolean) => {
     const disabled = next ? page >= count : page <= 1;
-    const words = next ? "Next" : "Previous";
+    const words = next ? t("Next") : t("Previous");
     return (
       <Button
         variant="ghost"
@@ -192,7 +193,7 @@ export function Pagination({
             !compact && ["hidden", fold.folded].join(" "),
           )}
         >
-          <span className="text-foreground">{page}</span> of {count}
+          {t("{page} of {pages}", { page: "\u0000", pages: count }).split("\u0000").map((part, i) => (i === 0 ? <span key={i}>{part}<span className="text-foreground">{page}</span></span> : <span key={i}>{part}</span>))}
         </li>
         <li>{arrow(page + 1, true)}</li>
       </ul>

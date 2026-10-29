@@ -12,11 +12,12 @@ import { Point } from "@/components/fragms/points";
 import { api, isMac, revealLabel } from "@/lib/api";
 import { bringCalibreOver, joinCopies } from "@/lib/actions";
 import { useCalibre } from "@/lib/findcalibre";
+import { fromLocale, LANGUAGES, t, tn, type Language, tc } from "../../../shared/i18n";
 import { findCopies } from "@/lib/copies";
 import { chooseIcon, iconSrc } from "@/lib/icon";
 import { PHONE_LIKE, useFinishedOnKindle, useKindlePort, useOnKindle } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
-import { bytes, plural } from "@/lib/util";
+import { bytes } from "@/lib/util";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
 import { APP_ICONS } from "../../../shared/icons";
 import type { UpdateState } from "../../../shared/types";
@@ -60,6 +61,19 @@ function Row({ label, hint, children, wrap }: { label: ReactNode; hint?: ReactNo
   );
 }
 
+/** A translated sentence with a link in place of its {link} (or other) placeholder, so the words around it can move. */
+function withLink(text: string, link: ReactNode, slot = "{link}") {
+  const at = text.indexOf(slot);
+  if (at < 0) return text;
+  return (
+    <>
+      {text.slice(0, at)}
+      {link}
+      {text.slice(at + slot.length)}
+    </>
+  );
+}
+
 /** A choice drawn as a picture, with its name under it. */
 function Choice({ on, label, onClick, children }: { on: boolean; label: string; onClick: () => void; children: ReactNode }) {
   return (
@@ -93,7 +107,7 @@ function LibrarySection() {
   const parts = path.split(/[\\/]/).filter(Boolean);
   return (
     <>
-      <Title title="Library">Your books live in a plain folder, one folder for each author, so they stay yours and readable without Shelfed.</Title>
+      <Title title={t("Library")}>{t("Your books live in a plain folder, one folder for each author, so they stay yours and readable without Shelfed.")}</Title>
       <Group>
         <div className="flex items-center gap-4 px-4 py-4">
           <Point shape="squircle" mood={mood ?? "idle"} size={44} look="pointer" energy={0.8} className="shrink-0" />
@@ -102,26 +116,26 @@ function LibrarySection() {
             <p className="line-clamp-1 text-caption break-all text-muted" title={path}>{path}</p>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" onClick={() => api.revealLibrary()}>{revealLabel.replace(/^Show in /, "Open in ")}</Button>
+            <Button size="sm" onClick={() => api.revealLibrary()}>{t(revealLabel.replace(/^Show in /, "Open in "))}</Button>
             <Button
               size="sm"
               onClick={async () => {
                 const state = await api.moveLibrary();
                 if (state) {
                   hydrate(state);
-                  toast.success("Switched to the new library folder");
+                  toast.success(t("Switched to the new library folder"));
                 }
               }}
             >
-              Move…
+              {t("Move…")}
             </Button>
           </div>
         </div>
         <div className="grid grid-cols-3 divide-x divide-border">
           {[
-            [books.length.toLocaleString(), books.length === 1 ? "book" : "books"],
-            [authors.toLocaleString(), authors === 1 ? "author" : "authors"],
-            [bytes(size), "on disk"],
+            [books.length.toLocaleString(), tn(books.length, "book", "books")],
+            [authors.toLocaleString(), tn(authors, "author", "authors")],
+            [bytes(size), t("on disk")],
           ].map(([value, label]) => (
             <div key={label} className="px-4 py-3.5">
               <p className="text-[20px] leading-tight font-medium tracking-[-0.02em] tabular-nums">{value}</p>
@@ -131,18 +145,20 @@ function LibrarySection() {
         </div>
       </Group>
       <FromCalibre />
-      <Group label="Downloads">
-        <SwitchRow
-          label="Add books you download"
-          hint="New EPUB, MOBI, AZW3, FB2 and comic files in your Downloads folder come in by themselves while Shelfed is open. PDFs and documents stay where they are."
-          checked={downloads}
-          onChange={(on) => setSetting({ downloads: on })}
-        />
+      <Group label={t("Downloads")}>
+        <div className="px-4 py-1">
+          <SwitchRow
+            label={t("Add books you download")}
+            hint={t("New EPUB, MOBI, AZW3, FB2 and comic files in your Downloads folder come in by themselves while Shelfed is open. PDFs and documents stay where they are.")}
+            checked={downloads}
+            onChange={(on) => setSetting({ downloads: on })}
+          />
+        </div>
       </Group>
       <Copies />
-      <Group label="The first time">
-        <Row label="The welcome" hint="The short story about reading Shelfed opens with.">
-          <Button size="sm" onClick={() => useStore.setState({ dialog: null, onboarding: true })}>Show it again</Button>
+      <Group label={t("The first time")}>
+        <Row label={t("The welcome")} hint={t("The short story about reading Shelfed opens with.")}>
+          <Button size="sm" onClick={() => useStore.setState({ dialog: null, onboarding: true })}>{t("Show it again")}</Button>
         </Row>
       </Group>
     </>
@@ -155,8 +171,16 @@ function FromCalibre() {
   if (!calibre) return null;
   return (
     <Group label="Calibre">
-      <Row label="Your Calibre library" hint={`${plural(calibre.books, "book")} in ${calibre.path}. Bring them over, with their formats, covers, series and tags. Calibre's library isn't changed, and books already here are skipped.`}>
-        <Button size="sm" onClick={() => bringCalibreOver(calibre.path, calibre.books)}>Bring them over</Button>
+      <Row
+        label={t("Your Calibre library")}
+        hint={tn(
+          calibre.books,
+          "{n} book in {path}. Bring them over, with their formats, covers, series and tags. Calibre's library isn't changed, and books already here are skipped.",
+          "{n} books in {path}. Bring them over, with their formats, covers, series and tags. Calibre's library isn't changed, and books already here are skipped.",
+          { path: calibre.path },
+        )}
+      >
+        <Button size="sm" onClick={() => bringCalibreOver(calibre.path, calibre.books)}>{t("Bring them over")}</Button>
       </Row>
     </Group>
   );
@@ -168,13 +192,17 @@ function Copies() {
   const copies = useMemo(() => findCopies(books).reduce((n, group) => n + group.copies.length, 0), [books]);
   const [busy, setBusy] = useState(false);
   return (
-    <Group label="Copies">
+    <Group label={t("Copies")}>
       <Row
-        label="The same book twice"
+        label={t("The same book twice")}
         hint={
           copies
-            ? `${plural(copies, "book is a copy", "books are copies")} of another in a different format, with the same title and author. Joined, each becomes one book with both files.`
-            : "No book here is a copy of another in a different format. Books that come in as copies join up by themselves."
+            ? tn(
+                copies,
+                "{n} book is a copy of another in a different format, with the same title and author. Joined, each becomes one book with both files.",
+                "{n} books are copies of another in a different format, with the same title and author. Joined, each becomes one book with both files.",
+              )
+            : t("No book here is a copy of another in a different format. Books that come in as copies join up by themselves.")
         }
       >
         <Button
@@ -183,10 +211,10 @@ function Copies() {
           onClick={async () => {
             setBusy(true);
             const joined = (await joinCopies().finally(() => setBusy(false))).size;
-            toast.success(`Joined ${plural(joined, "copy", "copies")} to ${joined === 1 ? "its book" : "their books"}`);
+            toast.success(tn(joined, "Joined {n} copy to its book", "Joined {n} copies to their books"));
           }}
         >
-          {busy ? "Joining…" : copies ? `Join ${copies.toLocaleString()}` : "None found"}
+          {busy ? t("Joining…") : copies ? t("Join {n}", { n: copies }) : t("None found")}
         </Button>
       </Row>
     </Group>
@@ -239,16 +267,36 @@ function IconChoice({ id, label, on }: { id: string; label: string; on: boolean 
   );
 }
 
+/** The language Shelfed speaks: automatic follows the system, so a Czech computer gets Czech. */
+function LanguageRow() {
+  const setting = useStore((s) => s.settings.language ?? "auto");
+  const system = LANGUAGES.find((l) => l.id === fromLocale(navigator.language))?.name ?? "English";
+  return (
+    <Group>
+      <Row label={t("Language")} hint={t("Shelfed speaks your system's language unless you choose one.")}>
+        <Select
+          label={t("Language")}
+          size="sm"
+          value={setting}
+          onChange={(id) => setSetting({ language: id as "auto" | Language })}
+          options={[{ id: "auto", label: t("Automatic ({language})", { language: system }) }, ...LANGUAGES.map((l) => ({ id: l.id, label: l.name }))]}
+        />
+      </Row>
+    </Group>
+  );
+}
+
 function AppearanceSection() {
   const { theme, setTheme } = useTheme();
   const current = (theme as "system" | "light" | "dark") ?? "system";
   const chosen = useStore((s) => s.settings.icon ?? "paper");
   return (
     <>
-      <Title title="Appearance">Light, dark, or following your system through the day.</Title>
+      <Title title={t("Appearance")}>{t("Light, dark, or following your system through the day.")}</Title>
+      <LanguageRow />
       <div className="grid grid-cols-3 gap-4">
         {(["system", "light", "dark"] as const).map((id) => (
-          <Choice key={id} on={current === id} label={{ system: "Auto", light: "Light", dark: "Dark" }[id]} onClick={() => setTheme(id)}>
+          <Choice key={id} on={current === id} label={t({ system: "Auto", light: "Light", dark: "Dark" }[id])} onClick={() => setTheme(id)}>
             <span className="aspect-[16/10] w-full">
               {id === "system" ? (
                 <span className="relative block h-full w-full">
@@ -264,16 +312,16 @@ function AppearanceSection() {
           </Choice>
         ))}
       </div>
-      <h3 className="mt-9 mb-1 text-label font-medium">App icon</h3>
+      <h3 className="mt-9 mb-1 text-label font-medium">{t("App icon")}</h3>
       <p className="mb-4 text-caption text-muted">
-        {isMac ? "Shows in the Dock while Shelfed is open." : "Shows on the taskbar while Shelfed is open."}
+        {isMac ? t("Shows in the Dock while Shelfed is open.") : t("Shows on the taskbar while Shelfed is open.")}
       </p>
       <div className="grid grid-cols-4 gap-x-8 gap-y-5 px-4">
         {APP_ICONS.map((icon) => (
-          <IconChoice key={icon.id} id={icon.id} label={icon.label} on={chosen === icon.id} />
+          <IconChoice key={icon.id} id={icon.id} label={t(icon.label)} on={chosen === icon.id} />
         ))}
       </div>
-      <p className="mt-6 text-caption text-muted">The bookcase has its own look, in its menu: shelves, wood, spines and ribbons.</p>
+      <p className="mt-6 text-caption text-muted">{t("The bookcase has its own look, in its menu: shelves, wood, spines and ribbons.")}</p>
     </>
   );
 }
@@ -296,7 +344,7 @@ function ReadingSection() {
   const set = (patch: Partial<typeof reader>) => setSetting({ reader: { ...useStore.getState().settings.reader, ...patch } });
   return (
     <>
-      <Title title="Reading">How books look when you open them. Size, spacing and page colour change from the Aa button while you read.</Title>
+      <Title title={tc("settings", "Reading")}>{t("How books look when you open them. Size, spacing and page colour change from the Aa button while you read.")}</Title>
       {/* The page, as it will look. */}
       <div className="mb-6 rounded-[18px] border border-border bg-[#f7f4ec] px-8 py-6 text-[#1d1b18] shadow-card dark:bg-[#1b1a18] dark:text-[#e9e4d8]">
         <p className="mb-2 text-center text-[11px] tracking-[0.18em] uppercase opacity-50">Chapter 1</p>
@@ -308,10 +356,10 @@ function ReadingSection() {
           {SAMPLE}
         </p>
       </div>
-      <Group label="Type">
+      <Group label={t("Type")}>
         <div className="grid grid-cols-3 gap-3 p-4">
           {(Object.keys(FACES) as Array<keyof typeof FACES>).map((id) => (
-            <Choice key={id} on={reader.font === id} label={FACES[id].label} onClick={() => set({ font: id })}>
+            <Choice key={id} on={reader.font === id} label={t(FACES[id].label)} onClick={() => set({ font: id })}>
               <span className="flex h-[72px] w-full flex-col items-center justify-center bg-well">
                 <span className="text-[30px] leading-none" style={{ fontFamily: FACES[id].family, fontStyle: id === "publisher" ? "italic" : undefined }}>
                   Aa
@@ -321,17 +369,17 @@ function ReadingSection() {
           ))}
         </div>
         <div className="px-4 py-1">
-          <SwitchRow label="Justify text" hint="Even edges on both sides, with hyphens." checked={reader.justify} onChange={(justify) => set({ justify })} />
+          <SwitchRow label={t("Justify text")} hint={t("Even edges on both sides, with hyphens.")} checked={reader.justify} onChange={(justify) => set({ justify })} />
         </div>
       </Group>
-      <Group label="Turning pages">
-        <Row label="Page turns" hint={reader.flow === "paginated" ? "One page at a time, like a book." : "One long page, like the web."}>
+      <Group label={t("Turning pages")}>
+        <Row label={t("Page turns")} hint={reader.flow === "paginated" ? t("One page at a time, like a book.") : t("One long page, like the web.")}>
           <Segmented
-            label="Page turns"
+            label={t("Page turns")}
             size="sm"
             value={reader.flow}
             onChange={(flow) => set({ flow })}
-            options={[{ id: "paginated", label: "Pages" }, { id: "scrolled", label: "Scroll" }]}
+            options={[{ id: "paginated", label: t("Pages") }, { id: "scrolled", label: t("Scroll") }]}
           />
         </Row>
       </Group>
@@ -364,49 +412,54 @@ function KindleSection() {
 
   return (
     <>
-      <Title title="Kindle">Plug your Kindle in and Shelfed recognises it. Or pick it here, and choose its colour.</Title>
+      <Title title={t("Kindle")}>{t("Plug your Kindle in and Shelfed recognises it. Or pick it here, and choose its colour.")}</Title>
       <div className="mb-6 flex flex-wrap items-center gap-8 rounded-[18px] border border-border bg-well px-7 py-7">
         <div className="flex w-[190px] shrink-0 justify-center">
           {model ? (
             <Kindle3D model={model} finish={finish} book={reading} height={model.size[1] > 200 ? 220 : 200} />
           ) : (
             <div className="flex h-[200px] w-[140px] items-center justify-center rounded-[16px] border border-dashed border-line-strong p-4 text-center text-caption text-muted">
-              Plug it in, or pick it from the list
+              {t("Plug it in, or pick it from the list")}
             </div>
           )}
         </div>
         <div className="flex min-w-[220px] flex-1 flex-col gap-4">
           <div>
-            <p className="text-[20px] leading-tight font-medium tracking-[-0.02em]">{model?.name ?? "Not known yet"}</p>
+            <p className="text-[20px] leading-tight font-medium tracking-[-0.02em]">{model?.name ?? t("Not known yet")}</p>
             <p className="mt-1.5 flex flex-wrap items-center gap-2 text-caption text-muted">
-              {model && <span>{model.year}, {model.screen}″ {model.colour ? "colour " : ""}screen</span>}
-              {plugged && <Badge tone="success">Plugged in</Badge>}
-              {stranger && <Badge>A Kindle Shelfed doesn't know is plugged in</Badge>}
-              {copied > 0 && <span>{copied} of your books {copied === 1 ? "is" : "are"} on it.</span>}
+              {model && <span>{t(model.colour ? "{year}, {size}″ colour screen" : "{year}, {size}″ screen", { year: String(model.year), size: model.screen })}</span>}
+              {plugged && <Badge tone="success">{t("Plugged in")}</Badge>}
+              {stranger && <Badge>{t("A Kindle Shelfed doesn't know is plugged in")}</Badge>}
+              {copied > 0 && <span>{tn(copied, "{n} of your books is on it.", "{n} of your books are on it.")}</span>}
             </p>
-            {cable === "phone" && <p className="mt-2 max-w-[44ch] text-caption text-muted">{PHONE_LIKE}</p>}
+            {cable === "phone" && <p className="mt-2 max-w-[44ch] text-caption text-muted">{t(PHONE_LIKE)}</p>}
             {finished && finished.books.length > 0 && (
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <p className="text-caption text-muted">
-                  {plural(finished.books.length, "book")} you've finished {finished.books.length === 1 ? "is" : "are"} still on it, using {bytes(finished.bytes)}.
+                  {tn(
+                    finished.books.length,
+                    "{n} book you've finished is still on it, using {size}.",
+                    "{n} books you've finished are still on it, using {size}.",
+                    { size: bytes(finished.bytes) },
+                  )}
                 </p>
-                <Button size="sm" onClick={() => useStore.setState({ confirmTidy: true })}>Take them off</Button>
+                <Button size="sm" onClick={() => useStore.setState({ confirmTidy: true })}>{t("Take them off")}</Button>
               </div>
             )}
           </div>
           <Select
-            label="Model"
+            label={t("Model")}
             size="sm"
             value={kindle.model ?? ""}
             onChange={(id) => {
               const picked = kindleById(id);
               set({ model: picked?.id, finish: picked?.finishes[0], picked: Boolean(picked) });
             }}
-            options={[{ id: "", label: "Recognise it when plugged in" }, ...[...KINDLES].reverse().map((k) => ({ id: k.id, label: `${k.name}, ${k.year}` }))]}
+            options={[{ id: "", label: t("Recognise it when plugged in") }, ...[...KINDLES].reverse().map((k) => ({ id: k.id, label: `${k.name}, ${k.year}` }))]}
           />
           {model && model.finishes.length > 1 && (
             <div className="flex items-center gap-3">
-              <span className="text-caption text-muted">{FINISHES[finish!].label}</span>
+              <span className="text-caption text-muted">{t(FINISHES[finish!].label)}</span>
               <ColourPicker
                 any={false}
                 value={FINISHES[finish!].hex}
@@ -416,13 +469,13 @@ function KindleSection() {
             </div>
           )}
           <div>
-            <Button size="sm" icon={PlayCircleIcon} onClick={plugIn}>Play the plug-in animation</Button>
+            <Button size="sm" icon={PlayCircleIcon} onClick={plugIn}>{t("Play the plug-in animation")}</Button>
           </div>
         </div>
       </div>
-      <Group label="From your Kindle">
-        <Row label="Highlights and notes" hint="Brings what you marked on a Kindle into the books here, from its My Clippings file.">
-          <Button size="sm" onClick={() => import("./Clippings").then((m) => m.importClippings())}>Import</Button>
+      <Group label={t("From your Kindle")}>
+        <Row label={t("Highlights and notes")} hint={t("Brings what you marked on a Kindle into the books here, from its My Clippings file.")}>
+          <Button size="sm" onClick={() => import("./Clippings").then((m) => m.importClippings())}>{t("Import")}</Button>
         </Row>
       </Group>
     </>
@@ -471,7 +524,7 @@ function SendingSection() {
       }
       await new Promise((r) => setTimeout(r, 350));
       await api.verifyMail();
-      toast.success("Signed in to your mail. Ready to send");
+      toast.success(t("Signed in to your mail. Ready to send"));
     } catch (error) {
       toast.error((error as Error).message);
     } finally {
@@ -481,27 +534,30 @@ function SendingSection() {
 
   return (
     <>
-      <Title title="Sending by email">
-        Every Kindle has an email address. Shelfed mails books to it from your own account, and Amazon puts them on all your Kindles and Kindle apps.
+      <Title title={t("Sending by email")}>
+        {t("Every Kindle has an email address. Shelfed mails books to it from your own account, and Amazon puts them on all your Kindles and Kindle apps.")}
       </Title>
       <div className="mb-6 flex items-center gap-3 rounded-[16px] border border-border bg-well px-4 py-3">
         <span className={cx("size-2 shrink-0 rounded-full", ready ? "bg-success" : "bg-line-strong")} />
-        <p className="flex-1 text-label">{ready ? `Ready to send to ${kindle.to}` : "Not set up yet. Three steps, once."}</p>
+        <p className="flex-1 text-label">{ready ? t("Ready to send to {address}", { address: kindle.to }) : t("Not set up yet. Three steps, once.")}</p>
       </div>
       <Group>
-        <Step n={1} title="Let your address send to your Kindle" done={ready}>
+        <Step n={1} title={t("Let your address send to your Kindle")} done={ready}>
           <p className="text-caption text-muted">
-            In Amazon’s <TextLink href="https://www.amazon.com/mycd">Content and Devices</TextLink>, under Preferences and Personal Document Settings, add the
-            address you’ll send from to the approved list.
+            {/* Amazon's page keeps its own English name; the sentence around it is translated. */}
+            {withLink(
+              t("In Amazon’s {link}, under Preferences and Personal Document Settings, add the address you’ll send from to the approved list."),
+              <TextLink href="https://www.amazon.com/mycd">Content and Devices</TextLink>,
+            )}
           </p>
         </Step>
-        <Step n={2} title="Your Kindle’s address" done={toKindle}>
+        <Step n={2} title={t("Your Kindle’s address")} done={toKindle}>
           <Input placeholder="you_abc123@kindle.com" value={kindle.to} onChange={(e) => set({ to: e.target.value.trim() })} />
-          <p className="mt-1.5 text-caption text-muted">It’s listed on the same Amazon page.</p>
+          <p className="mt-1.5 text-caption text-muted">{t("It’s listed on the same Amazon page.")}</p>
         </Step>
-        <Step n={3} title="Your mail" done={Boolean(kindle.from && kindle.hasPassword)}>
+        <Step n={3} title={t("Your mail")} done={Boolean(kindle.from && kindle.hasPassword)}>
           <div className="flex flex-col gap-3">
-            <Field label="Send from">
+            <Field label={t("Send from")}>
               <Input
                 placeholder="you@gmail.com"
                 value={kindle.from}
@@ -516,50 +572,50 @@ function SendingSection() {
             <Field
               label={
                 <span className="flex items-center gap-2">
-                  App password {kindle.hasPassword && <Badge tone="success">Saved in the {isMac ? "Keychain" : "system vault"}</Badge>}
+                  {t("App password")} {kindle.hasPassword && <Badge tone="success">{isMac ? t("Saved in the Keychain") : t("Saved in the system vault")}</Badge>}
                 </span>
               }
-              hint="Gmail, iCloud, Outlook and Yahoo want an app password, made in your account’s security settings."
+              hint={t("Gmail, iCloud, Outlook and Yahoo want an app password, made in your account’s security settings.")}
             >
-              <Input type="password" placeholder={kindle.hasPassword ? "Saved" : "App password"} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input type="password" placeholder={kindle.hasPassword ? t("Saved") : t("App password")} value={password} onChange={(e) => setPassword(e.target.value)} />
             </Field>
             {server ? (
               <div className="grid grid-cols-6 gap-3">
-                <Field label="Mail server" className="col-span-4">
+                <Field label={t("Mail server")} className="col-span-4">
                   <Input placeholder="smtp.example.com" value={kindle.host} onChange={(e) => set({ host: e.target.value.trim() })} />
                 </Field>
-                <Field label="Port" className="col-span-2">
+                <Field label={t("Port")} className="col-span-2">
                   <Input inputMode="numeric" value={kindle.port} onChange={(e) => set({ port: Number(e.target.value) || 0, secure: Number(e.target.value) === 465 })} />
                 </Field>
-                <Field label="User name" className="col-span-6">
+                <Field label={t("User name")} className="col-span-6">
                   <Input placeholder={kindle.from} value={kindle.user} onChange={(e) => set({ user: e.target.value.trim() })} />
                 </Field>
               </div>
             ) : (
               <p className="text-caption text-muted">
-                {kindle.host ? `Sends through ${kindle.host}. ` : "The mail server is filled in for common services. "}
+                {kindle.host ? t("Sends through {host}.", { host: kindle.host }) : t("The mail server is filled in for common services.")}{" "}
                 <button className="font-medium text-foreground underline decoration-underline underline-offset-4" onClick={() => setServer(true)}>
-                  Change it
+                  {t("Change it")}
                 </button>
               </p>
             )}
           </div>
         </Step>
       </Group>
-      <Group label="Books you send">
-        <Row label="Send as" hint="EPUB looks best on Kindle. Other books are made into EPUB first.">
+      <Group label={t("Books you send")}>
+        <Row label={t("Send as")} hint={t("EPUB looks best on Kindle. Other books are made into EPUB first.")}>
           <Segmented
-            label="Send as"
+            label={t("Send as")}
             size="sm"
             value={kindle.format}
             onChange={(format) => set({ format })}
-            options={[{ id: "epub", label: "EPUB" }, { id: "pdf", label: "PDF" }, { id: "original", label: "As is" }]}
+            options={[{ id: "epub", label: "EPUB" }, { id: "pdf", label: "PDF" }, { id: "original", label: t("As is") }]}
           />
         </Row>
       </Group>
       <div className="flex justify-end">
         <Button variant="primary" icon={MailSend01Icon} disabled={checking || !kindle.from || !kindle.host || (!password && !kindle.hasPassword)} onClick={verify}>
-          {checking ? "Checking" : password ? "Save and check" : "Check connection"}
+          {checking ? t("Checking") : password ? t("Save and check") : t("Check connection")}
         </Button>
       </div>
     </>
@@ -577,11 +633,12 @@ function ConvertingSection() {
   const page = useStore((s) => s.settings.pdfPage);
   return (
     <>
-      <Title title="Converting">
-        All built in, with nothing to install. Shelfed reads EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, web pages and text, and makes EPUB, AZW3 for
-        Kindle, PDF, Word, FB2, plain text and web pages.
+      <Title title={t("Converting")}>
+        {t(
+          "All built in, with nothing to install. Shelfed reads EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, web pages and text, and makes EPUB, AZW3 for Kindle, PDF, Word, FB2, plain text and web pages.",
+        )}
       </Title>
-      <Group label="PDF pages">
+      <Group label={t("PDF pages")}>
         <div className="grid grid-cols-4 gap-3 p-4">
           {(Object.keys(PAPER) as Array<keyof typeof PAPER>).map((id) => {
             const [w, h] = PAPER[id];
@@ -596,7 +653,9 @@ function ConvertingSection() {
           })}
         </div>
         <div className="px-4 py-3 text-caption text-muted">
-          {page === "Kindle" ? "Pages the size of a Paperwhite screen, for reading PDFs on a Kindle." : `${PAPER[page][0]} by ${PAPER[page][1]} mm, for printing.`}
+          {page === "Kindle"
+            ? t("Pages the size of a Paperwhite screen, for reading PDFs on a Kindle.")
+            : t("{width} by {height} mm, for printing.", { width: PAPER[page][0], height: PAPER[page][1] })}
         </div>
       </Group>
     </>
@@ -613,22 +672,22 @@ function Updates() {
   const check = () => api.checkForUpdates();
   const line: Record<UpdateState["state"], ReactNode> = {
     idle: null,
-    checking: "Looking for a new version…",
-    none: "This is the latest version.",
-    downloading: update.state === "downloading" && `Downloading ${update.version}, ${Math.round(update.progress * 100)}%`,
-    ready: update.state === "ready" && `Shelfed ${update.version} is ready to go in.`,
-    available: update.state === "available" && `Shelfed ${update.version} is out.`,
+    checking: t("Looking for a new version…"),
+    none: t("This is the latest version."),
+    downloading: update.state === "downloading" && t("Downloading {version}, {percent}%", { version: update.version, percent: Math.round(update.progress * 100) }),
+    ready: update.state === "ready" && t("Shelfed {version} is ready to go in.", { version: update.version }),
+    available: update.state === "available" && t("Shelfed {version} is out.", { version: update.version }),
     failed: update.state === "failed" && update.error,
   };
   return (
     <div className="mt-4 flex flex-col items-center gap-2.5">
       {line[update.state] && <p className="text-caption text-muted">{line[update.state]}</p>}
       {update.state === "ready" ? (
-        <Button size="sm" variant="primary" onClick={() => api.installUpdate()}>Restart to update</Button>
+        <Button size="sm" variant="primary" onClick={() => api.installUpdate()}>{t("Restart to update")}</Button>
       ) : update.state === "available" ? (
-        <Button size="sm" variant="primary" onClick={() => api.installUpdate()}>Download</Button>
+        <Button size="sm" variant="primary" onClick={() => api.installUpdate()}>{t("Download")}</Button>
       ) : (
-        <Button size="sm" disabled={update.state === "checking" || update.state === "downloading"} onClick={check}>Check for updates</Button>
+        <Button size="sm" disabled={update.state === "checking" || update.state === "downloading"} onClick={check}>{t("Check for updates")}</Button>
       )}
     </div>
   );
@@ -646,32 +705,32 @@ function AboutSection() {
         <img src={iconSrc(icon)} alt="" draggable={false} className={cx("absolute inset-0 size-full", isMac && "scale-[1.243]")} />
       </span>
       <h2 className="mt-5 text-[26px] font-medium tracking-[-0.02em]">Shelfed</h2>
-      <p className="mt-1 text-label text-muted">Version {version}</p>
+      <p className="mt-1 text-label text-muted">{t("Version {version}", { version })}</p>
       <Updates />
-      <p className="serif mt-5 max-w-[30ch] text-[17px] leading-snug">A quiet home for your books.</p>
-      {books > 0 && <p className="mt-2 text-caption text-muted">Keeping {plural(books, "book")} for you.</p>}
+      <p className="serif mt-5 max-w-[30ch] text-[17px] leading-snug">{t("A quiet home for your books.")}</p>
+      {books > 0 && <p className="mt-2 text-caption text-muted">{tn(books, "Keeping {n} book for you.", "Keeping {n} books for you.")}</p>}
       <div className="mt-7 flex flex-wrap justify-center gap-2">
-        <Button size="sm" icon={Globe02Icon} onClick={() => api.openExternal("https://simonveprek.github.io/shelf")}>Website</Button>
-        <Button size="sm" icon={GithubIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelfed")}>Source</Button>
-        <Button size="sm" icon={LicenseIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelfed/blob/main/LICENSE")}>Licence</Button>
+        <Button size="sm" icon={Globe02Icon} onClick={() => api.openExternal("https://simonveprek.github.io/shelf")}>{t("Website")}</Button>
+        <Button size="sm" icon={GithubIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelfed")}>{t("Source")}</Button>
+        <Button size="sm" icon={LicenseIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelfed/blob/main/LICENSE")}>{t("Licence")}</Button>
       </div>
       <div className="mt-8 w-full max-w-[460px] text-left">
         <Group>
           <div className="px-4 py-1">
             <SwitchRow
-              label="Look for updates"
-              hint="Checks GitHub now and then for a new version."
+              label={t("Look for updates")}
+              hint={t("Checks GitHub now and then for a new version.")}
               checked={updates}
               onChange={(on) => setSetting({ updates: on })}
             />
           </div>
-          <Row label="Log" hint="What Shelfed noted while running, for a bug report.">
-            <Button size="sm" onClick={() => api.showLog()}>{revealLabel}</Button>
+          <Row label={t("Log")} hint={t("What Shelfed noted while running, for a bug report.")}>
+            <Button size="sm" onClick={() => api.showLog()}>{t(revealLabel)}</Button>
           </Row>
         </Group>
       </div>
       <p className="mt-6 text-caption text-muted">
-        Made by <TextLink href="https://simonveprek.cz">Šimon Vepřek</TextLink>, built on Fragms Personal.
+        {withLink(t("Made by {name}, built on Fragms Personal."), <TextLink href="https://simonveprek.cz">Šimon Vepřek</TextLink>, "{name}")}
       </p>
     </div>
   );
@@ -696,11 +755,11 @@ export function SettingsDialog({ tab }: { tab?: SettingsSection }) {
   const close = () => useStore.setState({ dialog: null });
   const section = SECTIONS.find((s) => s.id === current) ?? SECTIONS[0];
   return (
-    <Dialog open onClose={close} label="Settings" className="sm:max-w-[880px]">
+    <Dialog open onClose={close} label={t("Settings")} className="sm:max-w-[880px]">
       <div className="flex h-[min(640px,86vh)]">
         <aside className="flex w-[210px] shrink-0 flex-col border-r border-border bg-well p-3">
-          <p className="px-2.5 pt-2 pb-4 text-[15px] font-medium tracking-[-0.01em]">Settings</p>
-          <nav className="flex flex-col gap-0.5" aria-label="Settings">
+          <p className="px-2.5 pt-2 pb-4 text-[15px] font-medium tracking-[-0.01em]">{t("Settings")}</p>
+          <nav className="flex flex-col gap-0.5" aria-label={t("Settings")}>
             {SECTIONS.map((s) => (
               <button
                 key={s.id}
@@ -714,13 +773,13 @@ export function SettingsDialog({ tab }: { tab?: SettingsSection }) {
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-[7px] text-white shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14)]" style={{ background: s.tint }}>
                   <Icon icon={s.icon} size={14} />
                 </span>
-                {s.label}
+                {tc("settings", s.label)}
               </button>
             ))}
           </nav>
         </aside>
         <div className="relative min-w-0 flex-1">
-          <IconButton label="Close" icon={Cancel01Icon} className="absolute top-3 right-3 z-10" onClick={close} />
+          <IconButton label={t("Close")} icon={Cancel01Icon} className="absolute top-3 right-3 z-10" onClick={close} />
           <div className="scroll h-full px-9 pt-9 pb-10">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div

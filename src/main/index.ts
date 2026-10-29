@@ -15,6 +15,8 @@ import { copyToDevice, deviceFiles, findDevices, kindlePort, kindlesOnUsb, readC
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks } from "./catalogues";
+import { fromLocale, setLanguage, t, tc } from "../shared/i18n";
+import "../shared/locales";
 import { findCalibre } from "./calibre";
 import { watchDownloads } from "./downloads";
 import { getSettings, setSettings, setSmtpPassword } from "./settings";
@@ -269,26 +271,26 @@ const api = {
 
   async pickFiles() {
     const res = await dialog.showOpenDialog(win!, {
-      title: "Add Books",
+      title: t("Add Books"),
       properties: ["openFile", "multiSelections"],
       filters: [
-        { name: "Books", extensions: ["epub", "mobi", "azw3", "azw", "pdf", "fb2", "fbz", "cbz", "txt", "md", "html", "htm", "docx", "prc"] },
-        { name: "All Files", extensions: ["*"] },
+        { name: t("Books"), extensions: ["epub", "mobi", "azw3", "azw", "pdf", "fb2", "fbz", "cbz", "txt", "md", "html", "htm", "docx", "prc"] },
+        { name: t("All Files"), extensions: ["*"] },
       ],
     });
     return res.canceled ? [] : res.filePaths;
   },
 
-  async pickFolder(title = "Add a Folder of Books") {
+  async pickFolder(title = t("Add a Folder of Books")) {
     const res = await dialog.showOpenDialog(win!, { title, properties: ["openDirectory", "createDirectory"] });
     return res.canceled ? [] : res.filePaths;
   },
 
   async pickImage() {
     const res = await dialog.showOpenDialog(win!, {
-      title: "Choose a Cover",
+      title: t("Choose a Cover"),
       properties: ["openFile"],
-      filters: [{ name: "Images", extensions: ["jpg", "jpeg", "png", "webp", "gif", "avif"] }],
+      filters: [{ name: t("Images"), extensions: ["jpg", "jpeg", "png", "webp", "gif", "avif"] }],
     });
     if (res.canceled || !res.filePaths[0]) return null;
     return new Uint8Array(readFileSync(res.filePaths[0]));
@@ -323,11 +325,15 @@ const api = {
   settings: (patch: Partial<Settings>) => {
     const settings = setSettings(patch);
     if ("downloads" in patch) followDownloads();
+    if ("language" in patch) {
+      speak();
+      buildMenu();
+    }
     return settings;
   },
 
   async moveLibrary() {
-    const [path] = await api.pickFolder("Choose Where Your Library Lives");
+    const [path] = await api.pickFolder(t("Choose Where Your Library Lives"));
     if (!path) return null;
     await library.settle();
     setSettings({ libraryPath: path });
@@ -358,7 +364,7 @@ const api = {
 
   async sendMail(id: string, ext: string) {
     const book = library.get(id);
-    if (!KINDLE_EMAIL.includes(ext)) throw new Error(`Amazon does not take ${ext.toUpperCase()} by email.`);
+    if (!KINDLE_EMAIL.includes(ext)) throw new Error(t("Amazon does not take {format} by email.", { format: ext.toUpperCase() }));
     const format = book.formats.find((f) => f.ext === ext)!;
     await sendToKindle(getSettings().kindle, library.filePath(book, ext), format.file, book.title);
   },
@@ -394,7 +400,7 @@ const api = {
 
   download: (url: string) => {
     // Covers come from the web, never from the disk or anywhere else.
-    if (!/^https:\/\//.test(url)) throw new Error("Only https addresses can be downloaded.");
+    if (!/^https:\/\//.test(url)) throw new Error(t("Only https addresses can be downloaded."));
     return fetchBytes(url);
   },
 
@@ -405,9 +411,9 @@ const api = {
 
   async pickClippings() {
     const res = await dialog.showOpenDialog(win!, {
-      title: "Choose My Clippings.txt",
+      title: t("Choose My Clippings.txt"),
       properties: ["openFile"],
-      filters: [{ name: "Kindle clippings", extensions: ["txt"] }],
+      filters: [{ name: t("Kindle clippings"), extensions: ["txt"] }],
     });
     if (res.canceled || !res.filePaths[0]) return null;
     return readFileSync(res.filePaths[0], "utf8");
@@ -465,6 +471,12 @@ ipcMain.handle("shelf", async (event, method: keyof Api, ...args: unknown[]) => 
 /* Menu                                                                      */
 /* ------------------------------------------------------------------------ */
 
+/** The language for menus and messages: the one chosen in Settings, or the system's. */
+function speak() {
+  const chosen = getSettings().language;
+  setLanguage(chosen === "en" || chosen === "cs" ? chosen : fromLocale(app.getLocale()));
+}
+
 function buildMenu() {
   const cmd = (command: string) => () => send("command", command);
   const template: MenuItemConstructorOptions[] = [
@@ -472,69 +484,89 @@ function buildMenu() {
       ? [{
           label: "Shelfed",
           submenu: [
-            { label: "About Shelfed", role: "about" as const },
+            { label: t("About Shelfed"), role: "about" as const },
             { type: "separator" as const },
-            { label: "Settings…", accelerator: "Cmd+,", click: cmd("settings") },
+            { label: t("Settings…"), accelerator: "Cmd+,", click: cmd("settings") },
             { type: "separator" as const },
-            { role: "hide" as const },
-            { role: "hideOthers" as const },
-            { role: "unhide" as const },
+            { role: "hide" as const, label: t("Hide Shelfed") },
+            { role: "hideOthers" as const, label: t("Hide Others") },
+            { role: "unhide" as const, label: t("Show All") },
             { type: "separator" as const },
-            { role: "quit" as const },
+            { role: "quit" as const, label: t("Quit Shelfed") },
           ],
         }]
       : []),
     {
-      label: "File",
+      label: t("File"),
       submenu: [
-        { label: "Add Books…", accelerator: "CmdOrCtrl+O", click: cmd("import") },
-        { label: "Add Folder…", accelerator: "CmdOrCtrl+Shift+O", click: cmd("import-folder") },
+        { label: t("Add Books…"), accelerator: "CmdOrCtrl+O", click: cmd("import") },
+        { label: t("Add Folder…"), accelerator: "CmdOrCtrl+Shift+O", click: cmd("import-folder") },
         { type: "separator" },
-        { label: "New Collection", accelerator: "CmdOrCtrl+Shift+N", click: cmd("new-collection") },
-        { label: "Import Kindle Highlights…", click: cmd("clippings") },
+        { label: t("New Collection"), accelerator: "CmdOrCtrl+Shift+N", click: cmd("new-collection") },
+        { label: t("Import Kindle Highlights…"), click: cmd("clippings") },
         { type: "separator" },
-        { label: "Open Library Folder", click: () => shell.openPath(library.root) },
+        { label: t("Open Library Folder"), click: () => shell.openPath(library.root) },
         ...(isMac
-          ? [{ type: "separator" as const }, { role: "close" as const }]
-          : [{ type: "separator" as const }, { label: "Settings…", accelerator: "Ctrl+,", click: cmd("settings") }, { role: "quit" as const }]),
+          ? [{ type: "separator" as const }, { role: "close" as const, label: t("Close Window") }]
+          : [{ type: "separator" as const }, { label: t("Settings…"), accelerator: "Ctrl+,", click: cmd("settings") }, { role: "quit" as const, label: t("Quit Shelfed") }]),
       ],
     },
-    { role: "editMenu" },
+    // Written out rather than Electron's own, so its words follow Shelfed's language.
     {
-      label: "View",
+      label: tc("menu", "Edit"),
       submenu: [
-        { label: "Covers", accelerator: "CmdOrCtrl+1", click: cmd("view:grid") },
-        { label: "List", accelerator: "CmdOrCtrl+2", click: cmd("view:list") },
-        { label: "Shelves", accelerator: "CmdOrCtrl+3", click: cmd("view:shelves") },
-        { label: "Bookcase", accelerator: "CmdOrCtrl+4", click: cmd("view:bookcase") },
+        { role: "undo", label: t("Undo") },
+        { role: "redo", label: t("Redo") },
         { type: "separator" },
-        { label: "Find", accelerator: "CmdOrCtrl+F", click: cmd("find") },
+        { role: "cut", label: t("Cut") },
+        { role: "copy", label: t("Copy") },
+        { role: "paste", label: t("Paste") },
+        { role: "selectAll", label: t("Select All") },
+      ],
+    },
+    {
+      label: t("View"),
+      submenu: [
+        { label: t("Covers"), accelerator: "CmdOrCtrl+1", click: cmd("view:grid") },
+        { label: t("List"), accelerator: "CmdOrCtrl+2", click: cmd("view:list") },
+        { label: t("Shelves"), accelerator: "CmdOrCtrl+3", click: cmd("view:shelves") },
+        { label: t("Bookcase"), accelerator: "CmdOrCtrl+4", click: cmd("view:bookcase") },
+        { type: "separator" },
+        { label: t("Find"), accelerator: "CmdOrCtrl+F", click: cmd("find") },
         { type: "separator" },
         // Ctrl+Alt is AltGr on Windows, where it types letters like ś and đ.
-        { label: "Toggle Sidebar", accelerator: isMac ? "Cmd+Alt+S" : "Ctrl+Shift+S", click: cmd("toggle-sidebar") },
-        { label: "Toggle Details", accelerator: isMac ? "Cmd+Alt+I" : "Ctrl+Shift+I", click: cmd("toggle-inspector") },
+        { label: t("Toggle Sidebar"), accelerator: isMac ? "Cmd+Alt+S" : "Ctrl+Shift+S", click: cmd("toggle-sidebar") },
+        { label: t("Toggle Details"), accelerator: isMac ? "Cmd+Alt+I" : "Ctrl+Shift+I", click: cmd("toggle-inspector") },
         { type: "separator" },
-        { label: "Bigger Covers", accelerator: "CmdOrCtrl+=", click: cmd("zoom-in") },
-        { label: "Smaller Covers", accelerator: "CmdOrCtrl+-", click: cmd("zoom-out") },
+        { label: t("Bigger Covers"), accelerator: "CmdOrCtrl+=", click: cmd("zoom-in") },
+        { label: t("Smaller Covers"), accelerator: "CmdOrCtrl+-", click: cmd("zoom-out") },
         { type: "separator" },
-        { role: "togglefullscreen" },
+        { role: "togglefullscreen", label: t("Full Screen") },
         ...(app.isPackaged ? [] : [{ role: "toggleDevTools" as const }]),
       ],
     },
     {
-      label: "Book",
+      label: t("Book"),
       submenu: [
-        { label: "Send to Kindle…", accelerator: "CmdOrCtrl+Shift+K", click: cmd("send") },
-        { label: "Convert…", accelerator: "CmdOrCtrl+Shift+C", click: cmd("convert") },
-        { label: "Find Details Online…", accelerator: "CmdOrCtrl+Shift+M", click: cmd("metadata") },
-        { label: "Edit Details…", accelerator: "CmdOrCtrl+E", click: cmd("edit") },
+        { label: t("Send to Kindle…"), accelerator: "CmdOrCtrl+Shift+K", click: cmd("send") },
+        { label: t("Convert…"), accelerator: "CmdOrCtrl+Shift+C", click: cmd("convert") },
+        { label: t("Find Details Online…"), accelerator: "CmdOrCtrl+Shift+M", click: cmd("metadata") },
+        { label: t("Edit Details…"), accelerator: "CmdOrCtrl+E", click: cmd("edit") },
         { type: "separator" },
-        { label: "Favorite", accelerator: "CmdOrCtrl+L", click: cmd("favorite") },
+        { label: t("Favorite"), accelerator: "CmdOrCtrl+L", click: cmd("favorite") },
         // Ctrl+Backspace deletes a word in a text field on Windows; Delete does this there.
-        { label: "Remove from Library…", accelerator: isMac ? "Cmd+Backspace" : "Delete", registerAccelerator: isMac, click: cmd("remove") },
+        { label: t("Remove from Library…"), accelerator: isMac ? "Cmd+Backspace" : "Delete", registerAccelerator: isMac, click: cmd("remove") },
       ],
     },
-    { role: "windowMenu" },
+    {
+      label: t("Window"),
+      role: "windowMenu",
+      submenu: [
+        { role: "minimize", label: t("Minimise") },
+        { role: "zoom", label: t("Zoom") },
+        ...(isMac ? [{ type: "separator" as const }, { role: "front" as const, label: t("Bring All to Front") }] : [{ role: "close" as const, label: t("Close Window") }]),
+      ],
+    },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
@@ -606,6 +638,7 @@ app.whenReady().then(async () => {
   library = await new Library(getSettings().libraryPath).open();
   library.onSaveError = () => send("save-failed");
   serve();
+  speak();
   buildMenu();
   createWindow();
   showIcon();

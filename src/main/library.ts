@@ -7,6 +7,7 @@ import type { Book, Collection } from "../shared/types";
 import { READABLE } from "../shared/types";
 import { personNames } from "../shared/names";
 import { seriesFix } from "../shared/series";
+import { t } from "../shared/i18n";
 
 type Data = { version: 1; books: Book[]; collections: Collection[] };
 
@@ -190,7 +191,7 @@ export class Library {
 
   get(id: string) {
     const book = this.books.get(id);
-    if (!book) throw new Error("That book is no longer in the library.");
+    if (!book) throw new Error(t("That book is no longer in the library."));
     return book;
   }
 
@@ -255,7 +256,7 @@ export class Library {
 
   filePath(book: Book, ext?: string) {
     const format = ext ? book.formats.find((f) => f.ext === ext) : book.formats[0];
-    if (!format) throw new Error(`This book has no ${ext?.toUpperCase()} file.`);
+    if (!format) throw new Error(t("This book has no {format} file.", { format: String(ext?.toUpperCase()) }));
     return join(this.bookDir(book), format.file);
   }
 
@@ -406,7 +407,7 @@ export class Library {
 
   async addFormat(id: string, ext: string, data: Uint8Array | string) {
     const book = this.get(id);
-    if (book.formats.some((f) => f.ext === ext)) throw new Error(`This book already has an ${ext.toUpperCase()}. Remove it first to make a new one.`);
+    if (book.formats.some((f) => f.ext === ext)) throw new Error(t("This book already has an {format}. Remove it first to make a new one.", { format: ext.toUpperCase() }));
     // Any file already sitting under that name is left alone, and the new one takes the next free name.
     let file = `${baseName(book)}.${ext}`;
     for (let n = 2; existsSync(join(this.bookDir(book), file)); n++) file = `${baseName(book)} (${n}).${ext}`;
@@ -450,7 +451,7 @@ export class Library {
 
   async removeFormat(id: string, ext: string) {
     const book = this.get(id);
-    if (book.formats.length < 2) throw new Error("A book keeps at least one file.");
+    if (book.formats.length < 2) throw new Error(t("A book keeps at least one file."));
     const format = book.formats.find((f) => f.ext === ext);
     if (!format) return book;
     const path = join(this.bookDir(book), format.file);

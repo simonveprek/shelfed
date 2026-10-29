@@ -13,7 +13,8 @@ import { buildFb2 } from "./fb2";
 import {
   bookById, drop, failed, flashMood, patchBooks, saveCollections, startJob, upsert, useStore, type JobHandle,
 } from "./store";
-import { bytes, FOLIATE, plural, readingFormat, TEXTUAL } from "./util";
+import { bytes, FOLIATE, readingFormat, TEXTUAL } from "./util";
+import { t, tn } from "../../../shared/i18n";
 
 const get = useStore.getState;
 const set = useStore.setState;
@@ -82,10 +83,10 @@ export async function importPaths(paths: string[], open = false, from?: string):
   const books = await api.collect(paths);
   if (!books.length) {
     // Nothing worth saying about a download that turned out not to be a book.
-    if (!from) toast.error("No books there that Shelfed can read");
+    if (!from) toast.error(t("No books there that Shelfed can read"));
     return null;
   }
-  const job = startJob(books.length === 1 ? "Adding a book" : `Adding ${books.length.toLocaleString()} books`);
+  const job = startJob(tn(books.length, "Adding a book", "Adding {n} books"));
   set({ mood: "reading" });
   let added = 0;
   let skipped = 0;
@@ -128,7 +129,7 @@ export async function importPaths(paths: string[], open = false, from?: string):
         // One bad file does not stop the rest.
       }
       done++;
-      job.update({ progress: done / books.length, detail: `${done.toLocaleString()} of ${books.length.toLocaleString()}` });
+      job.update({ progress: done / books.length, detail: t("{done} of {total}", { done, total: books.length }) });
     });
     // Copies that came as books of their own, like an EPUB and a MOBI Calibre kept apart, join up.
     const into = await joinCopies(touched);
@@ -137,9 +138,15 @@ export async function importPaths(paths: string[], open = false, from?: string):
     added -= [...into.keys()].filter((id) => fresh.has(id)).length;
     if (last && into.has((last as Book).id)) last = bookById(into.get((last as Book).id)!) ?? null;
     set({ mood: null });
-    const notes = [skipped && `${skipped} already here`, joined && `${plural(joined, "copy", "copies")} joined to ${joined === 1 ? "its book" : "their books"}`].filter(Boolean).join(", ");
-    const source = from ? ` from ${from}` : "";
-    job.done(added ? `Added ${plural(added, "book")}${source}${notes ? `, ${notes}` : ""}` : joined ? `Joined ${plural(joined, "copy", "copies")} to ${joined === 1 ? "its book" : "their books"}` : "Those books are already here");
+    const notes = [
+      skipped && tn(skipped, "{n} already here", "{n} already here"),
+      joined && tn(joined, "{n} copy joined to its book", "{n} copies joined to their books"),
+    ].filter(Boolean).join(", ");
+    // App.tsx says where downloads came from in English ("your Downloads"); the whole sentence is translated here.
+    const sentence = from
+      ? tn(added, "Added {n} book from {place}", "Added {n} books from {place}", { place: t(from) })
+      : tn(added, "Added {n} book", "Added {n} books");
+    job.done(added ? `${sentence}${notes ? `, ${notes}` : ""}` : joined ? tn(joined, "Joined {n} copy to its book", "Joined {n} copies to their books") : t("Those books are already here"));
     const book = last as Book | null;
     // A single file handed over opens; a folder, even of one book, doesn't.
     if (book && open && paths.length === 1 && books.length === 1 && books[0][0] === paths[0]) openReader(book.id);
@@ -193,8 +200,8 @@ export async function joinSelected(ids: string[]) {
   const joined = await joinBooks(keep.id, rest.map((b) => b.id));
   if (joined) {
     set({ selection: [joined.id], anchor: joined.id });
-    toast.success(`Joined into one book${rest.length > 1 ? ` from ${books.length}` : ""}`, {
-      description: `Files it already had went to the ${isMac ? "Trash" : "Recycle Bin"}, with the copies' folders.`,
+    toast.success(rest.length > 1 ? tn(books.length, "Joined into one book from {n}", "Joined into one book from {n}") : t("Joined into one book"), {
+      description: isMac ? t("Files it already had went to the Trash, with the copies' folders.") : t("Files it already had went to the Recycle Bin, with the copies' folders."),
     });
   }
 }
@@ -266,11 +273,11 @@ export function sourceFor(book: Book, to: string) {
   return SOURCE_ORDER.find((ext) => ext !== to && book.formats.some((f) => f.ext === ext)) ?? book.formats[0]?.ext;
 }
 
-/** Every format Shelfed can make, and whether it can make it from this book. */
+/** Every format Shelfed can make, and whether it can make it from this book. Labels are translated here, when asked for, not when the file loads. */
 export function targetsFor(book: Book): Target[] {
   return TARGETS.map((ext) => {
     const from = sourceFor(book, ext);
-    return { ext, label: LABELS[ext][0], note: LABELS[ext][1], possible: Boolean(from && canRead(from)) };
+    return { ext, label: t(LABELS[ext][0]), note: t(LABELS[ext][1]), possible: Boolean(from && canRead(from)) };
   });
 }
 
@@ -278,21 +285,21 @@ export function targetsFor(book: Book): Target[] {
 export async function convert(id: string, to: string, outer?: JobHandle): Promise<Book> {
   let book = bookById(id)!;
   const from = sourceFor(book, to);
-  if (!targetsFor(book).find((t) => t.ext === to)?.possible) throw new Error(`Shelfed can't read this book's files to make ${to.toUpperCase()} from them.`);
-  const job = outer ?? startJob(`${book.title} to ${to.toUpperCase()}`);
+  if (!targetsFor(book).find((t) => t.ext === to)?.possible) throw new Error(t("Shelfed can't read this book's files to make {format} from them.", { format: to.toUpperCase() }));
+  const job = outer ?? startJob(t("{title} to {format}", { title: book.title, format: to.toUpperCase() }));
   set({ mood: "thinking" });
   try {
     let saved: Book;
     if (to === "azw3") {
       // A Kindle file is made from the EPUB, so that comes first.
       if (!book.formats.some((f) => f.ext === "epub")) book = await convert(id, "epub", job);
-      job.update({ detail: "Making the Kindle file", progress: 0.9 });
+      job.update({ detail: t("Making the Kindle file"), progress: 0.9 });
       saved = await api.makeAzw3(id);
     } else {
-      job.update({ detail: `Reading the ${from.toUpperCase()}` });
+      job.update({ detail: t("Reading the {format}", { format: from.toUpperCase() }) });
       const content = await extractContent(book, from, (share) => job.update({ progress: share * 0.8 }));
-      if (!content.chapters.length) throw new Error("There were no words to take out of this file.");
-      job.update({ detail: `Making the ${to.toUpperCase()}`, progress: 0.85 });
+      if (!content.chapters.length) throw new Error(t("There were no words to take out of this file."));
+      job.update({ detail: t("Making the {format}", { format: to.toUpperCase() }), progress: 0.85 });
       await new Promise((r) => setTimeout(r));
       if (to === "epub") saved = await api.addFormat(id, "epub", buildEpub(content));
       else if (to === "pdf") saved = await api.pdfFormat(id, buildHtml(content, true));
@@ -302,7 +309,7 @@ export async function convert(id: string, to: string, outer?: JobHandle): Promis
       else saved = await api.addFormat(id, "html", new TextEncoder().encode(buildHtml(content)));
     }
     upsert(saved);
-    if (!outer) job.done(`${book.title} is now ${to.toUpperCase()} too`);
+    if (!outer) job.done(t("{title} is now {format} too", { title: book.title, format: to.toUpperCase() }));
     return saved;
   } catch (error) {
     if (!outer) job.fail(error);
@@ -314,7 +321,7 @@ export async function convert(id: string, to: string, outer?: JobHandle): Promis
 
 export async function convertMany(ids: string[], to: string) {
   if (ids.length === 1) return void convert(ids[0], to).catch(() => {});
-  const job = startJob(`Converting ${ids.length} books to ${to.toUpperCase()}`);
+  const job = startJob(tn(ids.length, "Converting {n} book to {format}", "Converting {n} books to {format}", { format: to.toUpperCase() }));
   let failures = 0;
   for (let i = 0; i < ids.length; i++) {
     const book = bookById(ids[i]);
@@ -324,8 +331,8 @@ export async function convertMany(ids: string[], to: string) {
     const inner = { ...job, update: (p: { detail?: string }) => p.detail && job.update({ detail: `${book.title}, ${p.detail.toLowerCase()}` }) } as JobHandle;
     await convert(ids[i], to, inner).catch(() => failures++);
   }
-  if (failures) job.fail(`${failures} of ${ids.length} could not be converted`);
-  else job.done(`Converted ${plural(ids.length, "book")} to ${to.toUpperCase()}`);
+  if (failures) job.fail(t("{n} of {total} could not be converted", { n: String(failures), total: String(ids.length) }));
+  else job.done(tn(ids.length, "Converted {n} book to {format}", "Converted {n} books to {format}", { format: to.toUpperCase() }));
 }
 
 /* ------------------------------------------------------------------------ */
@@ -376,7 +383,7 @@ function kindleBusy(via: "cable" | "email", bookId: string) {
 
 export async function sendByEmail(ids: string[]) {
   const books = ids.map(bookById).filter(Boolean) as Book[];
-  const job = startJob(books.length === 1 ? `Sending ${books[0].title}` : `Sending ${books.length} books`);
+  const job = startJob(books.length === 1 ? t("Sending {title}", { title: books[0].title }) : tn(books.length, "Sending {n} book", "Sending {n} books"));
   const kindle = kindleBusy("email", books[0]?.id ?? "");
   set({ mood: "excited" });
   let failures = 0;
@@ -392,8 +399,8 @@ export async function sendByEmail(ids: string[]) {
         book = await convert(book.id, plan.ext, inner);
       }
       const size = book.formats.find((f) => f.ext === plan.ext)?.size ?? 0;
-      if (size > KINDLE_LIMIT) throw new Error(`${bytes(size)} is over the 50 MB Amazon takes by email`);
-      job.update({ detail: `Mailing the ${plan.ext.toUpperCase()}, ${bytes(size)}` });
+      if (size > KINDLE_LIMIT) throw new Error(t("{size} is over the 50 MB Amazon takes by email", { size: bytes(size) }));
+      job.update({ detail: t("Mailing the {format}, {size}", { format: plan.ext.toUpperCase(), size: bytes(size) }) });
       await api.sendMail(book.id, plan.ext);
     } catch (error) {
       failures++;
@@ -403,14 +410,14 @@ export async function sendByEmail(ids: string[]) {
   set({ mood: null });
   kindle.end(failures === 0);
   if (failures === books.length) job.fail(lastError);
-  else if (failures) job.fail(`${failures} of ${books.length} did not send`);
-  else job.done(books.length === 1 ? "Sent. It reaches your Kindle in a few minutes" : `Sent ${plural(books.length, "book")} to your Kindle`);
+  else if (failures) job.fail(t("{n} of {total} did not send", { n: String(failures), total: String(books.length) }));
+  else job.done(books.length === 1 ? t("Sent. It reaches your Kindle in a few minutes") : tn(books.length, "Sent {n} book to your Kindle", "Sent {n} books to your Kindle"));
   return failures === 0;
 }
 
 export async function sendByCable(ids: string[], device: string) {
   const books = ids.map(bookById).filter(Boolean) as Book[];
-  const job = startJob(books.length === 1 ? `Copying ${books[0].title}` : `Copying ${books.length} books`);
+  const job = startJob(books.length === 1 ? t("Copying {title}", { title: books[0].title }) : tn(books.length, "Copying {n} book", "Copying {n} books"));
   const kindle = kindleBusy("cable", books[0]?.id ?? "");
   let failures = 0;
   let lastError: unknown;
@@ -420,7 +427,7 @@ export async function sendByCable(ids: string[], device: string) {
     kindle.progress(i / books.length);
     try {
       const plan = usbPlan(book);
-      if (!plan) throw new Error("Shelfed can't read this book's files to make a Kindle file from them");
+      if (!plan) throw new Error(t("Shelfed can't read this book's files to make a Kindle file from them"));
       if (plan.convert) {
         const inner = { ...job, update: (p: { detail?: string }) => p.detail && job.update({ detail: p.detail }) } as JobHandle;
         book = await convert(book.id, plan.ext, inner);
@@ -434,8 +441,8 @@ export async function sendByCable(ids: string[], device: string) {
   kindle.end(failures === 0);
   relistKindle();
   if (failures === books.length) job.fail(lastError);
-  else if (failures) job.fail(`${failures} of ${books.length} were not copied`);
-  else job.done(books.length === 1 ? "On your Kindle" : `Copied ${plural(books.length, "book")} to your Kindle`);
+  else if (failures) job.fail(t("{n} of {total} were not copied", { n: String(failures), total: String(books.length) }));
+  else job.done(books.length === 1 ? t("On your Kindle") : tn(books.length, "Copied {n} book to your Kindle", "Copied {n} books to your Kindle"));
 }
 
 /* ------------------------------------------------------------------------ */
@@ -443,15 +450,15 @@ export async function sendByCable(ids: string[], device: string) {
 /* ------------------------------------------------------------------------ */
 
 export async function removeBooks(ids: string[]) {
-  const first = bookById(ids[0])?.title ?? "Book";
+  const first = bookById(ids[0])?.title ?? t("Book");
   await api.remove(ids);
   drop(ids);
   set((s) => ({ reading: s.reading && ids.includes(s.reading.id) ? null : s.reading }));
-  toast(ids.length === 1 ? `Removed ${first}` : `Removed ${ids.length} books`, {
-    description: "The files go to the Trash in a few seconds",
+  toast(ids.length === 1 ? t("Removed {title}", { title: first }) : tn(ids.length, "Removed {n} book", "Removed {n} books"), {
+    description: t("The files go to the Trash in a few seconds"),
     duration: 10_000,
     action: {
-      label: "Undo",
+      label: t("Undo"),
       onClick: async () => {
         const books = await api.restore(ids);
         books.forEach(upsert);
@@ -467,7 +474,7 @@ export async function removeBooks(ids: string[]) {
 /* ------------------------------------------------------------------------ */
 
 export function createCollection(name: string, add: string[] = []): Collection {
-  const collection: Collection = { id: Math.random().toString(36).slice(2, 10), name: name.trim() || "New collection", created: Date.now() };
+  const collection: Collection = { id: Math.random().toString(36).slice(2, 10), name: name.trim() || t("New collection"), created: Date.now() };
   saveCollections([...get().collections, collection]);
   if (add.length) addToCollection(add, collection.id, true);
   return collection;
@@ -480,7 +487,7 @@ export function addToCollection(ids: string[], collection: string, quiet = false
   }));
   if (all || quiet) return;
   const name = get().collections.find((c) => c.id === collection)?.name;
-  toast.success(ids.length === 1 ? `Added to ${name}` : `Added ${ids.length} books to ${name}`);
+  toast.success(ids.length === 1 ? t("Added to {name}", { name: String(name) }) : tn(ids.length, "Added {n} book to {name}", "Added {n} books to {name}", { name: String(name) }));
   flashMood("love", 1400);
 }
 

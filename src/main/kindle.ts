@@ -7,6 +7,7 @@ import nodemailer from "nodemailer";
 import { kindleFromSerial } from "../shared/kindles";
 import type { KindleDevice, KindleFile, KindleOnUsb, KindleSettings } from "../shared/types";
 import { getSmtpPassword } from "./settings";
+import { t } from "../shared/i18n";
 
 /** Common mail services, so most people only type their address. */
 export const SMTP_PRESETS: Record<string, { host: string; port: number; secure: boolean }> = {
@@ -24,8 +25,8 @@ export const SMTP_PRESETS: Record<string, { host: string; port: number; secure: 
 
 function transport(settings: KindleSettings) {
   const password = getSmtpPassword();
-  if (!settings.host || !settings.from) throw new Error("Set up sending in Settings first.");
-  if (!password) throw new Error("Add your mail password in Settings.");
+  if (!settings.host || !settings.from) throw new Error(t("Set up sending in Settings first."));
+  if (!password) throw new Error(t("Add your mail password in Settings."));
   return nodemailer.createTransport({
     host: settings.host,
     port: settings.port,
@@ -41,12 +42,12 @@ export async function verifyMail(settings: KindleSettings) {
 }
 
 export async function sendToKindle(settings: KindleSettings, file: string, name: string, title: string) {
-  if (!settings.to.trim()) throw new Error("Add your Send to Kindle address in Settings.");
+  if (!settings.to.trim()) throw new Error(t("Add your Send to Kindle address in Settings."));
   await transport(settings).sendMail({
     from: settings.from,
     to: settings.to.trim(),
     subject: title,
-    text: `${title}, sent from Shelfed.`,
+    text: t("{title}, sent from Shelfed.", { title }),
     attachments: [{ filename: name, path: file }],
   });
 }

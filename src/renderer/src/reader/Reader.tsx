@@ -18,8 +18,9 @@ import { flashMood, setSetting, upsert, useStore } from "@/lib/store";
 import { addAnnotation, bookmarksOf, newAnnotationId, removeAnnotation } from "@/lib/annotations";
 import { AnnotationCard, MARKS, NotesList, SearchPanel, SelectionBar, Tab, useReadingTime, type SearchHit } from "./Notes";
 import { authorsOf, debounce, fetchFile, FOLIATE } from "@/lib/util";
+import { t, tc } from "../../../shared/i18n";
 
-/** The page itself. These are the paper, not the app, so they keep their own colours. */
+/** The page itself. These are the paper, not the app, so they keep their own colours. Labels are English here and translated where shown. */
 const PAPERS: Record<ReaderPrefs["theme"], { bg: string; fg: string; link: string; dark: boolean; label: string }> = {
   light: { bg: "#fbfaf7", fg: "#1d1b18", link: "#2f5fd0", dark: false, label: "Paper" },
   sepia: { bg: "#f2e9d5", fg: "#4f3f2f", link: "#8a4b1f", dark: false, label: "Sepia" },
@@ -37,13 +38,13 @@ type TocItem = { label: string; href: string; subitems?: TocItem[] };
 
 /** The reader's typography, laid over the book's own styles. */
 function bookCss(p: ReaderPrefs) {
-  const t = PAPERS[p.theme];
+  const paper = PAPERS[p.theme];
   const font = FONTS[p.font];
   return `
     @namespace epub "http://www.idpf.org/2007/ops";
-    html { color-scheme: ${t.dark ? "dark" : "light"}; font-size: ${p.size}px !important; }
-    html, body { color: ${t.fg} !important; background: transparent !important; }
-    ${t.dark || p.theme === "sepia" ? `body *:not(img):not(svg):not(svg *):not(video) { color: inherit !important; background-color: transparent !important; border-color: color-mix(in oklab, currentColor 30%, transparent) !important; }` : ""}
+    html { color-scheme: ${paper.dark ? "dark" : "light"}; font-size: ${p.size}px !important; }
+    html, body { color: ${paper.fg} !important; background: transparent !important; }
+    ${paper.dark || p.theme === "sepia" ? `body *:not(img):not(svg):not(svg *):not(video) { color: inherit !important; background-color: transparent !important; border-color: color-mix(in oklab, currentColor 30%, transparent) !important; }` : ""}
     ${font ? `body, body p, body div, body span, body li, body blockquote, body td, body h1, body h2, body h3, body h4 { font-family: ${font} !important; }` : ""}
     p, li, blockquote, dd {
       line-height: ${p.spacing} !important;
@@ -54,11 +55,11 @@ function bookCss(p: ReaderPrefs) {
     }
     [align="center"] { text-align: center; }
     [align="right"] { text-align: right; }
-    a:any-link { color: ${t.link} !important; text-underline-offset: 0.15em; }
+    a:any-link { color: ${paper.link} !important; text-underline-offset: 0.15em; }
     pre { white-space: pre-wrap !important; }
     img, svg { max-width: 100%; }
-    ${t.dark ? "img { filter: brightness(0.88); }" : ""}
-    ::selection { background: color-mix(in oklab, ${t.link} 35%, transparent); }
+    ${paper.dark ? "img { filter: brightness(0.88); }" : ""}
+    ::selection { background: color-mix(in oklab, ${paper.link} 35%, transparent); }
     aside[epub|type~="footnote"], aside[epub|type~="endnote"], aside[epub|type~="note"], aside[epub|type~="rearnote"] { display: none; }
   `;
 }
@@ -73,16 +74,16 @@ function usePrefs() {
 function useChrome() {
   const [shown, setShown] = useState(true);
   useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
+    let timer: ReturnType<typeof setTimeout>;
     const wake = () => {
       setShown(true);
-      clearTimeout(t);
-      t = setTimeout(() => setShown(false), 2600);
+      clearTimeout(timer);
+      timer = setTimeout(() => setShown(false), 2600);
     };
     wake();
     window.addEventListener("mousemove", wake);
     return () => {
-      clearTimeout(t);
+      clearTimeout(timer);
       window.removeEventListener("mousemove", wake);
     };
   }, []);
@@ -98,7 +99,7 @@ export const saveProgress = debounce(async (id: string, progress: number, locati
   await api.update(id, patch);
   if (finished) {
     flashMood("excited", 3000);
-    toast.success(`Finished ${book.title}`, { description: "Marked as read" });
+    toast.success(t("Finished {title}", { title: book.title }), { description: t("Marked as read") });
   }
 }, 700);
 
@@ -121,19 +122,19 @@ function TypeSettings({ prefs, set, pdf }: { prefs: ReaderPrefs; set: (p: Partia
             >
               Aa
             </span>
-            <span className="text-caption text-muted">{PAPERS[key].label}</span>
+            <span className="text-caption text-muted">{tc("page", PAPERS[key].label)}</span>
           </button>
         ))}
       </div>
       {!pdf && (
         <>
-          <Slider label="Text size" dense value={prefs.size} min={12} max={34} step={1} digits={0} suffix=" pt" defaultValue={18} onChange={(size) => set({ size })} />
-          <Slider label="Line spacing" dense value={prefs.spacing} min={1.1} max={2.2} step={0.05} digits={2} defaultValue={1.5} onChange={(spacing) => set({ spacing })} />
-          <Slider label="Line length" dense value={prefs.width} min={460} max={1000} step={20} format={(v) => `${Math.round(v / 9.5)} ch`} defaultValue={680} onChange={(width) => set({ width })} />
-          <Segmented label="Typeface" size="sm" block value={prefs.font} onChange={(font) => set({ font })} options={[{ id: "publisher", label: "The book’s" }, { id: "serif", label: "Serif" }, { id: "sans", label: "Sans" }]} />
+          <Slider label={t("Text size")} dense value={prefs.size} min={12} max={34} step={1} digits={0} suffix=" pt" defaultValue={18} onChange={(size) => set({ size })} />
+          <Slider label={t("Line spacing")} dense value={prefs.spacing} min={1.1} max={2.2} step={0.05} digits={2} defaultValue={1.5} onChange={(spacing) => set({ spacing })} />
+          <Slider label={t("Line length")} dense value={prefs.width} min={460} max={1000} step={20} format={(v) => t("{n} ch", { n: Math.round(v / 9.5) })} defaultValue={680} onChange={(width) => set({ width })} />
+          <Segmented label={t("Typeface")} size="sm" block value={prefs.font} onChange={(font) => set({ font })} options={[{ id: "publisher", label: t("The book’s") }, { id: "serif", label: t("Serif") }, { id: "sans", label: t("Sans") }]} />
           <div className="flex gap-2">
-            <Segmented label="Page turns" size="sm" block className="flex-1" value={prefs.flow} onChange={(flow) => set({ flow })} options={[{ id: "paginated", label: "Pages" }, { id: "scrolled", label: "Scroll" }]} />
-            <Segmented label="Alignment" size="sm" value={prefs.justify ? "j" : "l"} onChange={(v) => set({ justify: v === "j" })} options={[{ id: "l", label: "Left" }, { id: "j", label: "Justify" }]} />
+            <Segmented label={t("Page turns")} size="sm" block className="flex-1" value={prefs.flow} onChange={(flow) => set({ flow })} options={[{ id: "paginated", label: t("Pages") }, { id: "scrolled", label: t("Scroll") }]} />
+            <Segmented label={t("Alignment")} size="sm" value={prefs.justify ? "j" : "l"} onChange={(v) => set({ justify: v === "j" })} options={[{ id: "l", label: t("Left") }, { id: "j", label: t("Justify") }]} />
           </div>
         </>
       )}
@@ -226,10 +227,10 @@ function Frame({
     >
       <div className={cx("drag relative z-20 flex h-16 shrink-0 items-center justify-center", isMac ? "pl-20" : "pl-4", isWin ? "pr-[150px]" : "pr-4")}>
         <motion.div animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : -6 }} transition={{ duration: visible ? 0.25 : 0.15, ease: EASE }} className="no-drag">
-          <Toolbar label="Reader">
-            <ToolbarButton label="Back to the library" icon={ArrowLeft01Icon} onClick={close}>Library</ToolbarButton>
-            <ToolbarButton label="Contents and notes" icon={Menu01Icon} onClick={() => setPanel(toc.length ? "contents" : "notes")} />
-            {search && <ToolbarButton label="Search in this book" icon={Search01Icon} onClick={() => setPanel("search")} />}
+          <Toolbar label={t("Reader")}>
+            <ToolbarButton label={t("Back to the library")} icon={ArrowLeft01Icon} onClick={close}>{t("Library")}</ToolbarButton>
+            <ToolbarButton label={t("Contents and notes")} icon={Menu01Icon} onClick={() => setPanel(toc.length ? "contents" : "notes")} />
+            {search && <ToolbarButton label={t("Search in this book")} icon={Search01Icon} onClick={() => setPanel("search")} />}
             <ToolbarDivider />
             <span className="max-w-[34vw] truncate px-2 text-label">
               <span className="font-medium">{book.title}</span>
@@ -238,13 +239,13 @@ function Frame({
             <ToolbarDivider />
             {onBookmark && (
               <ToolbarButton
-                label={bookmarked ? "Remove bookmark" : "Bookmark this page"}
+                label={bookmarked ? t("Remove bookmark") : t("Bookmark this page")}
                 icon={Bookmark01Icon}
                 onClick={onBookmark}
                 className={bookmarked ? "[&_path]:fill-current" : undefined}
               />
             )}
-            <Popover label="Text and page" align="end" width={300} trigger={({ props }) => <ToolbarButton {...props} label="Text and page" icon={TextFontIcon} />}>
+            <Popover label={t("Text and page")} align="end" width={300} trigger={({ props }) => <ToolbarButton {...props} label={t("Text and page")} icon={TextFontIcon} />}>
               <TypeSettings prefs={prefs} set={setPrefs} pdf={pdf} />
             </Popover>
           </Toolbar>
@@ -263,7 +264,7 @@ function Frame({
           {(loading || error) && (
             <motion.div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-5" style={{ background: paper.bg }} exit={{ opacity: 0, transition: { duration: 0.25 } }}>
               {error ? <Point shape="squircle" mood="sad" size={64} /> : <Spinner size="lg" />}
-              <p className="max-w-[360px] text-center text-label opacity-60">{error ?? "Opening the book"}</p>
+              <p className="max-w-[360px] text-center text-label opacity-60">{error ?? t("Opening the book")}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -282,9 +283,9 @@ function Frame({
 
       <Sheet open={contents} onClose={() => setPanel(null)} side="left" title={book.title} description={authorsOf(book)}>
         <div className="-mt-1 mb-4 flex gap-1">
-          {toc.length > 0 && <Tab active={panel === "contents"} onClick={() => setPanel("contents")}>Contents</Tab>}
-          <Tab active={panel === "notes"} onClick={() => setPanel("notes")}>Notes</Tab>
-          {search && <Tab active={panel === "search"} onClick={() => setPanel("search")}>Search</Tab>}
+          {toc.length > 0 && <Tab active={panel === "contents"} onClick={() => setPanel("contents")}>{t("Contents")}</Tab>}
+          <Tab active={panel === "notes"} onClick={() => setPanel("notes")}>{t("Notes")}</Tab>
+          {search && <Tab active={panel === "search"} onClick={() => setPanel("search")}>{t("Search")}</Tab>}
         </div>
         {panel === "contents" && (
           <Contents
@@ -307,7 +308,7 @@ function PageButton({ side, onClick }: { side: "left" | "right"; onClick: () => 
   return (
     <button
       onClick={onClick}
-      aria-label={side === "left" ? "Previous page" : "Next page"}
+      aria-label={side === "left" ? t("Previous page") : t("Next page")}
       className={cx("group absolute inset-y-0 z-10 flex w-[6%] min-w-12 items-center", side === "left" ? "left-0 justify-start pl-4" : "right-0 justify-end pr-4")}
     >
       <span className="flex size-10 items-center justify-center rounded-full bg-control opacity-0 transition-opacity duration-150 group-hover:opacity-80">
@@ -493,7 +494,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
         }
         setLoading(false);
       } catch (err) {
-        if (alive) setError(`This ${ext.toUpperCase()} could not be opened. ${(err as Error).message ?? ""}`);
+        if (alive) setError(t("This {format} could not be opened. {error}", { format: ext.toUpperCase(), error: (err as Error).message ?? "" }).trim());
       }
     })();
     return () => {
@@ -645,7 +646,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
               onNote={() => highlight("yellow", true)}
               onCopy={() => {
                 navigator.clipboard.writeText(picked.text);
-                toast.success("Copied");
+                toast.success(t("Copied"));
                 setPicked(null);
               }}
             />
@@ -655,7 +656,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
       }
       footer={
         <Slider
-          label={where.chapter ?? "Progress"}
+          label={where.chapter ?? t("Progress")}
           dense
           value={Math.round(fraction * 1000) / 10}
           min={0}
@@ -771,7 +772,7 @@ function PdfReader({ book }: { book: Book }) {
           );
         setOutline(await map(items));
       } catch (err) {
-        if (alive) setError(`This PDF could not be opened. ${(err as Error).message}`);
+        if (alive) setError(t("This PDF could not be opened. {error}", { error: (err as Error).message ?? "" }).trim());
       }
     })();
     return () => {
@@ -834,7 +835,7 @@ function PdfReader({ book }: { book: Book }) {
       for (let at = lower.indexOf(needle); at !== -1 && hits.length < 20; at = lower.indexOf(needle, at + needle.length)) {
         hits.push({
           key: `${n}-${at}`,
-          label: `Page ${n}`,
+          label: t("Page {page}", { page: String(n) }),
           pre: text.slice(Math.max(0, at - 50), at),
           match: text.slice(at, at + needle.length),
           post: text.slice(at + needle.length, at + needle.length + 50),
@@ -885,12 +886,12 @@ function PdfReader({ book }: { book: Book }) {
       footer={
         <div className="flex items-end gap-3">
           <div className="min-w-0 flex-1">
-            <Slider label={`Page ${page} of ${doc?.numPages ?? 1}`} dense value={page} min={1} max={Math.max(2, doc?.numPages ?? 1)} step={1} digits={0} onChange={(n) => goTo(Math.round(n))} />
+            <Slider label={t("Page {page} of {pages}", { page: String(page), pages: String(doc?.numPages ?? 1) })} dense value={page} min={1} max={Math.max(2, doc?.numPages ?? 1)} step={1} digits={0} onChange={(n) => goTo(Math.round(n))} />
           </div>
-          <Toolbar label="Zoom" className="shadow-none">
-            <ToolbarButton label="Zoom out" icon={MinusSignIcon} onClick={() => setZoom((z) => Math.max(0.5, z - 0.15))} />
+          <Toolbar label={t("Zoom")} className="shadow-none">
+            <ToolbarButton label={t("Zoom out")} icon={MinusSignIcon} onClick={() => setZoom((z) => Math.max(0.5, z - 0.15))} />
             <span className="w-11 text-center text-caption tabular-nums">{Math.round(zoom * 100)}%</span>
-            <ToolbarButton label="Zoom in" icon={PlusSignIcon} onClick={() => setZoom((z) => Math.min(3, z + 0.15))} />
+            <ToolbarButton label={t("Zoom in")} icon={PlusSignIcon} onClick={() => setZoom((z) => Math.min(3, z + 0.15))} />
           </Toolbar>
         </div>
       }

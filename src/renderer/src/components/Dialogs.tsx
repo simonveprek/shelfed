@@ -14,6 +14,7 @@ import { bookById, patchBooks, saveCollections, setSetting, useStore, type Calib
 import { bytes, plural } from "@/lib/util";
 import { Cover } from "./Cover";
 import { PHONE_LIKE, tidyKindle, useFinishedOnKindle, useOnKindle } from "@/lib/kindle";
+import { t, tn } from "../../../shared/i18n";
 
 const close = () => useStore.setState({ dialog: null });
 
@@ -35,7 +36,7 @@ function BookRows({ books, side }: { books: Book[]; side: (b: Book) => React.Rea
           {side(book)}
         </Row>
       ))}
-      {books.length > 30 && <Row className="px-3 py-2 text-label text-muted">and {plural(books.length - 30, "more book")}</Row>}
+      {books.length > 30 && <Row className="px-3 py-2 text-label text-muted">{tn(books.length - 30, "and {n} more book", "and {n} more books")}</Row>}
     </List>
   );
 }
@@ -82,8 +83,8 @@ export function SendDialog({ ids }: { ids: string[] }) {
   const already = books.filter((b) => onKindle?.has(b.id)).length;
 
   return (
-    <Dialog open onClose={close} label="Send to Kindle" className="sm:max-w-[520px]">
-      <DialogHeader title="Send to Kindle" description={name(books)} />
+    <Dialog open onClose={close} label={t("Send to Kindle")} className="sm:max-w-[520px]">
+      <DialogHeader title={t("Send to Kindle")} description={name(books)} />
       <div className="flex flex-col gap-4 px-6 pt-5">
         {model && (
           <div className="-mb-1 flex justify-center rounded-[16px] bg-well pt-5 pb-2">
@@ -91,22 +92,22 @@ export function SendDialog({ ids }: { ids: string[] }) {
           </div>
         )}
         <Segmented
-          label="How to send"
+          label={t("How to send")}
           block
           value={mode}
           onChange={setMode}
           options={[
-            { id: "email", label: "By email", icon: Mail01Icon },
-            { id: "cable", label: "By cable", icon: TabletConnectedUsbIcon },
+            { id: "email", label: t("By email"), icon: Mail01Icon },
+            { id: "cable", label: t("By cable"), icon: TabletConnectedUsbIcon },
           ]}
         />
 
         {mode === "email" && !ready && (
           <Empty
             icon={MailSend01Icon}
-            title="Set up sending once"
-            description="Shelfed mails books to your Kindle address from your own mail account. After that every book is one click."
-            action={<Button variant="primary" onClick={() => useStore.setState({ dialog: { kind: "settings", tab: "sending" } })}>Set up Kindle</Button>}
+            title={t("Set up sending once")}
+            description={t("Shelfed mails books to your Kindle address from your own mail account. After that every book is one click.")}
+            action={<Button variant="primary" onClick={() => useStore.setState({ dialog: { kind: "settings", tab: "sending" } })}>{t("Set up Kindle")}</Button>}
           />
         )}
 
@@ -120,7 +121,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
                   <>
                     <Badge>{plan.ext.toUpperCase()}</Badge>
                     <span className="w-16 text-right text-caption text-muted tabular-nums">
-                      {plan.convert ? "made first" : bytes(book.formats.find((f) => f.ext === plan.ext)?.size ?? 0)}
+                      {plan.convert ? t("made first") : bytes(book.formats.find((f) => f.ext === plan.ext)?.size ?? 0)}
                     </span>
                   </>
                 );
@@ -128,14 +129,14 @@ export function SendDialog({ ids }: { ids: string[] }) {
             />
             <div className="flex flex-col gap-2">
               <div className="flex justify-between text-label">
-                <span className="text-muted">{books.length === 1 ? "Size" : "Largest file"}</span>
-                <span className="tabular-nums">{bytes(largest)} of 50 MB</span>
+                <span className="text-muted">{books.length === 1 ? t("Size") : t("Largest file")}</span>
+                <span className="tabular-nums">{t("{size} of 50 MB", { size: bytes(largest) })}</span>
               </div>
               <Meter value={largest} max={KINDLE_LIMIT} />
             </div>
-            {tooBig && <Alert tone="danger" title="Too big for email">Amazon takes up to 50 MB. Convert it to EPUB to make it smaller, or send it by cable.</Alert>}
+            {tooBig && <Alert tone="danger" title={t("Too big for email")}>{t("Amazon takes up to 50 MB. Convert it to EPUB to make it smaller, or send it by cable.")}</Alert>}
             <p className="text-label text-muted">
-              To {kindle.to}. Amazon syncs it to every Kindle and Kindle app in a few minutes.
+              {t("To {address}. Amazon syncs it to every Kindle and Kindle app in a few minutes.", { address: kindle.to })}
             </p>
           </>
         )}
@@ -146,12 +147,12 @@ export function SendDialog({ ids }: { ids: string[] }) {
           ) : devices.length === 0 && cable === "phone" ? (
             <Empty
               icon={TabletConnectedUsbIcon}
-              title="This Kindle can't take books by cable"
-              description={PHONE_LIKE}
-              action={<Button size="sm" onClick={() => setMode("email")}>Send by email</Button>}
+              title={t("This Kindle can't take books by cable")}
+              description={t(PHONE_LIKE)}
+              action={<Button size="sm" onClick={() => setMode("email")}>{t("Send by email")}</Button>}
             />
           ) : devices.length === 0 ? (
-            <Empty icon={TabletConnectedUsbIcon} title="Plug in your Kindle" description="Connect it with a USB cable and unlock it. Shelfed finds it on its own." />
+            <Empty icon={TabletConnectedUsbIcon} title={t("Plug in your Kindle")} description={t("Connect it with a USB cable and unlock it. Shelfed finds it on its own.")} />
           ) : (
             <>
               <RadioGroup
@@ -159,29 +160,29 @@ export function SendDialog({ ids }: { ids: string[] }) {
                 label="Kindle"
                 value={device}
                 onChange={setDevice}
-                options={devices.map((d) => ({ value: d.path, label: kindleById(d.model)?.name ?? d.name, description: `${bytes(d.free)} free` }))}
+                options={devices.map((d) => ({ value: d.path, label: kindleById(d.model)?.name ?? d.name, description: t("{size} free", { size: bytes(d.free) }) }))}
               />
               <p className="text-label text-muted">
                 {cablePlans.some((p) => !p)
-                  ? "Shelfed can't read some of these to make Kindle files from them."
+                  ? t("Shelfed can't read some of these to make Kindle files from them.")
                   : cablePlans.some((p) => p?.convert)
-                    ? "Books without a Kindle file get an AZW3 made first. Eject the Kindle before you unplug it."
-                    : "Copies the Kindle files straight to the device. Eject it before you unplug it."}
+                    ? t("Books without a Kindle file get an AZW3 made first. Eject the Kindle before you unplug it.")
+                    : t("Copies the Kindle files straight to the device. Eject it before you unplug it.")}
               </p>
               {already > 0 && (
                 <p className="text-label text-muted">
                   {already === books.length
                     ? books.length === 1
-                      ? "It's already on this Kindle. Copying it again replaces it."
-                      : "These are all already on this Kindle. Copying them again replaces them."
-                    : `${already} of these ${already === 1 ? "is" : "are"} already on this Kindle, and copying again replaces ${already === 1 ? "it" : "them"}.`}
+                      ? t("It's already on this Kindle. Copying it again replaces it.")
+                      : t("These are all already on this Kindle. Copying them again replaces them.")
+                    : tn(already, "{n} of these is already on this Kindle, and copying again replaces it.", "{n} of these are already on this Kindle, and copying again replaces them.")}
                 </p>
               )}
             </>
           ))}
       </div>
       <DialogFooter>
-        <Button variant="ghost" onClick={close}>Cancel</Button>
+        <Button variant="ghost" onClick={close}>{t("Cancel")}</Button>
         {mode === "email" && ready && (
           <Button
             variant="primary"
@@ -195,7 +196,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
               if (ok) setTimeout(close, model ? 1100 : 0);
             }}
           >
-            {sending ? "Sending" : books.length === 1 ? "Send" : `Send ${books.length} books`}
+            {sending ? t("Sending") : books.length === 1 ? t("Send") : tn(books.length, "Send {n} book", "Send {n} books")}
           </Button>
         )}
         {mode === "cable" && devices?.length ? (
@@ -208,7 +209,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
               close();
             }}
           >
-            Copy to Kindle
+            {t("Copy to Kindle")}
           </Button>
         ) : null}
       </DialogFooter>
@@ -225,36 +226,40 @@ export function ConvertDialog({ ids }: { ids: string[] }) {
   const pdfPage = useStore((s) => s.settings.pdfPage);
   const first = books[0];
   const targets = first ? targetsFor(first) : [];
-  const [to, setTo] = useState(() => targets.find((t) => t.possible && !first?.formats.some((f) => f.ext === t.ext))?.ext ?? "epub");
+  const [to, setTo] = useState(() => targets.find((x) => x.possible && !first?.formats.some((f) => f.ext === x.ext))?.ext ?? "epub");
   if (!first) return null;
-  const target = targets.find((t) => t.ext === to);
+  const target = targets.find((x) => x.ext === to);
 
   return (
-    <Dialog open onClose={close} label="Convert" className="sm:max-w-[560px]">
+    <Dialog open onClose={close} label={t("Convert")} className="sm:max-w-[560px]">
       <DialogHeader
-        title="Convert"
-        description={books.length === 1 ? `${first.title}. The new file sits beside its ${first.formats.map((f) => f.ext.toUpperCase()).join(" and ")}.` : `${plural(books.length, "book")}. Each new file sits beside the old ones.`}
+        title={t("Convert")}
+        description={
+          books.length === 1
+            ? t("{title}. The new file sits beside its {formats}.", { title: first.title, formats: first.formats.map((f) => f.ext.toUpperCase()).join(` ${t("and")} `) })
+            : t("{books}. Each new file sits beside the old ones.", { books: plural(books.length, "book") })
+        }
       />
       <div className="scroll flex max-h-[56vh] flex-col gap-4 px-6 pt-5">
         <RadioGroup
           variant="card"
-          label="Make a"
+          label={t("Make a")}
           value={to}
           onChange={setTo}
           className="sm:grid-cols-2"
-          options={targets.map((t) => ({
-            value: t.ext,
-            label: t.label,
-            description: t.note,
+          options={targets.map((x) => ({
+            value: x.ext,
+            label: t(x.label),
+            description: t(x.note),
             // A format the books already have stays as it is. Remove it first to remake it.
-            disabled: !t.possible || books.every((b) => b.formats.some((f) => f.ext === t.ext)),
-            meta: books.every((b) => b.formats.some((f) => f.ext === t.ext)) ? <Badge tone="success">Have it</Badge> : undefined,
+            disabled: !x.possible || books.every((b) => b.formats.some((f) => f.ext === x.ext)),
+            meta: books.every((b) => b.formats.some((f) => f.ext === x.ext)) ? <Badge tone="success">{t("Have it")}</Badge> : undefined,
           }))}
         />
         {to === "pdf" && (
-          <Field label="Page size" hint="Kindle makes pages the size of a Paperwhite screen.">
+          <Field label={t("Page size")} hint={t("Kindle makes pages the size of a Paperwhite screen.")}>
             <Segmented
-              label="Page size"
+              label={t("Page size")}
               block
               value={pdfPage}
               onChange={(pdfPage) => setSetting({ pdfPage })}
@@ -264,7 +269,7 @@ export function ConvertDialog({ ids }: { ids: string[] }) {
         )}
       </div>
       <DialogFooter>
-        <Button variant="ghost" onClick={close}>Cancel</Button>
+        <Button variant="ghost" onClick={close}>{t("Cancel")}</Button>
         <Button
           variant="primary"
           disabled={!target?.possible}
@@ -273,7 +278,7 @@ export function ConvertDialog({ ids }: { ids: string[] }) {
             close();
           }}
         >
-          Make {target?.label}
+          {t("Make {format}", { format: target ? t(target.label) : "" })}
         </Button>
       </DialogFooter>
     </Dialog>
@@ -325,8 +330,8 @@ export function EditDialog({ id }: { id: string }) {
     close();
   };
   return (
-    <Dialog open onClose={close} label="Edit details" className="sm:max-w-[600px]">
-      <DialogHeader title="Edit details" description={book.title} />
+    <Dialog open onClose={close} label={t("Edit details")} className="sm:max-w-[600px]">
+      <DialogHeader title={t("Edit details")} description={book.title} />
       <form
         className="scroll grid max-h-[60vh] grid-cols-6 gap-x-3 gap-y-4 px-6 pt-5"
         onSubmit={(e) => {
@@ -334,25 +339,25 @@ export function EditDialog({ id }: { id: string }) {
           save();
         }}
       >
-        <div className="col-span-6">{input("title", "Title", { autoFocus: true })}</div>
-        <div className="col-span-6">{input("authors", "Authors", { placeholder: "Separated by commas" })}</div>
-        <div className="col-span-4">{input("series", "Series")}</div>
-        <div className="col-span-2">{input("seriesIndex", "Number", { inputMode: "decimal" })}</div>
-        <div className="col-span-3">{input("publisher", "Publisher")}</div>
-        <div className="col-span-3">{input("published", "Published")}</div>
-        <div className="col-span-2">{input("language", "Language")}</div>
+        <div className="col-span-6">{input("title", t("Title"), { autoFocus: true })}</div>
+        <div className="col-span-6">{input("authors", t("Authors"), { placeholder: t("Separated by commas") })}</div>
+        <div className="col-span-4">{input("series", t("Series"))}</div>
+        <div className="col-span-2">{input("seriesIndex", t("Number"), { inputMode: "decimal" })}</div>
+        <div className="col-span-3">{input("publisher", t("Publisher"))}</div>
+        <div className="col-span-3">{input("published", t("Published"))}</div>
+        <div className="col-span-2">{input("language", t("Language"))}</div>
         <div className="col-span-4">{input("isbn", "ISBN")}</div>
-        <div className="col-span-6">{input("tags", "Tags", { placeholder: "Separated by commas" })}</div>
+        <div className="col-span-6">{input("tags", t("Tags"), { placeholder: t("Separated by commas") })}</div>
         <div className="col-span-6">
-          <Field label="Description">
+          <Field label={t("Description")}>
             <Textarea rows={6} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
         </div>
         <button type="submit" hidden />
       </form>
       <DialogFooter>
-        <Button variant="ghost" onClick={close}>Cancel</Button>
-        <Button variant="primary" onClick={save}>Save</Button>
+        <Button variant="ghost" onClick={close}>{t("Cancel")}</Button>
+        <Button variant="primary" onClick={save}>{t("Save")}</Button>
       </DialogFooter>
     </Dialog>
   );
@@ -372,8 +377,8 @@ export function RenameCollection({ id }: { id: string }) {
     close();
   };
   return (
-    <Dialog open onClose={close} label="Name the collection">
-      <DialogHeader title="Name the collection" />
+    <Dialog open onClose={close} label={t("Name the collection")}>
+      <DialogHeader title={t("Name the collection")} />
       <form
         className="px-6 pt-5"
         onSubmit={(e) => {
@@ -384,8 +389,8 @@ export function RenameCollection({ id }: { id: string }) {
         <Input autoFocus value={value} onFocus={(e) => e.target.select()} onChange={(e) => setValue(e.target.value)} />
       </form>
       <DialogFooter>
-        <Button variant="ghost" onClick={close}>Cancel</Button>
-        <Button variant="primary" onClick={save}>Save</Button>
+        <Button variant="ghost" onClick={close}>{t("Cancel")}</Button>
+        <Button variant="primary" onClick={save}>{t("Save")}</Button>
       </DialogFooter>
     </Dialog>
   );
@@ -407,9 +412,9 @@ export function RemoveConfirm() {
       open={Boolean(ids)}
       onClose={() => useStore.setState({ confirmRemove: null })}
       tone="danger"
-      title={held.length === 1 ? `Remove ${first?.title ?? "this book"}?` : `Remove ${held.length} books?`}
-      description="Their files go to the system Trash, with their reading progress. You can undo it for a few seconds."
-      confirmLabel="Remove"
+      title={held.length === 1 ? t("Remove {title}?", { title: first?.title ?? t("this book") }) : tn(held.length, "Remove {n} book?", "Remove {n} books?")}
+      description={t("Their files go to the system Trash, with their reading progress. You can undo it for a few seconds.")}
+      confirmLabel={t("Remove")}
       onConfirm={() => removeBooks(held)}
     />
   );
@@ -428,9 +433,9 @@ export function TidyConfirm() {
       open={open && count > 0}
       onClose={() => useStore.setState({ confirmTidy: false })}
       tone="danger"
-      title={`Take ${plural(count, "finished book")} off your Kindle?`}
-      description={`That frees ${bytes(finished?.bytes ?? 0)} on it. A Kindle has no Trash, so they go from it for good, with their notes there, but they stay in your library and can go back on any time.`}
-      confirmLabel="Take them off"
+      title={tn(count, "Take {n} finished book off your Kindle?", "Take {n} finished books off your Kindle?")}
+      description={t("That frees {size} on it. A Kindle has no Trash, so they go from it for good, with their notes there, but they stay in your library and can go back on any time.", { size: bytes(finished?.bytes ?? 0) })}
+      confirmLabel={t("Take them off")}
       onConfirm={() => tidyKindle()}
     />
   );
@@ -446,35 +451,35 @@ const lastFolders = (path: string) => path.split(/[\\/]/).filter(Boolean).slice(
 export function CalibreDialog({ path, books, working, done }: { path: string; books: number; working?: boolean; done?: CalibreSummary }) {
   if (done) return <CalibreDone summary={done} />;
   return (
-    <Dialog open onClose={close} label="Coming from Calibre">
-      <DialogHeader title="Coming from Calibre?" />
+    <Dialog open onClose={close} label={t("Coming from Calibre")}>
+      <DialogHeader title={t("Coming from Calibre?")} />
       <div className="flex flex-col gap-5 px-6 pt-5">
         <div className="flex items-center gap-4 rounded-[16px] border border-border bg-well px-4 py-3.5">
           <span className="grid size-11 shrink-0 place-items-center rounded-[13px] bg-control">
-            {working ? <Spinner /> : <span className="text-[17px] font-medium tabular-nums">{books > 999 ? "1k+" : books}</span>}
+            {working ? <Spinner /> : <span className="text-[17px] font-medium tabular-nums">{books > 999 ? t("1k+") : books}</span>}
           </span>
           <div className="min-w-0">
-            <p className="truncate text-label font-medium">{working ? `Bringing ${plural(books, "book")} over` : `Your Calibre library, ${plural(books, "book")}`}</p>
+            <p className="truncate text-label font-medium">{working ? tn(books, "Bringing {n} book over", "Bringing {n} books over") : t("Your Calibre library, {books}", { books: plural(books, "book") })}</p>
             <p className="truncate text-caption text-muted" title={path}>
-              {working ? "A big library takes a minute or two. Shelfed stays usable meanwhile." : `In ${lastFolders(path)}`}
+              {working ? t("A big library takes a minute or two. Shelfed stays usable meanwhile.") : t("In {folder}", { folder: lastFolders(path) })}
             </p>
           </div>
         </div>
         {!working && (
           <ul className="flex flex-col gap-2 text-label text-muted">
-            <li>Each book comes in once, with all its formats and its cover.</li>
-            <li>The titles, authors, series, tags and ratings you set in Calibre come along.</li>
-            <li>Calibre's own library is only read, never changed.</li>
+            <li>{t("Each book comes in once, with all its formats and its cover.")}</li>
+            <li>{t("The titles, authors, series, tags and ratings you set in Calibre come along.")}</li>
+            <li>{t("Calibre's own library is only read, never changed.")}</li>
           </ul>
         )}
       </div>
       <DialogFooter>
         {working ? (
-          <Button variant="ghost" onClick={close}>Keep it going in the background</Button>
+          <Button variant="ghost" onClick={close}>{t("Keep it going in the background")}</Button>
         ) : (
           <>
-            <Button variant="ghost" onClick={close}>Not now</Button>
-            <Button variant="primary" onClick={() => bringCalibreOver(path, books)}>Bring them over</Button>
+            <Button variant="ghost" onClick={close}>{t("Not now")}</Button>
+            <Button variant="primary" onClick={() => bringCalibreOver(path, books)}>{t("Bring them over")}</Button>
           </>
         )}
       </DialogFooter>
@@ -490,24 +495,24 @@ function CalibreDone({ summary }: { summary: CalibreSummary }) {
     [summary.joined, "copy joined", "copies joined"],
   ];
   return (
-    <Dialog open onClose={close} label="Your Calibre library is here">
-      <DialogHeader title="Your Calibre library is here" />
+    <Dialog open onClose={close} label={t("Your Calibre library is here")}>
+      <DialogHeader title={t("Your Calibre library is here")} />
       <div className="px-6 pt-5">
         <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[16px] border border-border bg-border">
           {figures.map(([value, one, many]) => (
             <div key={many} className="bg-card px-4 py-3.5">
               <p className="text-[22px] leading-tight font-medium tracking-[-0.02em] tabular-nums">{value.toLocaleString()}</p>
-              <p className="text-caption text-muted">{value === 1 ? one : many}</p>
+              <p className="text-caption text-muted">{tn(value, one, many)}</p>
             </div>
           ))}
         </div>
         <p className="mt-4 text-caption text-muted">
-          {summary.skipped ? `${plural(summary.skipped, "book was", "books were")} here already. ` : ""}
-          Your books now live in your Shelfed library as plain files. Calibre and its library are just as they were.
+          {summary.skipped ? `${tn(summary.skipped, "{n} book was here already.", "{n} books were here already.")} ` : ""}
+          {t("Your books now live in your Shelfed library as plain files. Calibre and its library are just as they were.")}
         </p>
       </div>
       <DialogFooter>
-        <Button variant="primary" onClick={close}>Done</Button>
+        <Button variant="primary" onClick={close}>{t("Done")}</Button>
       </DialogFooter>
     </Dialog>
   );

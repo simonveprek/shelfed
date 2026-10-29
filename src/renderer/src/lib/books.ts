@@ -2,6 +2,7 @@ import type { Book } from "../../../shared/types";
 import { api } from "./api";
 import { type Chapter, type Content, extOf, sniff } from "./epub";
 import { FOLIATE, fetchFile, plainText } from "./util";
+import { t } from "../../../shared/i18n";
 
 // pdf.js is large, so it loads the first time a PDF needs it.
 const pdf = () => import("./pdf");
@@ -205,7 +206,7 @@ function textToChapters(text: string): Chapter[] {
   const heading = /^\s*(chapter|kapitola|part|book|prologue|epilogue|kapitel|chapitre|capítulo|část)\b[^\n]{0,60}$/i;
   const blocks = /\n\s*\n/.test(text) ? text.split(/\n\s*\n/) : text.split(/\n/);
   const chapters: Chapter[] = [];
-  let current = { title: "Beginning", body: [] as string[] };
+  let current = { title: t("Beginning"), body: [] as string[] };
   const push = () => current.body.length && chapters.push({ title: current.title, xhtml: current.body.join(""), toc: true });
   for (const raw of blocks) {
     const block = raw.replace(/\s*\n\s*/g, " ").trim();
@@ -217,7 +218,7 @@ function textToChapters(text: string): Chapter[] {
     // Long texts without headings still break into readable pieces.
     if (current.body.length > 400) {
       push();
-      current = { title: `${current.title}, continued`, body: [] };
+      current = { title: t("{title}, continued", { title: current.title }), body: [] };
     }
   }
   push();
@@ -310,7 +311,7 @@ async function htmlToChapters(html: string, content: Content, fallback: string) 
   let holder = doc.createElement("div");
   const push = () => {
     if (!holder.childNodes.length) return;
-    chapters.push({ title: titleOf(holder, chapters.length ? `Part ${chapters.length + 1}` : fallback), xhtml: bodyToXhtml(holder), toc: true });
+    chapters.push({ title: titleOf(holder, chapters.length ? t("Part {n}", { n: String(chapters.length + 1) }) : fallback), xhtml: bodyToXhtml(holder), toc: true });
     holder = doc.createElement("div");
   };
   for (const node of Array.from(doc.body.childNodes)) {
@@ -384,7 +385,7 @@ export async function extractContent(book: Book, ext: string, onProgress?: (shar
         const body = doc.body ?? doc.querySelector("body");
         if (!body || (!body.textContent?.trim() && !body.querySelector("img, svg, image"))) continue;
         const toc = tocTitles.get(i);
-        content.chapters.push({ title: toc ?? titleOf(body, `Section ${i + 1}`), xhtml: bodyToXhtml(body), toc: Boolean(toc || body.querySelector("h1, h2")) });
+        content.chapters.push({ title: toc ?? titleOf(body, t("Section {n}", { n: String(i + 1) })), xhtml: bodyToXhtml(body), toc: Boolean(toc || body.querySelector("h1, h2")) });
       } catch {
         // One unreadable section should not sink the whole book.
       } finally {
@@ -409,7 +410,7 @@ export async function extractContent(book: Book, ext: string, onProgress?: (shar
         paragraphs.push(...(await pageParagraphs(doc, n)));
       }
       const xhtml = paragraphs.map((p) => `<p>${escapeText(p)}</p>`).join("");
-      if (xhtml) content.chapters.push({ title: doc.numPages > per ? `Pages ${start} to ${end}` : content.title, xhtml, toc: true });
+      if (xhtml) content.chapters.push({ title: doc.numPages > per ? t("Pages {start} to {end}", { start: String(start), end: String(end) }) : content.title, xhtml, toc: true });
     }
     closePdf(doc);
     return content;
@@ -435,5 +436,5 @@ export async function extractContent(book: Book, ext: string, onProgress?: (shar
     content.chapters = await htmlToChapters(await api.docxHtml(book.id), content, book.title);
     return content;
   }
-  throw new Error(`Shelfed cannot read ${ext.toUpperCase()} files on its own.`);
+  throw new Error(t("Shelfed cannot read {format} files on its own.", { format: ext.toUpperCase() }));
 }

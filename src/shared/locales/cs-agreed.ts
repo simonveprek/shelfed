@@ -1,0 +1,57 @@
+/**
+ * Czech settled once for the whole app, where its parts first said it in
+ * different ways, and the words that mean different things in different
+ * places ("text@place", read by tc()). Loaded last, so these win.
+ */
+const words: Record<string, string> = {
+  // Places, states and sections that share an English word.
+  Reading: "Rozečtené",
+  "Reading@status": "Čtu",
+  "Reading@settings": "Čtení",
+  Finished: "Dočtené",
+  "Finished@status": "Dočteno",
+  "To read@status": "Chci číst",
+  "Paper@page": "Světlé",
+  Paper: "Papír",
+
+  // One way of saying it everywhere.
+  "your Downloads": "ze stažených souborů",
+  "Joined {n} copy to its book|Joined {n} copies to their books": "{n} kopie připojena ke své knize|{n} kopie připojeny ke svým knihám|{n} kopií připojeno ke svým knihám",
+  "Reads everywhere. Best for Kindle by email": "Otevře se všude. Nejlepší pro Kindle e-mailem",
+  "On your Kindle": "V Kindlu",
+  "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead.":
+    "Tento Kindle se připojuje jako telefon a Mac ho neumí otevřít jako disk, takže do něj Shelfed nemůže kopírovat knihy kabelem. Posílejte je raději e-mailem.",
+  "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.":
+    "Tento Kindle se připojuje jako telefon, ne jako disk, takže do něj Shelfed zatím nemůže kopírovat knihy kabelem. Posílejte je raději e-mailem.",
+  Publisher: "Nakladatel",
+  "Last opened": "Naposledy otevřeno",
+  Favorite: "Oblíbená",
+  "Find details online": "Najít údaje online",
+  "Edit details": "Upravit údaje",
+  Details: "Údaje",
+  "{n} of your books is on it.|{n} of your books are on it.": "Je v něm {n} vaše kniha.|Jsou v něm {n} vaše knihy.|Je v něm {n} vašich knih.",
+  "Bring them over": "Přenést sem",
+  "Bookcase in 3D": "Knihovnička ve 3D",
+  "Page turns": "Otáčení stránek",
+  Pages: "Po stránkách",
+
+  // The menus Electron would otherwise fill with English.
+  "Edit@menu": "Úpravy",
+  Undo: "Zpět",
+  Redo: "Znovu",
+  Cut: "Vyjmout",
+  Paste: "Vložit",
+  "Select All": "Vybrat vše",
+  Window: "Okno",
+  Minimise: "Minimalizovat",
+  Zoom: "Změnit velikost",
+  "Bring All to Front": "Vše do popředí",
+  "Close Window": "Zavřít okno",
+  "Full Screen": "Celá obrazovka",
+  "Hide Shelfed": "Skrýt Shelfed",
+  "Hide Others": "Skrýt ostatní",
+  "Show All": "Zobrazit vše",
+  "Quit Shelfed": "Ukončit Shelfed",
+};
+
+export default words;

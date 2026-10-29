@@ -8,6 +8,7 @@ import { IconButton } from "./button";
 import { cx, EASE } from "./cx";
 import { useFocusTrap } from "./dialog";
 import { Portal } from "./portal";
+import { t } from "../../../../shared/i18n";
 
 /** True once the screen is at least this wide. Never on the server. */
 function useWide(from: number | false) {
@@ -265,7 +266,7 @@ export function Drawer({
                     </div>
                     {/* A phone closes it with a pull, so the button is there for screen readers only. */}
                     <IconButton
-                      label="Close"
+                      label={t("Close")}
                       icon={Cancel01Icon}
                       onClick={onClose}
                       className={cx("-mt-1.5 -mr-2", drawer && "sr-only focus:not-sr-only")}

@@ -10,6 +10,7 @@ import { useWidth } from "./Library";
 import { useBecauseYouRead, useFree } from "./Suggestions";
 import { useStore } from "@/lib/store";
 import { norm } from "@/lib/util";
+import { t } from "../../../shared/i18n";
 
 /*
  * Free books, inside the app. Standard Ebooks makes careful, beautiful
@@ -58,7 +59,7 @@ function FreeCard({ book, owned, onAdd, busy, index }: { book: FreeBook; owned: 
             onClick={onAdd}
             className="shadow-float"
           >
-            {owned ? "In Shelfed" : busy ? "Adding" : "Add"}
+            {owned ? t("In Shelfed") : busy ? t("Adding") : t("Add")}
           </Button>
         </div>
       </div>
@@ -90,13 +91,13 @@ function KindredItem({ title, author, why, after, owned, busy, onAdd }: {
       </span>
       <span className="min-w-0 flex-1">
         <span className="line-clamp-1 text-label font-medium">{title}</span>
-        <span className="line-clamp-1 text-caption text-muted" title={`${why}. After ${after}.`}>
+        <span className="line-clamp-1 text-caption text-muted" title={t("{why}. After {after}.", { why, after })}>
           {why}
         </span>
       </span>
       <IconButton
         className="shrink-0"
-        label={have ? `${title} is in Shelfed` : `Add ${title}`}
+        label={have ? t("{title} is in Shelfed", { title }) : t("Add {title}", { title })}
         icon={!free || adding ? <Spinner size="sm" /> : have ? Tick02Icon : Add01Icon}
         disabled={!free || have || adding}
         onClick={() => free && onAdd(free)}
@@ -116,7 +117,7 @@ function KindredStrip({ picks, owned, busy, onAdd }: {
   const fit = Math.max(1, Math.floor((width + 32) / (250 + 32)));
   return (
     <section className="mb-10 border-b border-border pb-8">
-      <p className="mb-4 text-caption text-muted">From what you’re reading</p>
+      <p className="mb-4 text-caption text-muted">{t("From what you’re reading")}</p>
       <div ref={ref} className="grid gap-x-8" style={{ gridTemplateColumns: `repeat(${fit}, minmax(0, 1fr))` }}>
         {picks.slice(0, fit).map((s) => (
           <KindredItem key={s.title} {...s} after={s.after.title.split(/[:;]/)[0]} owned={owned} busy={busy} onAdd={onAdd} />
@@ -168,15 +169,24 @@ export function Discover() {
       <div className="mx-auto max-w-[1180px] px-6 pt-8 pb-24">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-[46ch]">
-            <h2 className="serif text-[32px] leading-tight font-medium tracking-[-0.015em]">Something to read next</h2>
+            <h2 className="serif text-[32px] leading-tight font-medium tracking-[-0.015em]">{t("Something to read next")}</h2>
             <p className="mt-2 text-label text-muted">
-              Free books from the public domain, from <TextLink href={SOURCES.standard.home}>Standard Ebooks</TextLink> and{" "}
-              <TextLink href={SOURCES.gutenberg.home}>Project Gutenberg</TextLink>. Add one and it is yours to keep.
+              {t("Free books from the public domain, from {standard} and {gutenberg}. Add one and it is yours to keep.")
+                .split(/(\{standard\}|\{gutenberg\})/)
+                .map((part, i) =>
+                  part === "{standard}" ? (
+                    <TextLink key={i} href={SOURCES.standard.home}>Standard Ebooks</TextLink>
+                  ) : part === "{gutenberg}" ? (
+                    <TextLink key={i} href={SOURCES.gutenberg.home}>Project Gutenberg</TextLink>
+                  ) : (
+                    part
+                  ),
+                )}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Segmented
-              label="Catalogue"
+              label={t("Catalogue")}
               size="sm"
               value={source}
               onChange={(s) => setSource(s)}
@@ -192,7 +202,7 @@ export function Discover() {
               }}
             >
               <SearchField
-                placeholder="Title or author"
+                placeholder={t("Title or author")}
                 value={query}
                 onChange={(e) => {
                   setQuery(e.target.value);
@@ -207,13 +217,13 @@ export function Discover() {
         {!asked && kindred.length > 0 && <KindredStrip picks={kindred} owned={isOwned} busy={busy} onAdd={add} />}
 
         <p className="mb-4 text-caption text-muted">
-          {asked ? `Results for ${asked}` : source === "standard" ? "Newly released" : "Most read this month"}, {SOURCES[source].note.toLowerCase()}
+          {asked ? t("Results for {query}", { query: asked }) : source === "standard" ? t("Newly released") : t("Most read this month")}, {t(SOURCES[source].note).toLowerCase()}
         </p>
 
         {error ? (
           <Empty point={{ shape: "pebble", mood: "sad" }}>
-            <p className="text-[15px] font-medium text-foreground">The catalogue did not answer</p>
-            <p className="mt-1">{error}. Check your connection and try again.</p>
+            <p className="text-[15px] font-medium text-foreground">{t("The catalogue did not answer")}</p>
+            <p className="mt-1">{t("{error}. Check your connection and try again.", { error })}</p>
           </Empty>
         ) : results === null ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-6 gap-y-8">
@@ -226,8 +236,8 @@ export function Discover() {
           </div>
         ) : results.length === 0 ? (
           <Empty point={{ shape: "pebble", mood: "confused" }}>
-            <p className="text-[15px] font-medium text-foreground">Nothing found</p>
-            <p className="mt-1">Try another title or author, or the other catalogue.</p>
+            <p className="text-[15px] font-medium text-foreground">{t("Nothing found")}</p>
+            <p className="mt-1">{t("Try another title or author, or the other catalogue.")}</p>
           </Empty>
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-6 gap-y-8">

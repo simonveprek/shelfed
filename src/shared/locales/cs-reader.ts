@@ -1,0 +1,80 @@
+/** Czech for reader. English text as it is in the code, then its Czech. Counts: "{n} book|{n} books" → "{n} kniha|{n} knihy|{n} knih". */
+const words: Record<string, string> = {
+  // Toolbar and side panel
+  Reader: "Čtečka",
+  "Back to the library": "Zpět do knihovny",
+  Library: "Knihovna",
+  "Contents and notes": "Obsah a poznámky",
+  "Search in this book": "Hledat v knize",
+  "Bookmark this page": "Přidat záložku",
+  "Remove bookmark": "Odebrat záložku",
+  "Text and page": "Text a vzhled",
+  Contents: "Obsah",
+  Notes: "Poznámky",
+  Search: "Hledat",
+  "Previous page": "Předchozí strana",
+  "Next page": "Další strana",
+  "Opening the book": "Otevírání knihy",
+  Progress: "Průběh",
+  "Page {page}": "Strana {page}",
+  "Page {page} of {pages}": "Strana {page} z {pages}",
+  Zoom: "Přiblížení",
+  "Zoom out": "Oddálit",
+  "Zoom in": "Přiblížit",
+  "Finished {title}": "Dočteno: {title}",
+  "Marked as read": "Označeno jako přečtené",
+  "This {format} could not be opened. {error}": "Soubor {format} se nepodařilo otevřít. {error}",
+  "This PDF could not be opened. {error}": "PDF se nepodařilo otevřít. {error}",
+
+  // Typography and page themes
+  Paper: "Světlé",
+  Sepia: "Sépie",
+  Dusk: "Tmavé",
+  Night: "Černé",
+  "Text size": "Velikost písma",
+  "Line spacing": "Řádkování",
+  "Line length": "Šířka řádku",
+  "{n} ch": "{n} zn.",
+  Typeface: "Písmo",
+  "The book’s": "Z knihy",
+  Serif: "Patkové",
+  Sans: "Bezpatkové",
+  "Page turns": "Otáčení stránek",
+  Pages: "Po stránkách",
+  Scroll: "Posouvání",
+  Alignment: "Zarovnání",
+  Left: "Vlevo",
+  Justify: "Do bloku",
+
+  // Selection bar and highlights
+  yellow: "žlutá",
+  green: "zelená",
+  blue: "modrá",
+  pink: "růžová",
+  Note: "Poznámka",
+  Copy: "Kopírovat",
+  Copied: "Zkopírováno",
+  "Write a note": "Napište poznámku",
+  "Remove highlight": "Odebrat zvýraznění",
+  Done: "Hotovo",
+
+  // Notes list
+  "Nothing marked yet": "Zatím nic označeného",
+  "Select words to highlight them or add a note. Bookmark a page from the bar at the top.":
+    "Označte slova a zvýrazněte je nebo k nim přidejte poznámku. Záložku na stranu přidáte v liště nahoře.",
+  Bookmarks: "Záložky",
+  Page: "Strana",
+  "Highlights and notes": "Zvýraznění a poznámky",
+  "Copied as Markdown": "Zkopírováno jako Markdown",
+  "Copy all": "Kopírovat vše",
+  "From Kindle": "Z Kindlu",
+  "From Kindle, {where}": "Z Kindlu, {where}",
+
+  // Search
+  "Words in this book": "Slova v knize",
+  "Searching, {percent}%": "Hledání, {percent} %",
+  "{n} found|{n} found": "{n} výsledek|{n} výsledky|{n} výsledků",
+  "Not in this book": "V knize nenalezeno",
+};
+
+export default words;

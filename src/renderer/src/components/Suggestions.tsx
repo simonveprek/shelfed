@@ -6,8 +6,12 @@ import { addFree, findFree } from "@/lib/free";
 import { seedsOf, suggestionsFor, type Suggestion } from "@/lib/recommend";
 import { useStore } from "@/lib/store";
 import { Cover } from "./Cover";
+import { language, t } from "../../../shared/i18n";
 
 const select = (id: string) => useStore.setState({ selection: [id] });
+
+/** "Read" as in finished, not the button that opens a book; Czech needs another word for it. */
+const finished = () => (language() === "en" ? "Read" : t("Read (finished)"));
 
 /** A free classic's Gutenberg edition, once it has been looked up. */
 function useFree(title: string, author: string) {
@@ -59,7 +63,7 @@ function FreeRow({ s }: { s: Extract<Suggestion, { kind: "free" }> }) {
             setState((await addFree(free)) ? "added" : "idle");
           }}
         >
-          {state === "added" ? "Added" : "Free"}
+          {state === "added" ? t("Added") : t("Free")}
         </Button>
       )}
     </div>
@@ -72,7 +76,7 @@ function OwnedRow({ book, why, note }: { book: Book; why: string; note?: string 
       <Cover book={book} className="w-10 shrink-0 rounded-[3px] shadow-[var(--shadow-book)]" />
       <span className="min-w-0 flex-1">
         <span className="line-clamp-1 text-label font-medium">{book.title}</span>
-        <span className="line-clamp-1 text-caption text-muted">{note ?? (book.status === "finished" ? "Read" : "In your library")}</span>
+        <span className="line-clamp-1 text-caption text-muted">{note ?? (book.status === "finished" ? finished() : t("In your library"))}</span>
         {why && <span className="serif mt-0.5 line-clamp-3 text-[12.5px] leading-snug text-muted italic">{why}</span>}
       </span>
     </button>

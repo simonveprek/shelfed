@@ -7,6 +7,7 @@ import { groupClippings, parseClippings, toAnnotations } from "@/lib/clippings";
 import { flashMood, patchBooks, useStore } from "@/lib/store";
 import { plural } from "@/lib/util";
 import { Cover } from "./Cover";
+import { t, tn } from "../../../shared/i18n";
 
 const close = () => useStore.setState({ dialog: null });
 
@@ -18,11 +19,11 @@ export async function importClippings() {
       useStore.setState({ dialog: { kind: "clippings", text: found.map((f) => f.text).join("\n==========\n"), from: found[0].device } });
       return;
     }
-    toast("No Kindle plugged in", {
-      description: "Plug it in with a cable, or choose My Clippings.txt from its documents folder.",
+    toast(t("No Kindle plugged in"), {
+      description: t("Plug it in with a cable, or choose My Clippings.txt from its documents folder."),
       duration: 8000,
       action: {
-        label: "Choose file",
+        label: t("Choose file"),
         onClick: async () => {
           const text = await api.pickClippings();
           if (text) useStore.setState({ dialog: { kind: "clippings", text, from: "My Clippings.txt" } });
@@ -50,17 +51,21 @@ export function ClippingsDialog({ text, from }: { text: string; from: string }) 
     }
     close();
     flashMood("love", 2000);
-    toast.success(`Brought over ${plural(total, "highlight")}`, { description: "Find them in each book's details and in the reader's notes." });
+    toast.success(tn(total, "Brought over {n} highlight", "Brought over {n} highlights"), { description: t("Find them in each book's details and in the reader's notes.") });
   };
 
   return (
-    <Dialog open onClose={close} label="Kindle highlights" className="sm:max-w-[600px]">
+    <Dialog open onClose={close} label={t("Kindle highlights")} className="sm:max-w-[600px]">
       <DialogHeader
-        title="Kindle highlights"
-        description={groups.length ? `From ${from}. ${plural(groups.length, "book")}, ${plural(matched.length, "match", "matches")} in your library.` : `Nothing to bring over from ${from}.`}
+        title={t("Kindle highlights")}
+        description={
+          groups.length
+            ? t("From {from}. {books}, {matches} in your library.", { from, books: plural(groups.length, "book"), matches: plural(matched.length, "match", "matches") })
+            : t("Nothing to bring over from {from}.", { from })
+        }
       />
       <div className="scroll flex max-h-[56vh] flex-col gap-4 px-6 pt-5">
-        {!groups.length && <Empty icon={Tablet01Icon} title="No highlights found" description="Highlight something on your Kindle, then try again." />}
+        {!groups.length && <Empty icon={Tablet01Icon} title={t("No highlights found")} description={t("Highlight something on your Kindle, then try again.")} />}
         {matched.length > 0 && (
           <List inset>
             {matched.map((g) => {
@@ -68,7 +73,7 @@ export function ClippingsDialog({ text, from }: { text: string; from: string }) 
               return (
                 <Row key={g.book!.id} className="flex-nowrap gap-3 px-3 py-2.5">
                   <Checkbox
-                    aria-label={`Bring over highlights from ${g.book!.title}`}
+                    aria-label={t("Bring over highlights from {title}", { title: g.book!.title })}
                     checked={chosen.has(g.book!.id) && count > 0}
                     disabled={!count}
                     onChange={(on) =>
@@ -83,9 +88,9 @@ export function ClippingsDialog({ text, from }: { text: string; from: string }) 
                   <Cover book={g.book!} className="w-7 shrink-0 rounded-[3px]" />
                   <span className="min-w-0 flex-1">
                     <span className="line-clamp-1 text-label font-medium">{g.book!.title}</span>
-                    <span className="line-clamp-1 text-caption text-muted">On the Kindle as {g.title}</span>
+                    <span className="line-clamp-1 text-caption text-muted">{t("On the Kindle as {title}", { title: g.title })}</span>
                   </span>
-                  <Badge tone={count ? "strong" : "neutral"}>{count ? `${count} new` : "Already here"}</Badge>
+                  <Badge tone={count ? "strong" : "neutral"}>{count ? tn(count, "{n} new", "{n} new") : t("Already here")}</Badge>
                 </Row>
               );
             })}
@@ -93,7 +98,7 @@ export function ClippingsDialog({ text, from }: { text: string; from: string }) 
         )}
         {groups.length > matched.length && (
           <div>
-            <p className="mb-2 px-1 text-caption font-medium text-muted">Not in your library</p>
+            <p className="mb-2 px-1 text-caption font-medium text-muted">{t("Not in your library")}</p>
             <List inset>
               {groups
                 .filter((g) => !g.book)
@@ -108,14 +113,14 @@ export function ClippingsDialog({ text, from }: { text: string; from: string }) 
                   </Row>
                 ))}
             </List>
-            <p className="mt-2 px-1 text-caption text-muted">Add these books to Shelfed and import again to keep their highlights too.</p>
+            <p className="mt-2 px-1 text-caption text-muted">{t("Add these books to Shelfed and import again to keep their highlights too.")}</p>
           </div>
         )}
       </div>
       <DialogFooter>
-        <Button variant="ghost" onClick={close}>Cancel</Button>
+        <Button variant="ghost" onClick={close}>{t("Cancel")}</Button>
         <Button variant="primary" disabled={!total} onClick={run}>
-          {total ? `Bring over ${plural(total, "highlight")}` : "Nothing new"}
+          {total ? tn(total, "Bring over {n} highlight", "Bring over {n} highlights") : t("Nothing new")}
         </Button>
       </DialogFooter>
     </Dialog>

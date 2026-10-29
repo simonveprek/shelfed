@@ -17,6 +17,7 @@ import { cx, EASE } from "./cx";
 import { type IconLike } from "./icon";
 import { NavGroup, NavItem } from "./nav";
 import { Portal } from "./portal";
+import { t } from "../../../../shared/i18n";
 
 type SidebarState = {
   collapsed: boolean;
@@ -280,7 +281,7 @@ export function SidebarSheet({
             <div className="flex items-center gap-2">
               <div className="min-w-0 flex-1">{header}</div>
               <IconButton
-                label="Close"
+                label={t("Close")}
                 icon={Cancel01Icon}
                 autoFocus
                 onClick={() => onOpenChange(false)}

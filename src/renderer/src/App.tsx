@@ -8,6 +8,8 @@ import { api, isMac, isWin, on } from "@/lib/api";
 import { runCommand } from "@/lib/commands";
 import { hydrate, persist, setSetting, useStore } from "@/lib/store";
 import { findCalibre } from "@/lib/findcalibre";
+import { fromLocale, setLanguage, t, type Language } from "../../shared/i18n";
+import "../../shared/locales";
 import { AppSidebar, Header } from "@/components/Shell";
 import { LibraryView } from "@/components/Library";
 import { Inspector } from "@/components/Inspector";
@@ -89,16 +91,16 @@ function announce(update: UpdateState) {
   useStore.setState({ update });
   if (before.state === update.state) return;
   if (update.state === "ready")
-    toast(`Shelfed ${update.version} is ready`, {
-      description: "It goes in when Shelfed next starts.",
+    toast(t("Shelfed {version} is ready", { version: update.version }), {
+      description: t("It goes in when Shelfed next starts."),
       duration: 15_000,
-      action: { label: "Restart now", onClick: () => api.installUpdate() },
+      action: { label: t("Restart now"), onClick: () => api.installUpdate() },
     });
   if (update.state === "available")
-    toast(`Shelfed ${update.version} is out`, {
-      description: "Download it from GitHub.",
+    toast(t("Shelfed {version} is out", { version: update.version }), {
+      description: t("Download it from GitHub."),
       duration: 15_000,
-      action: { label: "Download", onClick: () => api.installUpdate() },
+      action: { label: t("Download"), onClick: () => api.installUpdate() },
     });
 }
 
@@ -116,20 +118,20 @@ class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
     if (!error) return this.props.children;
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-        <p className="text-heading">Something went wrong</p>
-        <p className="mt-2 max-w-[440px] text-label text-muted">Your books are safe. Shelfed hit an error drawing this screen.</p>
+        <p className="text-heading">{t("Something went wrong")}</p>
+        <p className="mt-2 max-w-[440px] text-label text-muted">{t("Your books are safe. Shelfed hit an error drawing this screen.")}</p>
         <pre className="selectable mt-4 max-w-[560px] rounded-[10px] bg-well px-3 py-2 text-left text-caption whitespace-pre-wrap text-muted">{error.message}</pre>
         <div className="mt-5 flex gap-2">
-          <Button variant="primary" onClick={() => this.setState({ error: null })}>Try again</Button>
-          <Button onClick={() => location.reload()}>Reload</Button>
+          <Button variant="primary" onClick={() => this.setState({ error: null })}>{t("Try again")}</Button>
+          <Button onClick={() => location.reload()}>{t("Reload")}</Button>
           <Button
             onClick={() => {
               const { version, platform } = useStore.getState();
               navigator.clipboard.writeText(`Shelfed ${version} on ${platform}\n\n${error.stack ?? error.message}`);
-              toast.success("Copied, ready to paste into a bug report");
+              toast.success(t("Copied, ready to paste into a bug report"));
             }}
           >
-            Copy details
+            {t("Copy details")}
           </Button>
         </div>
       </div>
@@ -168,8 +170,14 @@ function Library() {
   );
 }
 
+/** The language Shelfed speaks: the one chosen in Settings, or the system's. */
+const chosenLanguage = (setting?: string): Language => (setting === "en" || setting === "cs" ? setting : fromLocale(navigator.language));
+
 export function App() {
   const ready = useStore((s) => s.ready);
+  // Set before anything below draws, and everything draws afresh when it changes.
+  const speaks = chosenLanguage(useStore((s) => s.settings?.language));
+  setLanguage(speaks);
 
   useEffect(() => {
     api
@@ -182,8 +190,8 @@ export function App() {
     const offs = [
       on("command", runCommand),
       on("open-files", (paths: string[]) => importPaths(paths, paths.length === 1)),
-      on("downloaded", (paths: string[]) => importPaths(paths, false, "your Downloads")),
-      on("save-failed", () => toast.error("Shelfed could not save your library", { description: "Your changes are kept and it will try again. Check the disk has room." })),
+      on("downloaded", (paths: string[]) => importPaths(paths, false, t("your Downloads"))),
+      on("save-failed", () => toast.error(t("Shelfed could not save your library"), { description: t("Your changes are kept and it will try again. Check the disk has room.") })),
       on("update", announce),
     ];
     api.updateState().then((update) => useStore.setState({ update }));
@@ -219,7 +227,7 @@ export function App() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <Appearance />
       {ready && (
-        <Mend>
+        <Mend key={speaks}>
           <KindleWatch />
           <CalibreOffer />
           <Library />

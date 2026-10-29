@@ -20,6 +20,7 @@ import { groupKeys, sortBooks, useVisibleBooks } from "@/lib/view";
 import { Bookcase } from "./Bookcase";
 import { Discover } from "./Discover";
 import { Cover } from "./Cover";
+import { t, tn } from "../../../shared/i18n";
 
 /* ------------------------------------------------------------------------ */
 /* The menu every book has, on a right click                                 */
@@ -35,40 +36,40 @@ export function BookMenu({ ids }: { ids: string[] }) {
   if (!books.length)
     return (
       <>
-        <MenuItem icon={FileAddIcon} onSelect={() => pickAndImport(false)}>Add books</MenuItem>
-        <MenuItem icon={FolderAddIcon} onSelect={() => pickAndImport(true)}>Add a folder of books</MenuItem>
+        <MenuItem icon={FileAddIcon} onSelect={() => pickAndImport(false)}>{t("Add books")}</MenuItem>
+        <MenuItem icon={FolderAddIcon} onSelect={() => pickAndImport(true)}>{t("Add a folder of books")}</MenuItem>
       </>
     );
   return (
     <>
-      {one && <MenuItem icon={BookOpen01Icon} onSelect={() => runAction("read", ids)}>Read</MenuItem>}
-      <MenuItem icon={MailSend01Icon} onSelect={() => runAction("send", ids)}>Send to Kindle</MenuItem>
-      <MenuItem icon={ArrowDataTransferHorizontalIcon} onSelect={() => runAction("convert", ids)}>Convert</MenuItem>
-      {one && <MenuItem icon={MagicWand01Icon} onSelect={() => runAction("metadata", ids)}>Find details online</MenuItem>}
-      {one && <MenuItem icon={PencilEdit02Icon} onSelect={() => runAction("edit", ids)}>Edit details</MenuItem>}
+      {one && <MenuItem icon={BookOpen01Icon} onSelect={() => runAction("read", ids)}>{t("Read")}</MenuItem>}
+      <MenuItem icon={MailSend01Icon} onSelect={() => runAction("send", ids)}>{t("Send to Kindle")}</MenuItem>
+      <MenuItem icon={ArrowDataTransferHorizontalIcon} onSelect={() => runAction("convert", ids)}>{t("Convert")}</MenuItem>
+      {one && <MenuItem icon={MagicWand01Icon} onSelect={() => runAction("metadata", ids)}>{t("Find details online")}</MenuItem>}
+      {one && <MenuItem icon={PencilEdit02Icon} onSelect={() => runAction("edit", ids)}>{t("Edit details")}</MenuItem>}
       <MenuSeparator />
-      <MenuLabel>Add to a collection</MenuLabel>
+      <MenuLabel>{t("Add to a collection")}</MenuLabel>
       {collections.map((c) => (
         <MenuItem key={c.id} icon={Folder01Icon} selected={books.every((b) => b.collections.includes(c.id))} onSelect={() => addToCollection(ids, c.id)}>
           {c.name}
         </MenuItem>
       ))}
-      <MenuItem icon={FolderAddIcon} onSelect={() => newCollection(ids)}>New collection</MenuItem>
+      <MenuItem icon={FolderAddIcon} onSelect={() => newCollection(ids)}>{t("New collection")}</MenuItem>
       {section.kind === "collection" && (
         <MenuItem icon={Folder01Icon} onSelect={() => removeFromCollection(ids, section.id)}>
-          Take out of this collection
+          {t("Take out of this collection")}
         </MenuItem>
       )}
       <MenuSeparator />
-      <MenuItem icon={FavouriteIcon} selected={books.every((b) => b.favorite)} onSelect={() => runAction("favorite", ids)}>Favorite</MenuItem>
+      <MenuItem icon={FavouriteIcon} selected={books.every((b) => b.favorite)} onSelect={() => runAction("favorite", ids)}>{t("Favorite")}</MenuItem>
       <MenuItem icon={CheckmarkCircle02Icon} selected={books.every((b) => b.status === "finished")} onSelect={() => runAction(books.every((b) => b.status === "finished") ? "unread" : "finished", ids)}>
-        Read it
+        {t("Read it")}
       </MenuItem>
-      {one && <MenuItem icon={FolderOpenIcon} onSelect={() => api.reveal(one.id)}>{revealLabel}</MenuItem>}
-      {books.length > 1 && <MenuItem icon={Layers01Icon} onSelect={() => joinSelected(ids)}>Join into one book</MenuItem>}
+      {one && <MenuItem icon={FolderOpenIcon} onSelect={() => api.reveal(one.id)}>{t(revealLabel)}</MenuItem>}
+      {books.length > 1 && <MenuItem icon={Layers01Icon} onSelect={() => joinSelected(ids)}>{t("Join into one book")}</MenuItem>}
       <MenuSeparator />
       <MenuItem icon={Delete02Icon} danger onSelect={() => runAction("remove", ids)}>
-        {books.length > 1 ? `Remove ${books.length} books` : "Remove from library"}
+        {books.length > 1 ? tn(books.length, "Remove {n} book", "Remove {n} books") : t("Remove from library")}
       </MenuItem>
     </>
   );
@@ -78,7 +79,7 @@ export function BookMenu({ ids }: { ids: string[] }) {
 export function BooksMenu({ children }: { children: React.ReactNode }) {
   const selection = useStore((s) => s.selection);
   return (
-    <ContextMenu label="Book" width={250} menu={<BookMenu ids={selection} />} className="h-full">
+    <ContextMenu label={t("Book")} width={250} menu={<BookMenu ids={selection} />} className="h-full">
       {children}
     </ContextMenu>
   );
@@ -180,7 +181,7 @@ const BookCard = memo(function BookCard({ book, selected, width, visible, onKind
           </span>
         )}
         {onKindle && (
-          <span title="On your Kindle" className="absolute top-1.5 left-1.5 flex h-6 items-center gap-1 rounded-full bg-black/45 px-2 text-[10.5px] font-medium text-white backdrop-blur-md">
+          <span title={t("On your Kindle")} className="absolute top-1.5 left-1.5 flex h-6 items-center gap-1 rounded-full bg-black/45 px-2 text-[10.5px] font-medium text-white backdrop-blur-md">
             <Icon icon={Tablet01Icon} size={11} />
             Kindle
           </span>
@@ -269,7 +270,7 @@ export function List({ visible }: { visible: Book[] }) {
     () => [
       {
         id: "title",
-        header: "Title",
+        header: t("Title"),
         sortValue: (b) => b.title.toLowerCase(),
         cell: (b) => (
           <button
@@ -290,22 +291,22 @@ export function List({ visible }: { visible: Book[] }) {
       },
       // Series only earns a column once some book has one.
       ...(visible.some((b) => b.series)
-        ? [{ id: "series", header: "Series", hideOnMobile: true, sortValue: (b: Book) => b.series ?? "~", cell: (b: Book) => <span className="text-muted">{b.series ? `${b.series}${b.seriesIndex ? ` ${b.seriesIndex}` : ""}` : ""}</span> }]
+        ? [{ id: "series", header: t("Series"), hideOnMobile: true, sortValue: (b: Book) => b.series ?? "~", cell: (b: Book) => <span className="text-muted">{b.series ? `${b.series}${b.seriesIndex ? ` ${b.seriesIndex}` : ""}` : ""}</span> }]
         : []),
       {
         id: "progress",
-        header: "Progress",
+        header: t("Progress"),
         sortValue: (b) => (b.status === "finished" ? 2 : (b.progress ?? 0)),
         cell: (b) =>
           b.status === "reading" ? (
-            <div className="w-24"><Progress size="sm" value={(b.progress ?? 0) * 100} aria-label="Progress" /></div>
+            <div className="w-24"><Progress size="sm" value={(b.progress ?? 0) * 100} aria-label={t("Progress")} /></div>
           ) : (
-            <span className="whitespace-nowrap text-muted">{STATUS[b.status]}</span>
+            <span className="whitespace-nowrap text-muted">{t(STATUS[b.status])}</span>
           ),
       },
-      { id: "formats", header: "Files", hideOnMobile: true, cell: (b) => <span className="flex gap-1">{b.formats.map((f) => <Badge key={f.ext}>{f.ext.toUpperCase()}</Badge>)}</span> },
-      { id: "size", header: "Size", align: "right", sortValue: (b) => b.formats.reduce((n, f) => n + f.size, 0), cell: (b) => <span className="whitespace-nowrap text-muted tabular-nums">{bytes(b.formats.reduce((n, f) => n + f.size, 0))}</span> },
-      { id: "added", header: "Added", align: "right", sortValue: (b) => b.added, cell: (b) => <span className="whitespace-nowrap text-muted tabular-nums">{date(b.added)}</span> },
+      { id: "formats", header: t("Files"), hideOnMobile: true, cell: (b) => <span className="flex gap-1">{b.formats.map((f) => <Badge key={f.ext}>{f.ext.toUpperCase()}</Badge>)}</span> },
+      { id: "size", header: t("Size"), align: "right", sortValue: (b) => b.formats.reduce((n, f) => n + f.size, 0), cell: (b) => <span className="whitespace-nowrap text-muted tabular-nums">{bytes(b.formats.reduce((n, f) => n + f.size, 0))}</span> },
+      { id: "added", header: t("Added"), align: "right", sortValue: (b) => b.added, cell: (b) => <span className="whitespace-nowrap text-muted tabular-nums">{date(b.added)}</span> },
     ],
     [visible],
   );
@@ -316,7 +317,7 @@ export function List({ visible }: { visible: Book[] }) {
           rows={visible}
           columns={columns}
           rowId={(b) => b.id}
-          label="Books"
+          label={t("Books")}
           selectable
           selected={selection}
           onSelectedChange={(ids) => useStore.setState({ selection: ids, anchor: ids[ids.length - 1] ?? null })}
@@ -375,8 +376,8 @@ export function Shelves({ visible }: { visible: Book[] }) {
     return (
       <Centered>
         <Empty point={{ shape: "cookie", mood: "curious" }}>
-          <p className="text-[15px] font-medium text-foreground">Nothing to show yet</p>
-          <p className="mt-1">{by === "series" ? "Books from a series gather here once their details say so. Find details online to fill them in." : "As your library grows, it sorts itself here."}</p>
+          <p className="text-[15px] font-medium text-foreground">{t("Nothing to show yet")}</p>
+          <p className="mt-1">{by === "series" ? t("Books from a series gather here once their details say so. Find details online to fill them in.") : t("As your library grows, it sorts itself here.")}</p>
         </Empty>
       </Centered>
     );
@@ -447,11 +448,11 @@ function Page() {
     return (
       <Centered>
         <Empty point={{ shape: "squircle", mood: "reading" }}>
-          <p className="text-heading text-foreground">A home for your books</p>
-          <p className="mt-2">Add EPUB, Kindle, PDF, comic and text files. Shelfed reads their covers and details and keeps them in one tidy folder.</p>
+          <p className="text-heading text-foreground">{t("A home for your books")}</p>
+          <p className="mt-2">{t("Add EPUB, Kindle, PDF, comic and text files. Shelfed reads their covers and details and keeps them in one tidy folder.")}</p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
-            <Button variant="primary" icon={FileAddIcon} onClick={() => pickAndImport(false)}>Add books</Button>
-            <Button icon={FolderAddIcon} onClick={() => pickAndImport(true)}>Add a folder</Button>
+            <Button variant="primary" icon={FileAddIcon} onClick={() => pickAndImport(false)}>{t("Add books")}</Button>
+            <Button icon={FolderAddIcon} onClick={() => pickAndImport(true)}>{t("Add a folder")}</Button>
           </div>
           {calibre && (
             <button
@@ -459,15 +460,21 @@ function Page() {
               className="mt-4 text-label text-muted underline decoration-line-strong underline-offset-4 hover:text-foreground"
               onClick={() => useStore.setState({ dialog: { kind: "calibre", path: calibre.path, books: calibre.books } })}
             >
-              Bring over your Calibre library, {plural(calibre.books, "book")}
+              {t("Bring over your Calibre library, {books}", { books: plural(calibre.books, "book") })}
             </button>
           )}
           <p className="mt-4 text-caption">
-            Or drop files anywhere on this window, or{" "}
-            <button className="underline decoration-underline underline-offset-4 hover:text-foreground" onClick={() => useStore.setState({ section: { kind: "discover" } })}>
-              browse the classics
-            </button>
-            .
+            {t("Or drop files anywhere on this window, or {browse}.")
+              .split(/(\{browse\})/)
+              .map((part, i) =>
+                part === "{browse}" ? (
+                  <button key={i} className="underline decoration-underline underline-offset-4 hover:text-foreground" onClick={() => useStore.setState({ section: { kind: "discover" } })}>
+                    {t("browse the classics")}
+                  </button>
+                ) : (
+                  part
+                ),
+              )}
           </p>
         </Empty>
       </Centered>
@@ -477,8 +484,8 @@ function Page() {
     return (
       <Centered>
         <Empty point={{ shape: query ? "pebble" : "cookie", mood: query ? "confused" : "idle" }}>
-          <p className="text-[15px] font-medium text-foreground">{query ? "Nothing found" : "Nothing here yet"}</p>
-          <p className="mt-1">{query ? `No book matches ${query}. Try a title, an author, a series or a tag.` : (EMPTY[section.kind] ?? "Books show up here as you read.")}</p>
+          <p className="text-[15px] font-medium text-foreground">{query ? t("Nothing found") : t("Nothing here yet")}</p>
+          <p className="mt-1">{query ? t("No book matches {query}. Try a title, an author, a series or a tag.", { query }) : t(EMPTY[section.kind] ?? "Books show up here as you read.")}</p>
         </Empty>
       </Centered>
     );

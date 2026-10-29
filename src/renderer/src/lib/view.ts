@@ -3,13 +3,14 @@ import type { Book, SortKey } from "../../../shared/types";
 import { useStore, type Browse, type Section } from "./store";
 import { norm, sortAuthor, sortTitle } from "./util";
 import { useOnKindle } from "./kindle";
+import { t } from "../../../shared/i18n";
 
 const FORTNIGHT = 1000 * 60 * 60 * 24 * 14;
 
 export function groupKeys(book: Book, by: Browse) {
   switch (by) {
     case "author":
-      return book.authors.length ? book.authors : ["Unknown author"];
+      return book.authors.length ? book.authors : [t("Unknown author")];
     case "series":
       return book.series ? [book.series] : [];
     case "tag":
@@ -93,16 +94,16 @@ export function useVisibleBooks() {
 
 export function sectionTitle(section: Section, collections: { id: string; name: string }[]) {
   switch (section.kind) {
-    case "all": return "All books";
-    case "reading": return "Reading";
-    case "unread": return "Want to read";
-    case "finished": return "Finished";
-    case "favorites": return "Favorites";
-    case "recent": return "Recently added";
-    case "collection": return collections.find((c) => c.id === section.id)?.name ?? "Collection";
-    case "browse": return { author: "Authors", series: "Series", tag: "Tags", format: "Formats" }[section.by];
-    case "discover": return "Classics";
-    case "kindle": return "On your Kindle";
+    case "all": return t("All books");
+    case "reading": return t("Reading");
+    case "unread": return t("Want to read");
+    case "finished": return t("Finished");
+    case "favorites": return t("Favorites");
+    case "recent": return t("Recently added");
+    case "collection": return collections.find((c) => c.id === section.id)?.name ?? t("Collection");
+    case "browse": return t({ author: "Authors", series: "Series", tag: "Tags", format: "Formats" }[section.by]);
+    case "discover": return t("Classics");
+    case "kindle": return t("On your Kindle");
     case "group": return section.value;
   }
 }

@@ -12,6 +12,7 @@ import {
 import { IconButton } from "./button";
 import { cx } from "./cx";
 import { Icon, type IconLike } from "./icon";
+import { t } from "../../../../shared/i18n";
 
 export type AlertTone = "neutral" | "success" | "warning" | "danger";
 
@@ -93,7 +94,7 @@ export function Alert({
           {action}
           {onDismiss && (
             <IconButton
-              label="Dismiss"
+              label={t("Dismiss")}
               icon={Cancel01Icon}
               onClick={onDismiss}
               className="-mr-1.5"

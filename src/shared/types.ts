@@ -172,6 +172,8 @@ export type Settings = {
   downloads?: boolean;
   /** True once Shelfed has offered to bring a Calibre library over, so it asks only once. */
   calibreOffered?: boolean;
+  /** The language Shelfed speaks; automatic follows the system. */
+  language?: "auto" | "en" | "cs";
 };
 
 /** Where finding and getting a new version of Shelfed has got to. */

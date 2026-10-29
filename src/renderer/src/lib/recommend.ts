@@ -1,5 +1,6 @@
 import type { Book } from "../../../shared/types";
 import { norm } from "./util";
+import { t } from "../../../shared/i18n";
 
 /*
  * What to read next, worked out on this computer. Two parts: a hand-made
@@ -240,8 +241,8 @@ export function suggestionsFor(seed: Book, books: Book[], limit = 4): Suggestion
   for (const kin of (key && KIN.get(key)) || []) {
     const copy = ownedCopy(books, kin.key);
     if (copy) {
-      if (copy.id !== seed.id) out.set(copy.id, { kind: "owned", book: copy, why: kin.why, score: 10 });
-    } else out.set(kin.key, { kind: "free", ...C[kin.key], why: kin.why, score: 9 });
+      if (copy.id !== seed.id) out.set(copy.id, { kind: "owned", book: copy, why: t(kin.why), score: 10 });
+    } else out.set(kin.key, { kind: "free", ...C[kin.key], why: t(kin.why), score: 9 });
   }
 
   for (const book of books) {
@@ -250,17 +251,17 @@ export function suggestionsFor(seed: Book, books: Book[], limit = 4): Suggestion
     let why = "";
     if (seed.series && book.series === seed.series && (book.seriesIndex ?? 0) === (seed.seriesIndex ?? 0) + 1) {
       score += 8;
-      why = `Next in ${seed.series}`;
+      why = t("Next in {series}", { series: seed.series });
     }
     if (book.authors[0] && book.authors[0] === seed.authors[0]) {
       score += 4;
-      why ||= `More from ${book.authors[0]}`;
+      why ||= t("More from {author}", { author: book.authors[0] });
     }
     const theirs = words(book);
     const shared = [...seedWords].filter((w) => theirs.has(w));
     if (shared.length) {
       score += (6 * shared.length) / new Set([...seedWords, ...theirs]).size + shared.length * 0.5;
-      why ||= `Shared subjects: ${sharedSubjects(book, shared).join(", ")}`;
+      why ||= t("Shared subjects: {subjects}", { subjects: sharedSubjects(book, shared).join(", ") });
     }
     const year = parseInt(book.published ?? "", 10);
     if (score && seedYear && year && Math.abs(seedYear - year) < 30) score += 0.5;

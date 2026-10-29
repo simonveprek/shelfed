@@ -20,6 +20,7 @@ import { patchBooks, setSetting, useStore, type Browse, type Section } from "@/l
 import { sectionTitle, useVisibleBooks } from "@/lib/view";
 import { Logo } from "./Logo";
 import { MATERIALS } from "./Bookcase";
+import { t } from "../../../shared/i18n";
 import { ColourPicker, RIBBONS } from "./Colours";
 
 const same = (a: Section, b: Section) => JSON.stringify(a) === JSON.stringify(b);
@@ -95,24 +96,24 @@ export function AppSidebar() {
         {PLACES.map((place) => (
           <DropTarget key={place.kind} onDrop={place.kind === "favorites" ? (ids) => patchBooks(ids, () => ({ favorite: true })) : undefined}>
             <SidebarItem icon={place.icon} active={same(section, { kind: place.kind })} onClick={() => go({ kind: place.kind })}>
-              {place.label}
+              {t(place.label)}
             </SidebarItem>
           </DropTarget>
         ))}
         {onKindle && (
           <SidebarItem icon={Tablet01Icon} active={section.kind === "kindle"} onClick={() => go({ kind: "kindle" })}>
-            On your Kindle
+            {t("On your Kindle")}
           </SidebarItem>
         )}
       </SidebarGroup>
 
-      <SidebarGroup label="Discover">
+      <SidebarGroup label={t("Discover")}>
         <SidebarItem icon={Globe02Icon} active={section.kind === "discover"} onClick={() => go({ kind: "discover" })}>
-          Classics
+          {t("Classics")}
         </SidebarItem>
       </SidebarGroup>
 
-      <SidebarGroup label="Collections">
+      <SidebarGroup label={t("Collections")}>
         {collections.map((c) => (
           <ContextMenu
             key={c.id}
@@ -121,10 +122,10 @@ export function AppSidebar() {
             menu={
               <>
                 <MenuItem icon={PencilEdit02Icon} onSelect={() => useStore.setState({ dialog: { kind: "rename-collection", id: c.id } })}>
-                  Rename
+                  {t("Rename")}
                 </MenuItem>
                 <MenuItem icon={Delete02Icon} danger onSelect={() => deleteCollection(c.id)}>
-                  Delete collection
+                  {t("Delete collection")}
                 </MenuItem>
               </>
             }
@@ -137,11 +138,11 @@ export function AppSidebar() {
           </ContextMenu>
         ))}
         <SidebarItem icon={FolderAddIcon} onClick={() => newCollection(useStore.getState().selection)}>
-          New collection
+          {t("New collection")}
         </SidebarItem>
       </SidebarGroup>
 
-      <SidebarGroup label="Browse">
+      <SidebarGroup label={t("Browse")}>
         {BROWSE.map((item) => (
           <SidebarItem
             key={item.by}
@@ -149,7 +150,7 @@ export function AppSidebar() {
             active={(section.kind === "browse" || section.kind === "group") && section.by === item.by}
             onClick={() => go({ kind: "browse", by: item.by })}
           >
-            {item.label}
+            {t(item.label)}
           </SidebarItem>
         ))}
       </SidebarGroup>
@@ -187,7 +188,7 @@ function Search() {
       id="search"
       value={query}
       spellCheck={false}
-      placeholder="Search your books"
+      placeholder={t("Search your books")}
       shortcut={`${mod}F`}
       onChange={(e) => useStore.setState({ query: e.target.value })}
       onKeyDown={(e) => {
@@ -220,24 +221,24 @@ function BookcaseOptions() {
   const set = (patch: Partial<typeof prefs>) => setSetting({ bookcase: { ...useStore.getState().settings.bookcase, ...patch } });
   return (
     <>
-      <Section title="Shelves">
+      <Section title={t("Shelves")}>
         <Select
-          label="Shelves"
+          label={t("Shelves")}
           size="sm"
           value={prefs.group}
           onChange={(group) => set({ group })}
           options={[
-            { id: "none", label: "All books together" },
-            { id: "author", label: "A shelf for each author" },
-            { id: "series", label: "A shelf for each series" },
-            { id: "collection", label: "A shelf for each collection" },
-            { id: "status", label: "By reading status" },
-            { id: "format", label: "By file type" },
+            { id: "none", label: t("All books together") },
+            { id: "author", label: t("A shelf for each author") },
+            { id: "series", label: t("A shelf for each series") },
+            { id: "collection", label: t("A shelf for each collection") },
+            { id: "status", label: t("By reading status") },
+            { id: "format", label: t("By file type") },
           ]}
         />
       </Section>
       <Rule />
-      <Section title="The case">
+      <Section title={t("The case")}>
         <div className="grid grid-cols-4 gap-2.5">
           {(Object.keys(MATERIALS) as Array<keyof typeof MATERIALS>).map((key) => {
             const on = prefs.material === key;
@@ -258,40 +259,40 @@ function BookcaseOptions() {
                   style={{ background: `linear-gradient(180deg, transparent 62%, rgb(0 0 0 / 0.08) 62%), ${MATERIALS[key].front}` }}
                 />
                 <span className={cx("text-caption transition-colors duration-150", on ? "text-foreground" : "text-muted group-hover:text-foreground")}>
-                  {MATERIALS[key].label}
+                  {t(MATERIALS[key].label)}
                 </span>
               </button>
             );
           })}
         </div>
       </Section>
-      <Section title="Spines">
+      <Section title={t("Spines")}>
         <Segmented
-          label="Spines"
+          label={t("Spines")}
           size="sm"
           block
           value={prefs.spines}
           onChange={(spines) => set({ spines })}
           options={[
-            { id: "cover", label: "Cover colour" },
-            { id: "cloth", label: "Cloth" },
-            { id: "ink", label: "Ink" },
+            { id: "cover", label: t("Cover colour") },
+            { id: "cloth", label: t("Cloth") },
+            { id: "ink", label: t("Ink") },
           ]}
         />
       </Section>
       <Rule />
-      <Section title="On the shelves">
+      <Section title={t("On the shelves")}>
         <div className="flex flex-col gap-4">
-          <SwitchRow label="Fill the window" hint="A small library grows to fit." checked={prefs.fit} onChange={(fit) => set({ fit })} />
-          <SwitchRow label="Authors on spines" checked={prefs.authors} onChange={(authors) => set({ authors })} />
-          <SwitchRow label="Reading ribbons" hint="Rise out of books you're partway through." checked={prefs.ribbons} onChange={(ribbons) => set({ ribbons })} />
+          <SwitchRow label={t("Fill the window")} hint={t("A small library grows to fit.")} checked={prefs.fit} onChange={(fit) => set({ fit })} />
+          <SwitchRow label={t("Authors on spines")} checked={prefs.authors} onChange={(authors) => set({ authors })} />
+          <SwitchRow label={t("Reading ribbons")} hint={t("Rise out of books you're partway through.")} checked={prefs.ribbons} onChange={(ribbons) => set({ ribbons })} />
           {prefs.ribbons && (
             <div className="-mt-1 flex flex-col gap-2">
-              <span className="text-caption text-muted">Ribbon colour, unless a book has its own</span>
+              <span className="text-caption text-muted">{t("Ribbon colour, unless a book has its own")}</span>
               <ColourPicker value={prefs.ribbon} options={RIBBONS} onChange={(ribbon) => set({ ribbon: ribbon ?? "accent" })} />
             </div>
           )}
-          <SwitchRow label="Lean toward the pointer" checked={prefs.lean} onChange={(lean) => set({ lean })} />
+          <SwitchRow label={t("Lean toward the pointer")} checked={prefs.lean} onChange={(lean) => set({ lean })} />
         </div>
       </Section>
       <Rule />
@@ -311,11 +312,11 @@ export function Header() {
   return (
     <header className={cx("drag flex h-16 shrink-0 items-center gap-2 border-b border-border pl-6", isWin ? "pr-[150px]" : "pr-4")}>
       {section.kind === "group" && (
-        <IconButton label="Back" icon={ArrowLeft01Icon} className="-ml-2" onClick={() => useStore.setState({ section: { kind: "browse", by: section.by } })} />
+        <IconButton label={t("Back")} icon={ArrowLeft01Icon} className="-ml-2" onClick={() => useStore.setState({ section: { kind: "browse", by: section.by } })} />
       )}
       <motion.h1
         key={sectionTitle(section, collections)}
-        className="truncate text-[15px] font-medium tracking-[-0.01em]"
+        className="min-w-0 shrink-0 truncate whitespace-nowrap text-[15px] font-medium tracking-[-0.01em]"
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: EASE }}
@@ -331,48 +332,48 @@ export function Header() {
           {!browsing && (
             <>
               <Segmented
-                label="View"
+                label={t("View")}
                 size="sm"
                 value={settings.view}
                 onChange={(view) => setSetting({ view })}
                 options={[
-                  { id: "grid", label: <span className="sr-only">Covers</span>, icon: GridViewIcon },
-                  { id: "list", label: <span className="sr-only">List</span>, icon: LeftToRightListBulletIcon },
-                  { id: "shelves", label: <span className="sr-only">Shelves</span>, icon: Bookshelf01Icon },
-                  { id: "bookcase", label: <span className="sr-only">Bookcase in 3D</span>, icon: ThreeDViewIcon },
+                  { id: "grid", label: <span className="sr-only">{t("Covers")}</span>, icon: GridViewIcon },
+                  { id: "list", label: <span className="sr-only">{t("List")}</span>, icon: LeftToRightListBulletIcon },
+                  { id: "shelves", label: <span className="sr-only">{t("Shelves")}</span>, icon: Bookshelf01Icon },
+                  { id: "bookcase", label: <span className="sr-only">{t("Bookcase in 3D")}</span>, icon: ThreeDViewIcon },
                 ]}
               />
               <Popover
-                label="Display"
+                label={t("Display")}
                 align="end"
                 width={settings.view === "bookcase" ? 360 : 280}
-                trigger={({ props, open }) => <IconButton {...props} label={settings.view === "bookcase" ? "Bookcase" : "Sort and size"} icon={FilterHorizontalIcon} active={open} />}
+                trigger={({ props, open }) => <IconButton {...props} label={settings.view === "bookcase" ? t("Bookcase") : t("Sort and size")} icon={FilterHorizontalIcon} active={open} />}
               >
                 <div className="scroll -m-2 flex max-h-[min(720px,calc(100vh-120px))] flex-col gap-5 p-3">
                   {settings.view === "bookcase" && <BookcaseOptions />}
-                  <Section title="Order">
+                  <Section title={t("Order")}>
                     <Select
-                      label="Sort by"
+                      label={t("Sort by")}
                       size="sm"
                       value={settings.sort}
                       onChange={(sort) => setSetting({ sort, sortDir: SORTS.find((s) => s.id === sort)!.dir })}
-                      options={SORTS.map(({ id, label }) => ({ id, label }))}
+                      options={SORTS.map(({ id, label }) => ({ id, label: t(label) }))}
                     />
                     <Segmented
-                      label="Order"
+                      label={t("Order")}
                       size="sm"
                       block
                       value={settings.sortDir}
                       onChange={(sortDir) => setSetting({ sortDir })}
                       options={[
-                        { id: "asc", label: "Ascending" },
-                        { id: "desc", label: "Descending" },
+                        { id: "asc", label: t("Ascending") },
+                        { id: "desc", label: t("Descending") },
                       ]}
                     />
                   </Section>
                   {(settings.view === "grid" || settings.view === "bookcase") && (
                     <Slider
-                      label={settings.view === "bookcase" ? (settings.bookcase.fit ? "Smallest book size" : "Book size") : "Cover size"}
+                      label={settings.view === "bookcase" ? (settings.bookcase.fit ? t("Smallest book size") : t("Book size")) : t("Cover size")}
                       dense
                       value={settings.gridSize}
                       min={100}
@@ -390,19 +391,19 @@ export function Header() {
         </>
       )}
       <Menu
-        label="Add books"
+        label={t("Add books")}
         align="end"
         width={220}
-        trigger={({ props, open }) => <IconButton {...props} label="Add books" icon={Add01Icon} active={open} />}
+        trigger={({ props, open }) => <IconButton {...props} label={t("Add books")} icon={Add01Icon} active={open} />}
       >
-        <MenuLabel>Add to your library</MenuLabel>
-        <MenuItem icon={FileAddIcon} shortcut={`${mod}O`} onSelect={() => pickAndImport(false)}>Books</MenuItem>
-        <MenuItem icon={FolderAddIcon} shortcut={`${mod}${shift}O`} onSelect={() => pickAndImport(true)}>A folder of books</MenuItem>
+        <MenuLabel>{t("Add to your library")}</MenuLabel>
+        <MenuItem icon={FileAddIcon} shortcut={`${mod}O`} onSelect={() => pickAndImport(false)}>{t("Books")}</MenuItem>
+        <MenuItem icon={FolderAddIcon} shortcut={`${mod}${shift}O`} onSelect={() => pickAndImport(true)}>{t("A folder of books")}</MenuItem>
         <MenuSeparator />
-        <MenuItem icon={Settings01Icon} onSelect={() => useStore.setState({ dialog: { kind: "settings" } })}>Settings</MenuItem>
+        <MenuItem icon={Settings01Icon} onSelect={() => useStore.setState({ dialog: { kind: "settings" } })}>{t("Settings")}</MenuItem>
       </Menu>
       <ThemeToggle />
-      <IconButton label="Details" icon={SidebarRightIcon} active={settings.inspector} onClick={() => setSetting({ inspector: !settings.inspector })} />
+      <IconButton label={t("Details")} icon={SidebarRightIcon} active={settings.inspector} onClick={() => setSetting({ inspector: !settings.inspector })} />
     </header>
   );
 }

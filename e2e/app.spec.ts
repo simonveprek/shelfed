@@ -452,3 +452,37 @@ test.describe("coming from Calibre", () => {
   });
 });
 
+test.describe("in Czech", () => {
+  test.use({ language: "cs" });
+
+  test("speaks Czech everywhere, counting the Czech way", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await expect(page.getByText("Přidány 3 knihy")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Rozečtené", exact: true })).toBeVisible();
+    await expect(page.getByPlaceholder("Hledat v knihách")).toBeVisible();
+    // The same English word, said for its place: a book's state is "Čtu", the sidebar's place "Rozečtené".
+    await card(page, "Salt and Ink").click();
+    await expect(page.locator("aside").getByText("Čtu", { exact: true }).first()).toBeVisible();
+    await card(page, "Salt and Ink").click({ button: "right" });
+    await expect(page.getByRole("menuitem", { name: "Poslat do Kindlu" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.getByLabel("Přidat knihy", { exact: true }).click();
+    await page.getByRole("menuitem", { name: "Nastavení" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Čtení", exact: true }).click();
+    await expect(dialog.getByRole("heading", { name: "Čtení" })).toBeVisible();
+  });
+
+  test("switches back to English from Settings, at once", async ({ shelf }) => {
+    const { page } = shelf;
+    await page.getByLabel("Přidat knihy", { exact: true }).click();
+    await page.getByRole("menuitem", { name: "Nastavení" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Vzhled", exact: true }).click();
+    await dialog.getByRole("combobox", { name: "Jazyk" }).click();
+    await page.getByRole("option", { name: "English" }).click();
+    await expect(page.getByRole("button", { name: "All books", exact: true })).toBeVisible();
+  });
+});
+

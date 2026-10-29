@@ -1,10 +1,11 @@
 import { useRef, type CSSProperties, type ReactNode } from "react";
 import { cx, Tooltip } from "@/components/ui";
+import { t } from "../../../shared/i18n";
 
 // Bookbinder's cloth: deep, quiet colours that sit well side by side.
 export const CLOTH = ["#2c3e50", "#7a2e2e", "#2f5d50", "#3b3561", "#8a5a2b", "#1f4e79", "#4a4a4a", "#6d3b5c", "#2d6a6a", "#9c4221"];
 
-/** Spines to pick by hand: the cloth, with paper and black. */
+/** Spines to pick by hand: the cloth, with paper and black. Names stay English here and are translated where they're shown. */
 export const SPINES: Array<[string, string]> = [
   ["#e9e2d0", "Paper"],
   ["#1d1b18", "Black"],
@@ -45,11 +46,13 @@ function Dot({ label, on, onClick, style, className, children }: {
   className?: string;
   children?: ReactNode;
 }) {
+  // Colour names are kept in English in the lists above, so they're translated here, when shown.
+  const name = t(label);
   return (
-    <Tooltip content={label}>
+    <Tooltip content={name}>
       <button
         type="button"
-        aria-label={label}
+        aria-label={name}
         aria-pressed={on}
         onClick={onClick}
         className={cx(

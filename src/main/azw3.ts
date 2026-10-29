@@ -2,6 +2,7 @@ import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Worker } from "node:worker_threads";
+import { t } from "../shared/i18n";
 
 // Runs in a worker, so a long book never holds up the window. The converter
 // sees only the folder it works in, as /work.
@@ -41,12 +42,12 @@ export async function epubToAzw3(wasm: string, epub: string, title: string, auth
       const worker = new Worker(WORKER, { eval: true, workerData: { wasm, dir, title, author } });
       worker.once("message", resolve);
       worker.once("error", reject);
-      worker.once("exit", (exit) => exit && reject(new Error(`The converter stopped with code ${exit}`)));
+      worker.once("exit", (exit) => exit && reject(new Error(t("The converter stopped with code {code}", { code: String(exit) }))));
     });
     if (code !== 0) {
       const log = await readFile(join(dir, "log.txt"), "utf8").catch(() => "");
       const reason = error ?? log.split(/\r?\n/).filter((line) => line && !line.startsWith("warning:")).at(-1);
-      throw new Error(reason ? `Couldn't make the Kindle file: ${reason}` : "Couldn't make the Kindle file.");
+      throw new Error(reason ? t("Couldn't make the Kindle file: {reason}", { reason }) : t("Couldn't make the Kindle file."));
     }
     return await readFile(join(dir, "out.azw3"));
   } finally {

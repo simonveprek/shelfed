@@ -5,11 +5,15 @@ import { Point } from "@/components/fragms/points";
 import { pickAndImport } from "@/lib/actions";
 import { isMac, isWin } from "@/lib/api";
 import { setSetting, useStore } from "@/lib/store";
+import { t } from "../../../shared/i18n";
 
 /*
  * The first thing Shelfed shows. A short walk through what happened to
  * reading, told slowly, the way a book would. Each scene waits a few
  * seconds, or moves on with a click, the space bar or an arrow.
+ *
+ * The words below stay English where they are written, since they're read
+ * before the language is chosen, and are put into it where they are shown.
  */
 
 /* ------------------------------------------------------------------------ */
@@ -104,10 +108,10 @@ function Feed() {
           animate={{ y: col === 0 ? "-60%" : "-80%" }}
           transition={{ duration: 7 + col, ease: "linear" }}
         >
-          {items.map((t, i) => (
+          {items.map((item, i) => (
             <div key={i} className="flex items-center gap-3 rounded-item border border-border bg-card px-3.5 py-3 text-label text-muted shadow-card">
               <span className="size-6 shrink-0 rounded-full bg-control" />
-              <span className="truncate">{t}</span>
+              <span className="truncate">{t(item)}</span>
             </div>
           ))}
         </motion.div>
@@ -123,7 +127,7 @@ function Unfinished() {
     <div className="mb-14 flex w-[300px] flex-col gap-3.5">
       {stops.map((stop, i) => (
         <div key={i} className="flex items-center gap-3">
-          <span className="w-[86px] text-right text-caption text-muted tabular-nums">{["Chapter 3", "Page 140", "Page 12", "Chapter 7", "Page 6", "Part one"][i]}</span>
+          <span className="w-[86px] text-right text-caption text-muted tabular-nums">{t(["Chapter 3", "Page 140", "Page 12", "Chapter 7", "Page 6", "Part one"][i])}</span>
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-control">
             <motion.div
               className="h-full rounded-full bg-foreground"
@@ -228,7 +232,7 @@ function Welcome({ done }: { done: () => void }) {
   const link = "underline decoration-underline underline-offset-4 transition-colors duration-150 hover:text-foreground hover:decoration-foreground";
   return (
     <div className="flex flex-col items-center">
-      <Big>Now, read something that takes a while.</Big>
+      <Big>{t("Now, read something that takes a while.")}</Big>
       <motion.div
         className="mt-14 flex flex-col items-center gap-5"
         initial={{ opacity: 0, y: 8 }}
@@ -245,7 +249,7 @@ function Welcome({ done }: { done: () => void }) {
             pickAndImport(false);
           }}
         >
-          Choose your books
+          {t("Choose your books")}
         </Button>
         <p className="text-label text-muted">
           <button
@@ -255,11 +259,11 @@ function Welcome({ done }: { done: () => void }) {
               pickAndImport(true);
             }}
           >
-            add a folder
+            {t("add a folder")}
           </button>
           <span className="mx-2.5 opacity-50">·</span>
           <button className={link} onClick={done}>
-            look around first
+            {t("look around first")}
           </button>
         </p>
       </motion.div>
@@ -330,7 +334,7 @@ export function Onboarding() {
                   setStep(last);
                 }}
               >
-                Skip
+                {t("Skip")}
               </button>
             )}
           </div>
@@ -349,8 +353,8 @@ export function Onboarding() {
                     {scene.feed && <Feed />}
                     <div className={cx("relative flex flex-col items-center", scene.feed && "rounded-card bg-background/80 px-10 py-9 backdrop-blur-xl")}>
                       {scene.art}
-                      <Big>{scene.title}</Big>
-                      {scene.body && <Small delay={1.4}>{scene.body}</Small>}
+                      <Big>{t(scene.title)}</Big>
+                      {scene.body && <Small delay={1.4}>{t(scene.body)}</Small>}
                     </div>
                   </>
                 ) : (
@@ -364,7 +368,7 @@ export function Onboarding() {
             {[...SCENES, null].map((_, i) => (
               <button
                 key={i}
-                aria-label={`Part ${i + 1}`}
+                aria-label={t("Part {n}", { n: i + 1 })}
                 onClick={(e) => {
                   e.stopPropagation();
                   setStep(i);

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Bookmark01Icon, Cancel01Icon, Copy01Icon, Delete02Icon, Search01Icon } from "@hugeicons/core-free-icons";
 import type { Annotation, Book } from "../../../shared/types";
 import { Button, cx, EASE, Empty, Icon, IconButton, Input, Panel, Spinner, Textarea, toast } from "@/components/ui";
+import { t, tn } from "../../../shared/i18n";
 import { annotationsMarkdown, bookmarksOf, highlightsOf, logReading, removeAnnotation, updateAnnotation } from "@/lib/annotations";
 
 /** Highlight colours, soft enough to read through on any page. */
@@ -48,6 +49,15 @@ export function useReadingTime(bookId: string) {
   }, []);
 }
 
+/**
+ * A bookmark's place, as shown. A PDF bookmark is saved as "Page 12", in
+ * English, so it shows in the chosen language; a chapter's own name stays as the book has it.
+ */
+const placeName = (chapter: string) => {
+  const page = /^Page (\d+)$/.exec(chapter)?.[1];
+  return page ? t("Page {page}", { page }) : chapter;
+};
+
 /* ------------------------------------------------------------------------ */
 /* What the reader marked                                                    */
 /* ------------------------------------------------------------------------ */
@@ -58,7 +68,7 @@ function Swatches({ value, onPick }: { value?: Annotation["color"]; onPick: (c: 
       {(Object.keys(MARKS) as Array<keyof typeof MARKS>).map((c) => (
         <button
           key={c}
-          aria-label={c}
+          aria-label={t(c)}
           onClick={() => onPick(c)}
           className={cx("size-6 rounded-full transition-transform duration-150 hover:scale-110", value === c && "shadow-[0_0_0_2px_var(--card),0_0_0_4px_var(--foreground)]")}
           style={{ background: MARKS[c] }}
@@ -89,8 +99,8 @@ export function SelectionBar({
       <div className="flex items-center gap-2 rounded-full border border-border bg-card/95 p-1.5 pl-3 text-foreground shadow-float backdrop-blur-xl">
         <Swatches onPick={onHighlight} />
         <span className="mx-1 h-4 w-px bg-border" />
-        <Button size="sm" variant="ghost" className="text-foreground" onClick={onNote}>Note</Button>
-        <IconButton label="Copy" icon={Copy01Icon} onClick={onCopy} />
+        <Button size="sm" variant="ghost" className="text-foreground" onClick={onNote}>{t("Note")}</Button>
+        <IconButton label={t("Copy")} icon={Copy01Icon} onClick={onCopy} />
       </div>
     </motion.div>
   );
@@ -128,19 +138,19 @@ export function AnnotationCard({
               {annotation.text}
             </p>
           )}
-          <Textarea autoFocus autoResize rows={2} className="max-h-40" placeholder="Write a note" value={note} onChange={(e) => setNote(e.target.value)} />
+          <Textarea autoFocus autoResize rows={2} className="max-h-40" placeholder={t("Write a note")} value={note} onChange={(e) => setNote(e.target.value)} />
           <div className="flex items-center justify-between">
             <Swatches value={annotation.color} onPick={(color) => updateAnnotation(bookId, annotation.id, { color })} />
             <div className="flex gap-1">
               <IconButton
-                label="Remove highlight"
+                label={t("Remove highlight")}
                 icon={Delete02Icon}
                 onClick={() => {
                   removeAnnotation(bookId, annotation.id);
                   onClose();
                 }}
               />
-              <Button size="sm" variant="primary" onClick={save}>Done</Button>
+              <Button size="sm" variant="primary" onClick={save}>{t("Done")}</Button>
             </div>
           </div>
         </Panel>
@@ -154,21 +164,21 @@ export function NotesList({ book, onGo, onFind }: { book: Book; onGo: (a: Annota
   const highlights = highlightsOf(book);
   const bookmarks = bookmarksOf(book);
   if (!highlights.length && !bookmarks.length)
-    return <Empty icon={Bookmark01Icon} title="Nothing marked yet" description="Select words to highlight them or add a note. Bookmark a page from the bar at the top." />;
+    return <Empty icon={Bookmark01Icon} title={t("Nothing marked yet")} description={t("Select words to highlight them or add a note. Bookmark a page from the bar at the top.")} />;
   return (
     <div className="flex flex-col gap-6">
       {bookmarks.length > 0 && (
         <section>
-          <h3 className="mb-2 px-1 text-caption font-medium text-muted">Bookmarks</h3>
+          <h3 className="mb-2 px-1 text-caption font-medium text-muted">{t("Bookmarks")}</h3>
           <div className="flex flex-col">
             {bookmarks.map((b) => (
               <div key={b.id} className="group flex items-center gap-2 rounded-item px-2 py-2 hover:bg-control">
                 <button className="min-w-0 flex-1 text-left" onClick={() => onGo(b)}>
-                  <span className="line-clamp-1 text-label">{b.chapter || "Page"}</span>
+                  <span className="line-clamp-1 text-label">{b.chapter ? placeName(b.chapter) : t("Page")}</span>
                   {b.fraction !== undefined && <span className="text-caption text-muted tabular-nums">{Math.round(b.fraction * 100)}%</span>}
                 </button>
                 <span className="opacity-0 transition-opacity group-hover:opacity-100">
-                  <IconButton label="Remove bookmark" icon={Cancel01Icon} onClick={() => removeAnnotation(book.id, b.id)} />
+                  <IconButton label={t("Remove bookmark")} icon={Cancel01Icon} onClick={() => removeAnnotation(book.id, b.id)} />
                 </span>
               </div>
             ))}
@@ -178,15 +188,15 @@ export function NotesList({ book, onGo, onFind }: { book: Book; onGo: (a: Annota
       {highlights.length > 0 && (
         <section>
           <div className="mb-2 flex items-center justify-between px-1">
-            <h3 className="text-caption font-medium text-muted">Highlights and notes</h3>
+            <h3 className="text-caption font-medium text-muted">{t("Highlights and notes")}</h3>
             <button
               className="text-caption font-medium text-muted hover:text-foreground"
               onClick={() => {
                 navigator.clipboard.writeText(annotationsMarkdown(book));
-                toast.success("Copied as Markdown");
+                toast.success(t("Copied as Markdown"));
               }}
             >
-              Copy all
+              {t("Copy all")}
             </button>
           </div>
           <div className="flex flex-col gap-1">
@@ -203,7 +213,7 @@ export function NotesList({ book, onGo, onFind }: { book: Book; onGo: (a: Annota
                 )}
                 {h.note && <span className="mt-1.5 block pl-3 text-label text-muted">{h.note}</span>}
                 <span className="mt-1 block pl-3 text-caption text-muted">
-                  {h.kind === "kindle" ? `From Kindle${h.where ? `, ${h.where}` : ""}` : h.chapter}
+                  {h.kind === "kindle" ? (h.where ? t("From Kindle, {where}", { where: h.where }) : t("From Kindle")) : h.chapter}
                 </span>
               </button>
             ))}
@@ -267,15 +277,15 @@ export function SearchPanel({
         }}
         className="flex gap-2"
       >
-        <Input autoFocus placeholder="Words in this book" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <IconButton label="Search" icon={Search01Icon} variant="secondary" size="md" type="submit" />
+        <Input autoFocus placeholder={t("Words in this book")} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <IconButton label={t("Search")} icon={Search01Icon} variant="secondary" size="md" type="submit" />
       </form>
       {busy && (
         <div className="flex items-center gap-2 text-caption text-muted">
-          <Spinner size="sm" /> Searching, {Math.round(share * 100)}%
+          <Spinner size="sm" /> {t("Searching, {percent}%", { percent: Math.round(share * 100) })}
         </div>
       )}
-      {done && <p className="text-caption text-muted">{hits.length ? `${hits.length} found` : "Not in this book"}</p>}
+      {done && <p className="text-caption text-muted">{hits.length ? tn(hits.length, "{n} found", "{n} found") : t("Not in this book")}</p>}
       <div className="flex flex-col">
         {hits.slice(0, 400).map((h) => (
           <button key={h.key} className="rounded-item px-2 py-2.5 text-left hover:bg-control" onClick={h.go}>

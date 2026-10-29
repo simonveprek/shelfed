@@ -3,6 +3,7 @@
 
 import { motion } from "framer-motion";
 import { cx } from "./cx";
+import { t } from "../../../../shared/i18n";
 
 const SIZE = { sm: 14, md: 18, lg: 24 } as const;
 
@@ -12,7 +13,7 @@ const SIZE = { sm: 14, md: 18, lg: 24 } as const;
  */
 export function Spinner({
   size = "md",
-  label = "Loading",
+  label = t("Loading"),
   className,
 }: {
   size?: "sm" | "md" | "lg";

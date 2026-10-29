@@ -7,6 +7,7 @@ import { Button } from "./button";
 import { cx } from "./cx";
 import { Dialog, DialogFooter, DialogHeader } from "./dialog";
 import { Icon } from "./icon";
+import { t } from "../../../../shared/i18n";
 
 /**
  * A dialog that asks before something happens. Focus starts on Cancel, so
@@ -18,9 +19,9 @@ export function AlertDialog({
   onClose,
   title,
   description,
-  confirmLabel = "Confirm",
+  confirmLabel = t("Confirm"),
   pendingLabel,
-  cancelLabel = "Cancel",
+  cancelLabel = t("Cancel"),
   tone = "neutral",
   onConfirm,
   children,

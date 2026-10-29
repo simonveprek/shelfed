@@ -7,6 +7,7 @@ import { PHONE_LIKE, useOnKindle } from "@/lib/kindle";
 import { useStore } from "@/lib/store";
 import { isMac } from "@/lib/api";
 import { bytes } from "@/lib/util";
+import { t, tn } from "../../../shared/i18n";
 import { Kindle3D } from "./Kindle3D";
 
 const done = () => useStore.setState({ kindleArrived: null });
@@ -134,12 +135,16 @@ export function KindleArrival() {
           >
             <p className="text-[22px] leading-tight font-medium tracking-[-0.02em]">{model.name}</p>
             <p className="mt-1 text-label text-muted">
-              {drive ? `Plugged in, ${bytes(drive.free)} free${copied ? `, ${copied} of your books on it` : ""}` : "Plugged in"}
+              {drive
+                ? copied
+                  ? tn(copied, "Plugged in, {free} free, {n} of your books on it", "Plugged in, {free} free, {n} of your books on it", { free: bytes(drive.free) })
+                  : t("Plugged in, {free} free", { free: bytes(drive.free) })
+                : t("Plugged in")}
             </p>
             {cable === "phone" ? (
-              <p className="mt-4 max-w-[34rem] text-caption text-muted" style={{ textWrap: "balance" }}>{PHONE_LIKE}</p>
+              <p className="mt-4 max-w-[34rem] text-caption text-muted" style={{ textWrap: "balance" }}>{t(PHONE_LIKE)}</p>
             ) : (
-              <p className="mt-4 text-caption text-muted">{panel ? "Drop books on it in the side panel" : "Drag books onto it to copy them"}</p>
+              <p className="mt-4 text-caption text-muted">{panel ? t("Drop books on it in the side panel") : t("Drag books onto it to copy them")}</p>
             )}
           </motion.div>
         </motion.div>
