@@ -8,9 +8,9 @@ import {
   AlertDialog, Alert, Badge, Button, Dialog, DialogFooter, DialogHeader, Empty, Field, Input, RadioGroup, Segmented, Spinner, Textarea,
 } from "@/components/ui";
 import { List, Meter, Row } from "@/components/bits";
-import { convertMany, emailPlan, removeBooks, sendByCable, sendByEmail, targetsFor, usbPlan } from "@/lib/actions";
+import { bringCalibreOver, convertMany, emailPlan, removeBooks, sendByCable, sendByEmail, targetsFor, usbPlan } from "@/lib/actions";
 import { api } from "@/lib/api";
-import { bookById, patchBooks, saveCollections, setSetting, useStore } from "@/lib/store";
+import { bookById, patchBooks, saveCollections, setSetting, useStore, type CalibreSummary } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { Cover } from "./Cover";
 import { PHONE_LIKE, tidyKindle, useFinishedOnKindle, useOnKindle } from "@/lib/kindle";
@@ -433,6 +433,83 @@ export function TidyConfirm() {
       confirmLabel="Take them off"
       onConfirm={() => tidyKindle()}
     />
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* Coming from Calibre                                                       */
+/* ------------------------------------------------------------------------ */
+
+/** The last two folders of a path, enough to know it by: Documents/Calibre Library. */
+const lastFolders = (path: string) => path.split(/[\\/]/).filter(Boolean).slice(-2).join(path.includes("\\") ? "\\" : "/");
+
+export function CalibreDialog({ path, books, working, done }: { path: string; books: number; working?: boolean; done?: CalibreSummary }) {
+  if (done) return <CalibreDone summary={done} />;
+  return (
+    <Dialog open onClose={close} label="Coming from Calibre">
+      <DialogHeader title="Coming from Calibre?" />
+      <div className="flex flex-col gap-5 px-6 pt-5">
+        <div className="flex items-center gap-4 rounded-[16px] border border-border bg-well px-4 py-3.5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-[13px] bg-control">
+            {working ? <Spinner /> : <span className="text-[17px] font-medium tabular-nums">{books > 999 ? "1k+" : books}</span>}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-label font-medium">{working ? `Bringing ${plural(books, "book")} over` : `Your Calibre library, ${plural(books, "book")}`}</p>
+            <p className="truncate text-caption text-muted" title={path}>
+              {working ? "A big library takes a minute or two. Shelfed stays usable meanwhile." : `In ${lastFolders(path)}`}
+            </p>
+          </div>
+        </div>
+        {!working && (
+          <ul className="flex flex-col gap-2 text-label text-muted">
+            <li>Each book comes in once, with all its formats and its cover.</li>
+            <li>The titles, authors, series, tags and ratings you set in Calibre come along.</li>
+            <li>Calibre's own library is only read, never changed.</li>
+          </ul>
+        )}
+      </div>
+      <DialogFooter>
+        {working ? (
+          <Button variant="ghost" onClick={close}>Keep it going in the background</Button>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={close}>Not now</Button>
+            <Button variant="primary" onClick={() => bringCalibreOver(path, books)}>Bring them over</Button>
+          </>
+        )}
+      </DialogFooter>
+    </Dialog>
+  );
+}
+
+function CalibreDone({ summary }: { summary: CalibreSummary }) {
+  const figures: Array<[number, string, string]> = [
+    [summary.added, "book", "books"],
+    [summary.series, "series", "series"],
+    [summary.authors, "author", "authors"],
+    [summary.joined, "copy joined", "copies joined"],
+  ];
+  return (
+    <Dialog open onClose={close} label="Your Calibre library is here">
+      <DialogHeader title="Your Calibre library is here" />
+      <div className="px-6 pt-5">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[16px] border border-border bg-border">
+          {figures.map(([value, one, many]) => (
+            <div key={many} className="bg-card px-4 py-3.5">
+              <p className="text-[22px] leading-tight font-medium tracking-[-0.02em] tabular-nums">{value.toLocaleString()}</p>
+              <p className="text-caption text-muted">{value === 1 ? one : many}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-caption text-muted">
+          {summary.skipped ? `${plural(summary.skipped, "book was", "books were")} here already. ` : ""}
+          Your books now live in your Shelfed library as plain files. Calibre and its library are just as they were.
+        </p>
+      </div>
+      <DialogFooter>
+        <Button variant="primary" onClick={close}>Done</Button>
+      </DialogFooter>
+    </Dialog>
   );
 }
 

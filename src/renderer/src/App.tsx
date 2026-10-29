@@ -6,11 +6,12 @@ import { importPaths } from "@/lib/actions";
 import type { UpdateState } from "../../shared/types";
 import { api, isMac, isWin, on } from "@/lib/api";
 import { runCommand } from "@/lib/commands";
-import { hydrate, persist, useStore } from "@/lib/store";
+import { hydrate, persist, setSetting, useStore } from "@/lib/store";
+import { findCalibre } from "@/lib/findcalibre";
 import { AppSidebar, Header } from "@/components/Shell";
 import { LibraryView } from "@/components/Library";
 import { Inspector } from "@/components/Inspector";
-import { ConvertDialog, EditDialog, RemoveConfirm, RenameCollection, SendDialog, TidyConfirm } from "@/components/Dialogs";
+import { CalibreDialog, ConvertDialog, EditDialog, RemoveConfirm, RenameCollection, SendDialog, TidyConfirm } from "@/components/Dialogs";
 import { MetadataDialog } from "@/components/Metadata";
 import { SettingsDialog } from "@/components/Settings";
 import { DropZone, Jobs, Palette } from "@/components/Overlays";
@@ -51,7 +52,29 @@ function Dialogs() {
       return <RenameCollection key={dialog.id} id={dialog.id} />;
     case "clippings":
       return <ClippingsDialog text={dialog.text} from={dialog.from} />;
+    case "calibre":
+      return <CalibreDialog path={dialog.path} books={dialog.books} working={dialog.working} done={dialog.done} />;
   }
+}
+
+/**
+ * Once, after the welcome: if there's a Calibre library on this computer,
+ * Shelfed offers to bring it over. Never again after that; it stays in
+ * Settings → Library.
+ */
+function CalibreOffer() {
+  const ready = useStore((s) => s.ready && !s.onboarding && s.settings.onboarded && !s.settings.calibreOffered);
+  useEffect(() => {
+    if (!ready) return;
+    findCalibre().then((all) => {
+      const library = all[0];
+      if (!library) return;
+      setSetting({ calibreOffered: true });
+      // Not over something else already open.
+      if (!useStore.getState().dialog) useStore.setState({ dialog: { kind: "calibre", path: library.path, books: library.books } });
+    });
+  }, [ready]);
+  return null;
 }
 
 /** Looks out for Kindles for the whole app, once it has its settings. */
@@ -198,6 +221,7 @@ export function App() {
       {ready && (
         <Mend>
           <KindleWatch />
+          <CalibreOffer />
           <Library />
           <KindleArrival />
           <Reader />

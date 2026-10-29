@@ -170,6 +170,8 @@ export type Settings = {
   icon?: string;
   /** Ebooks arriving in Downloads come in by themselves. On unless turned off. */
   downloads?: boolean;
+  /** True once Shelfed has offered to bring a Calibre library over, so it asks only once. */
+  calibreOffered?: boolean;
 };
 
 /** Where finding and getting a new version of Shelfed has got to. */

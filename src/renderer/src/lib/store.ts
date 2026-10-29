@@ -16,11 +16,16 @@ export type Section =
   | { kind: "kindle" }
   | { kind: "group"; by: Browse; value: string };
 
+/** What bringing a Calibre library over came to. */
+export type CalibreSummary = { added: number; skipped: number; joined: number; series: number; authors: number };
+
 export type Dialog =
   | { kind: "send" | "convert" | "metadata" | "edit"; ids: string[] }
   | { kind: "settings"; tab?: SettingsSection }
   | { kind: "rename-collection"; id: string }
-  | { kind: "clippings"; text: string; from: string };
+  | { kind: "clippings"; text: string; from: string }
+  /** Bringing a Calibre library over: the offer, then what came of it. */
+  | { kind: "calibre"; path: string; books: number; working?: boolean; done?: CalibreSummary };
 
 export type Job = {
   id: string;

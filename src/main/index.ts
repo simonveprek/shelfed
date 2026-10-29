@@ -15,6 +15,7 @@ import { copyToDevice, deviceFiles, findDevices, kindlePort, kindlesOnUsb, readC
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks } from "./catalogues";
+import { findCalibre } from "./calibre";
 import { watchDownloads } from "./downloads";
 import { getSettings, setSettings, setSmtpPassword } from "./settings";
 import { checkForUpdates, installUpdate, updateState, watchUpdates } from "./updates";
@@ -376,6 +377,8 @@ const api = {
 
   /** The book files already on a Kindle plugged in as a drive. */
   deviceFiles: (device: string) => deviceFiles(device),
+  /** The Calibre libraries on this computer, to offer bringing one over. */
+  findCalibre: () => findCalibre(),
   /** Takes book files off a Kindle plugged in as a drive. */
   removeFromDevice: (device: string, files: string[]) => removeFromDevice(device, files),
 

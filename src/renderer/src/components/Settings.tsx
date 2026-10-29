@@ -10,7 +10,8 @@ import {
 } from "@/components/ui";
 import { Point } from "@/components/fragms/points";
 import { api, isMac, revealLabel } from "@/lib/api";
-import { joinCopies } from "@/lib/actions";
+import { bringCalibreOver, joinCopies } from "@/lib/actions";
+import { useCalibre } from "@/lib/findcalibre";
 import { findCopies } from "@/lib/copies";
 import { chooseIcon, iconSrc } from "@/lib/icon";
 import { PHONE_LIKE, useFinishedOnKindle, useKindlePort, useOnKindle } from "@/lib/kindle";
@@ -129,6 +130,7 @@ function LibrarySection() {
           ))}
         </div>
       </Group>
+      <FromCalibre />
       <Group label="Downloads">
         <SwitchRow
           label="Add books you download"
@@ -144,6 +146,19 @@ function LibrarySection() {
         </Row>
       </Group>
     </>
+  );
+}
+
+/** A Calibre library on this computer, to bring over at any time. */
+function FromCalibre() {
+  const calibre = useCalibre();
+  if (!calibre) return null;
+  return (
+    <Group label="Calibre">
+      <Row label="Your Calibre library" hint={`${plural(calibre.books, "book")} in ${calibre.path}. Bring them over, with their formats, covers, series and tags. Calibre's library isn't changed, and books already here are skipped.`}>
+        <Button size="sm" onClick={() => bringCalibreOver(calibre.path, calibre.books)}>Bring them over</Button>
+      </Row>
+    </Group>
   );
 }
 

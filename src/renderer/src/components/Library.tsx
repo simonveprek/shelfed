@@ -11,6 +11,7 @@ import { Empty } from "@/components/bits";
 import { addToCollection, joinSelected, openReader, pickAndImport, removeFromCollection } from "@/lib/actions";
 import { api, isMac, revealLabel } from "@/lib/api";
 import { newCollection, runAction } from "@/lib/commands";
+import { useCalibre } from "@/lib/findcalibre";
 import { useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME, selectBook, targetIds } from "@/lib/select";
 import { useStore } from "@/lib/store";
@@ -435,6 +436,7 @@ export function LibraryView() {
 
 function Page() {
   const visible = useVisibleBooks();
+  const calibre = useCalibre();
   const view = useStore((s) => s.settings.view);
   const section = useStore((s) => s.section);
   const total = useStore((s) => s.books.length);
@@ -451,6 +453,15 @@ function Page() {
             <Button variant="primary" icon={FileAddIcon} onClick={() => pickAndImport(false)}>Add books</Button>
             <Button icon={FolderAddIcon} onClick={() => pickAndImport(true)}>Add a folder</Button>
           </div>
+          {calibre && (
+            <button
+              type="button"
+              className="mt-4 text-label text-muted underline decoration-line-strong underline-offset-4 hover:text-foreground"
+              onClick={() => useStore.setState({ dialog: { kind: "calibre", path: calibre.path, books: calibre.books } })}
+            >
+              Bring over your Calibre library, {plural(calibre.books, "book")}
+            </button>
+          )}
           <p className="mt-4 text-caption">
             Or drop files anywhere on this window, or{" "}
             <button className="underline decoration-underline underline-offset-4 hover:text-foreground" onClick={() => useStore.setState({ section: { kind: "discover" } })}>

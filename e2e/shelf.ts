@@ -71,17 +71,29 @@ type Options = {
   onKindle: string[];
   /** Fills the library folder before Shelfed starts, for a library that's been around a while. */
   library: { fill: (folder: string) => void } | undefined;
+  /** A Calibre library on this pretend computer, filled by the test, for Shelfed to find. */
+  calibre: { fill: (folder: string) => void } | undefined;
 };
 
 export const test = base.extend<{ shelf: Shelf } & Options>({
   kindle: [undefined, { option: true }],
   onKindle: [[], { option: true }],
   library: [undefined, { option: true }],
-  shelf: async ({ kindle, onKindle, library }, use) => {
+  calibre: [undefined, { option: true }],
+  shelf: async ({ kindle, onKindle, library, calibre }, use) => {
     const dir = mkdtempSync(join(tmpdir(), "shelf-e2e-"));
     const data = join(dir, "data");
     mkdirSync(data);
     mkdirSync(join(dir, "Downloads"));
+    // Calibre's settings, empty unless the test gives it a library, so the real one is never found.
+    mkdirSync(join(dir, "calibre-config"));
+    if (calibre) {
+      const books = join(dir, "Calibre Library");
+      mkdirSync(books);
+      writeFileSync(join(books, "metadata.db"), "");
+      calibre.fill(books);
+      writeFileSync(join(dir, "calibre-config", "global.py.json"), JSON.stringify({ library_path: books }));
+    }
     writeFileSync(
       join(data, "settings.json"),
       JSON.stringify({ libraryPath: join(dir, "Library"), onboarded: true, inspector: true, sidebar: true, updates: false }),
@@ -115,6 +127,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
         SHELF_USERDATA: data,
         // A Downloads folder of its own, never the real one.
         SHELF_DOWNLOADS: join(dir, "Downloads"),
+        SHELF_CALIBRE_CONFIG: join(dir, "calibre-config"),
         ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}),
         // On someone's own computer the test books are deleted, not put in their Trash.
         ...(process.env.CI ? {} : { SHELF_NO_TRASH: "1" }),

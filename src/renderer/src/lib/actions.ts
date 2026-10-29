@@ -92,6 +92,7 @@ export async function importPaths(paths: string[], open = false, from?: string):
   let joined = 0;
   let done = 0;
   const touched = new Set<string>();
+  const fresh = new Set<string>();
   let last: Book | null = null;
   try {
     await pool(books, 3, async ([first, ...others]) => {
@@ -109,6 +110,7 @@ export async function importPaths(paths: string[], open = false, from?: string):
         } else {
           upsert(book);
           current = await finishImport(book, calibre, cover);
+          fresh.add(current.id);
           added++;
         }
         for (const path of others) {
@@ -131,6 +133,8 @@ export async function importPaths(paths: string[], open = false, from?: string):
     // Copies that came as books of their own, like an EPUB and a MOBI Calibre kept apart, join up.
     const into = await joinCopies(touched);
     joined += into.size;
+    // A new book that turned out to be a copy is a format now, not a book of its own.
+    added -= [...into.keys()].filter((id) => fresh.has(id)).length;
     if (last && into.has((last as Book).id)) last = bookById(into.get((last as Book).id)!) ?? null;
     set({ mood: null });
     const notes = [skipped && `${skipped} already here`, joined && `${plural(joined, "copy", "copies")} joined to ${joined === 1 ? "its book" : "their books"}`].filter(Boolean).join(", ");
@@ -193,6 +197,32 @@ export async function joinSelected(ids: string[]) {
       description: `Files it already had went to the ${isMac ? "Trash" : "Recycle Bin"}, with the copies' folders.`,
     });
   }
+}
+
+/**
+ * Brings a Calibre library over: every book, with its formats, cover and the
+ * details set in Calibre, copies joined and series found, then says what came
+ * of it. Calibre's own library is only read, never changed.
+ */
+export async function bringCalibreOver(path: string, books: number) {
+  set({ dialog: { kind: "calibre", path, books, working: true } });
+  const result = await importPaths([path]);
+  const brought = (result?.ids ?? []).map(bookById).filter((b): b is Book => Boolean(b));
+  set({
+    dialog: {
+      kind: "calibre",
+      path,
+      books,
+      done: {
+        // Books as they now are in the library, copies joined.
+        added: brought.length,
+        skipped: result?.skipped ?? 0,
+        joined: result?.joined ?? 0,
+        series: new Set(brought.map((b) => b.series).filter(Boolean)).size,
+        authors: new Set(brought.flatMap((b) => b.authors)).size,
+      },
+    },
+  });
 }
 
 export async function pickAndImport(folder = false) {

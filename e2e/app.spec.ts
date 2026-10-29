@@ -406,3 +406,49 @@ test("downloads stay out when that's turned off", async ({ shelf }) => {
   await expect(page.locator("main [draggable=true]")).toHaveCount(0);
 });
 
+test.describe("coming from Calibre", () => {
+  test.use({
+    calibre: {
+      fill: (folder: string) => {
+        const book = (author: string, dir: string, title: string, ext: string, body: string | Uint8Array, series?: [string, number]) => {
+          mkdirSync(join(folder, author, dir), { recursive: true });
+          writeFileSync(join(folder, author, dir, `${title} - ${author}.${ext}`), body);
+          writeFileSync(
+            join(folder, author, dir, "metadata.opf"),
+            `<?xml version='1.0' encoding='utf-8'?><package xmlns="http://www.idpf.org/2007/opf" version="2.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf"><dc:title>${title}</dc:title><dc:creator opf:role="aut">${author}</dc:creator>${series ? `<meta name="calibre:series" content="${series[0]}"/><meta name="calibre:series_index" content="${series[1]}"/>` : ""}</metadata></package>`,
+          );
+        };
+        book("John Flanagan", "The Ruins of Gorlan (1)", "The Ruins of Gorlan", "epub", epub({ title: "Gorlan", author: "Unknown" }), ["Ranger's Apprentice", 1]);
+        book("John Flanagan", "The Burning Bridge (2)", "The Burning Bridge", "epub", epub({ title: "Bridge", author: "Unknown" }), ["Ranger's Apprentice", 2]);
+        // One book Calibre kept twice, once per format.
+        book("Jane Austen", "Emma (3)", "Emma", "epub", epub({ title: "Emma", author: "Jane Austen" }));
+        book(
+          "Jane Austen", "Emma (4)", "Emma", "fb2",
+          `<?xml version="1.0" encoding="UTF-8"?><FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0"><description><title-info><book-title>Emma</book-title><lang>en</lang></title-info></description><body><section><p>Emma.</p></section></body></FictionBook>`,
+        );
+      },
+    },
+  });
+
+  test("Shelfed finds the Calibre library, offers it once, and says what came over", async ({ shelf }) => {
+    let { page } = shelf;
+    const offer = page.getByRole("dialog");
+    await expect(offer.getByText("Coming from Calibre?")).toBeVisible();
+    await expect(offer.getByText("Your Calibre library, 4 books")).toBeVisible();
+    await offer.getByRole("button", { name: "Bring them over" }).click();
+    await expect(offer.getByText("Your Calibre library is here")).toBeVisible({ timeout: 30_000 });
+    const figure = (label: string) => offer.getByText(label, { exact: true }).locator("xpath=preceding-sibling::p[1]");
+    await expect(figure("books")).toHaveText("3");
+    await expect(figure("series")).toHaveText("1");
+    await expect(figure("authors")).toHaveText("2");
+    await expect(figure("copy joined")).toHaveText("1");
+    await offer.getByRole("button", { name: "Done" }).click();
+    await expect(card(page, "The Ruins of Gorlan")).toBeVisible();
+    // Only once.
+    await shelf.restart();
+    page = shelf.page;
+    await expect(card(page, "The Ruins of Gorlan")).toBeVisible();
+    await expect(page.getByText("Coming from Calibre?")).toHaveCount(0);
+  });
+});
+
