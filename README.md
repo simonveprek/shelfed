@@ -34,7 +34,7 @@
 
 ## What it does
 
-- **Reads everything.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens where you stopped.
+- **Reads everything.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens where you stopped, and reads aloud.
 - **Keeps your library as plain files.** One folder per author in `Documents/Shelf Library`, readable without the app.
 - **Converts.** To EPUB, AZW3 for Kindle, PDF, Word, FB2, text or a web page, all built in.
 - **Sends to your Kindle.** By cable, or by email from your own mail account. It shows which of your books are already on a Kindle, and takes the finished ones off.
