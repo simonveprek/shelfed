@@ -32,8 +32,10 @@ function Install($name, $seconds) {
   while (-not $process.HasExited -and (Get-Date) -lt $deadline) {
     foreach ($child in Get-CimInstance Win32_Process) {
       if ($tree.ContainsKey([int]$child.ParentProcessId) -and -not $tree.ContainsKey([int]$child.ProcessId)) {
-        $tree[[int]$child.ProcessId] = $true
         $started[$child.Name] = $true
+        # Shelfed opening at the end is the installer's last step; what Shelfed then does
+        # (a hidden PowerShell looking for Kindles) is its own, not the installer's.
+        if ($child.Name -ne "Shelfed.exe") { $tree[[int]$child.ProcessId] = $true }
       }
     }
     if ($n % 4 -eq 0) { Shot ("{0}-{1:d2}" -f $name, [int]($n / 4)) }
