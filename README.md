@@ -20,6 +20,7 @@
   <a href="https://github.com/simonveprek/shelfed/releases/latest"><b>Download</b></a> ·
   <a href="https://shelfed.simonveprek.cz">Website</a> ·
   <a href="#how-it-works">How it works</a> ·
+  <a href="ROADMAP.md">Roadmap</a> ·
   <a href="#build-it">Build it</a>
 </p>
 
@@ -203,7 +204,7 @@ Pushing a tag like `v0.2.0` builds every installer into a draft release. If some
 - **Calibre libraries import their books**, but not yet Calibre's own tags and shelves.
 - **Linux** runs from source, but there's no installer yet.
 
-Bugs and ideas are welcome in [issues](https://github.com/simonveprek/shelfed/issues); see [CONTRIBUTING.md](CONTRIBUTING.md) before a pull request.
+What's planned for these, and what isn't, is in the [roadmap](ROADMAP.md). Bugs and ideas are welcome in [issues](https://github.com/simonveprek/shelfed/issues); see [CONTRIBUTING.md](CONTRIBUTING.md) before a pull request.
 
 ## Licence
 
