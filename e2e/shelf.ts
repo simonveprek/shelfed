@@ -67,12 +67,15 @@ type Options = {
   kindle: "drive" | "phone" | undefined;
   /** Book files already in that drive Kindle's documents folder. */
   onKindle: string[];
+  /** Fills the library folder before Shelfed starts, for a library that's been around a while. */
+  library: { fill: (folder: string) => void } | undefined;
 };
 
 export const test = base.extend<{ shelf: Shelf } & Options>({
   kindle: [undefined, { option: true }],
   onKindle: [[], { option: true }],
-  shelf: async ({ kindle, onKindle }, use) => {
+  library: [undefined, { option: true }],
+  shelf: async ({ kindle, onKindle, library }, use) => {
     const dir = mkdtempSync(join(tmpdir(), "shelf-e2e-"));
     const data = join(dir, "data");
     mkdirSync(data);
@@ -80,6 +83,10 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       join(data, "settings.json"),
       JSON.stringify({ libraryPath: join(dir, "Library"), onboarded: true, inspector: true, sidebar: true, updates: false }),
     );
+    if (library) {
+      mkdirSync(join(dir, "Library"), { recursive: true });
+      library.fill(join(dir, "Library"));
+    }
     // Always the small window GitHub's Mac runners open, so a book can sit half
     // out of view and the tests meet what a small screen does, wherever they run.
     writeFileSync(join(data, "window.json"), JSON.stringify({ x: 0, y: 0, width: 1024, height: 677 }));
@@ -100,7 +107,13 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       const args = ["."];
       if (process.platform === "linux" && process.env.CI) args.push("--no-sandbox");
       if (process.platform === "win32") args.push("--disable-features=CalculateNativeWinOcclusion");
-      const env = { ...process.env, SHELF_USERDATA: data, ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}) };
+      const env = {
+        ...process.env,
+        SHELF_USERDATA: data,
+        ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}),
+        // On someone's own computer the test books are deleted, not put in their Trash.
+        ...(process.env.CI ? {} : { SHELF_NO_TRASH: "1" }),
+      };
       // SHELF_APP=<the packaged app's executable> tests an installer's app instead of the build.
       app = process.env.SHELF_APP
         ? await electron.launch({ executablePath: process.env.SHELF_APP, args: args.slice(1), env })

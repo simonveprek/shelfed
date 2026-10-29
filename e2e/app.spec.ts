@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BOOKS, card, epub, expect, openSettings, test } from "./shelf";
@@ -302,3 +302,64 @@ test.describe("a Calibre library", () => {
     }
   });
 });
+
+test.describe("a library that came in from Calibre before copies joined up", () => {
+  const PAIRS = 20;
+  const SINGLES = 9;
+  const cover = join(import.meta.dirname, "..", "site", "public", "media", "views.jpg");
+
+  /** Like one imported before: each Pedro Urvi book twice, an EPUB and a MOBI in folders of their own, with covers. */
+  test.use({
+    library: { fill: (folder: string) => {
+      const books: object[] = [];
+      let n = 0;
+      const add = (title: string, author: string, ext: string, body: Uint8Array | string) => {
+        const id = `seed${String(n++).padStart(6, "0")}`;
+        const dir = `${author}/${title.replace(/[:]/g, "")} (${id.slice(-4)})`;
+        const file = `${title.replace(/[:]/g, "")} - ${author}.${ext}`;
+        mkdirSync(join(folder, dir), { recursive: true });
+        writeFileSync(join(folder, dir, file), body);
+        copyFileSync(cover, join(folder, dir, "cover.jpg"));
+        copyFileSync(cover, join(folder, dir, "thumb.jpg"));
+        books.push({
+          id, title, authors: [author], tags: [], collections: [], rating: 0, status: "unread", favorite: false,
+          formats: [{ ext, file, size: typeof body === "string" ? body.length : body.byteLength }], dir, cover: 1,
+          added: 1_700_000_000_000 + n, modified: 1_700_000_000_000 + n, parsed: true, hash: `hash-${id}`,
+        });
+      };
+      for (let i = 1; i <= PAIRS; i++) {
+        const title = `The King of the West: (Path of the Ranger Book ${i})`;
+        add(title, "Pedro Urvi", "epub", epub({ title, author: "Pedro Urvi" }));
+        add(title, "Pedro Urvi", "mobi", `a mobi of book ${i}`);
+      }
+      for (let i = 1; i <= SINGLES; i++) add(`A Book Alone ${i}`, "Ada Marsh", "epub", epub({ title: `A Book Alone ${i}`, author: "Ada Marsh" }));
+      writeFileSync(join(folder, "library.json"), JSON.stringify({ version: 1, books, collections: [] }));
+    } },
+  });
+
+  test("joins its copies from Settings, and Shelfed starts again after", async ({ shelf }) => {
+    let { page } = shelf;
+    const count = page.locator("header").getByText(String(PAIRS * 2 + SINGLES), { exact: true });
+    await expect(count).toBeVisible();
+    await openSettings(page);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Library", exact: true }).click();
+    await expect(dialog.getByText(`${PAIRS} books are copies`, { exact: false })).toBeVisible();
+    await dialog.getByRole("button", { name: `Join ${PAIRS}` }).click();
+    await expect(page.getByText(`Joined ${PAIRS} copies to their books`)).toBeVisible({ timeout: 60_000 });
+    await expect(dialog.getByRole("button", { name: "None found" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("header").getByText(String(PAIRS + SINGLES), { exact: true })).toBeVisible();
+
+    // Every joined book holds both files.
+    await page.getByPlaceholder("Search your books").fill("Ranger Book 20");
+    await card(page, "The King of the West: (Path of the Ranger Book 20)").click();
+    await expect(page.locator("aside").getByText("MOBI", { exact: true })).toBeVisible();
+
+    // And it starts again, on the joined library.
+    await shelf.restart();
+    page = shelf.page;
+    await expect(page.locator("header").getByText(String(PAIRS + SINGLES), { exact: true })).toBeVisible();
+  });
+});
+

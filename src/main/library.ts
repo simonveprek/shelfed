@@ -71,6 +71,13 @@ async function withFolder<T>(step: () => Promise<T>): Promise<T> {
   }
 }
 
+/**
+ * Sends a folder to the system Trash. The app tests, run on someone's own
+ * computer, delete instead, so their Trash doesn't fill with test books; CI
+ * uses the real Trash, as people do.
+ */
+const toTrash = (dir: string) => (process.env.SHELF_NO_TRASH ? rm(dir, { recursive: true, force: true }) : shell.trashItem(dir));
+
 /** A path inside the library as it's stored, with forward slashes on every system, so a library moves between Mac and PC. */
 const stored = (...parts: string[]) => parts.join("/");
 
@@ -416,7 +423,7 @@ export class Library {
     const format = book.formats.find((f) => f.ext === ext);
     if (!format) return book;
     const path = join(this.bookDir(book), format.file);
-    await shell.trashItem(path).catch(() => rm(path, { force: true, maxRetries: 5 }));
+    await toTrash(path).catch(() => rm(path, { force: true, maxRetries: 5 }));
     book.formats = book.formats.filter((f) => f.ext !== ext);
     this.save();
     return book;
@@ -432,7 +439,7 @@ export class Library {
     }
     // Only once every file is safely copied does the old folder go, and to the Trash.
     const dir = this.ownFolder(source);
-    await shell.trashItem(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }));
+    await toTrash(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }));
     await this.tidy(dirname(dir));
     this.books.delete(from);
     this.save();
@@ -472,7 +479,7 @@ export class Library {
       return;
     }
     this.books.delete(id);
-    await shell.trashItem(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }).catch((error) => console.error("Could not remove", dir, error)));
+    await toTrash(dir).catch(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }).catch((error) => console.error("Could not remove", dir, error)));
     await this.tidy(dirname(dir));
     this.save();
   }
