@@ -71,6 +71,9 @@ export const test = base.extend<{ shelf: Shelf }>({
       join(data, "settings.json"),
       JSON.stringify({ libraryPath: join(dir, "Library"), onboarded: true, inspector: true, sidebar: true, updates: false }),
     );
+    // Always the small window GitHub's Mac runners open, so a book can sit half
+    // out of view and the tests meet what a small screen does, wherever they run.
+    writeFileSync(join(data, "window.json"), JSON.stringify({ x: 0, y: 0, width: 1024, height: 677 }));
     const errors: string[] = [];
     let app!: ElectronApplication;
     let page!: Page;

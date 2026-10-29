@@ -103,13 +103,23 @@ export function ContextMenu({
     const gone = () => setOpened(null);
     document.addEventListener("pointerdown", away);
     window.addEventListener("keydown", escape);
-    window.addEventListener("scroll", gone, true);
+    // A scroll already on its way when the menu opened, the end of a flick or
+    // the one bringing the item into view, arrives a frame late. Only scrolls
+    // after the menu shows close it.
+    let armed = 0;
+    let soon = requestAnimationFrame(() => {
+      soon = requestAnimationFrame(() => {
+        armed = 1;
+        window.addEventListener("scroll", gone, true);
+      });
+    });
     window.addEventListener("resize", gone);
     window.addEventListener("blur", gone);
     return () => {
+      cancelAnimationFrame(soon);
+      if (armed) window.removeEventListener("scroll", gone, true);
       document.removeEventListener("pointerdown", away);
       window.removeEventListener("keydown", escape);
-      window.removeEventListener("scroll", gone, true);
       window.removeEventListener("resize", gone);
       window.removeEventListener("blur", gone);
     };
