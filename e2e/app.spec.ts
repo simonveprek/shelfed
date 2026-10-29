@@ -518,23 +518,3 @@ test("reads a book aloud from the page, and stops", async ({ shelf }) => {
   await expect(page.getByRole("button", { name: "Read aloud" })).toBeVisible();
 });
 
-test("the 3D bookcase takes a new wood, a rainbow order, shelf lights and bookends", async ({ shelf }) => {
-  const { page } = shelf;
-  await shelf.add();
-  await page.getByRole("radio", { name: "Bookcase in 3D" }).click();
-  await page.getByLabel("Bookcase", { exact: true }).click();
-  await page.getByRole("combobox", { name: "Order on the shelf" }).click();
-  await page.getByRole("option", { name: "Rainbow, by spine colour" }).click();
-  await page.getByRole("button", { name: "Cherry" }).click();
-  await expect(page.getByRole("button", { name: "Cherry" })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("switch", { name: "Shelf lights" }).click();
-  await page.getByRole("switch", { name: "Bookends and plants" }).click();
-  await expect(page.getByRole("switch", { name: "Bookends and plants" })).toBeChecked();
-  await page.keyboard.press("Escape");
-  await expect(page.locator("main").getByText("Salt and Ink").first()).toBeVisible();
-  // Kept after a restart.
-  await shelf.restart();
-  await shelf.page.getByLabel("Bookcase", { exact: true }).click();
-  await expect(shelf.page.getByRole("switch", { name: "Shelf lights" })).toBeChecked();
-});
-
