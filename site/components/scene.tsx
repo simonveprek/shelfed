@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { asset } from "@/lib";
-import { Aura } from "./aura";
 import { DownloadButton } from "./download";
 
 type Chapter = { clip: string; label: string; title: ReactNode; line?: string };
@@ -29,7 +28,7 @@ const CHAPTERS: Chapter[] = [
 /**
  * The page's one big moment: the app's window pinned to the screen while the
  * story scrolls past, a chapter at a time. Each chapter plays its recording
- * from the start, and the window's edge glows when it changes.
+ * from the start.
  */
 export function Scene() {
   const section = useRef<HTMLDivElement>(null);
@@ -38,7 +37,6 @@ export function Scene() {
   const [active, setActive] = useState(0);
   // Recordings load as their chapter comes near, not all at once.
   const [near, setNear] = useState(1);
-  const changed = useRef(0);
 
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
   useMotionValueEvent(scrollYProgress, "change", (p) => {
@@ -52,7 +50,6 @@ export function Scene() {
   const scale = useTransform(scrollYProgress, [0, 0.07], still ? [1, 1] : [0.9, 1]);
 
   useEffect(() => {
-    changed.current = performance.now();
     videos.current.forEach((video, i) => {
       if (!video) return;
       if (i === active) {
@@ -61,9 +58,6 @@ export function Scene() {
       } else video.pause();
     });
   }, [active, still]);
-
-  // A swell of light at each new chapter, settling to a breath.
-  const level = useCallback(() => 0.12 + 0.32 * Math.exp(-(performance.now() - changed.current) / 600), []);
 
   const go = (i: number) => {
     const box = section.current;
@@ -75,9 +69,9 @@ export function Scene() {
   const chapter = CHAPTERS[active];
   return (
     <section ref={section} style={{ height: `${CHAPTERS.length * 90}svh` }} aria-label="What Shelf does">
-      <div className="sticky top-0 flex h-svh flex-col items-center overflow-hidden px-5 pt-[clamp(76px,11svh,112px)] sm:px-8">
+      <div className="sticky top-0 flex h-svh flex-col items-center overflow-hidden px-5 pt-[clamp(112px,17svh,168px)] sm:px-8">
         {/* The words, one chapter at a time. */}
-        <div className="relative flex h-[clamp(150px,21svh,200px)] w-full max-w-[60rem] flex-col items-center text-center">
+        <div className="relative flex h-[clamp(170px,24svh,232px)] w-full max-w-[60rem] flex-col items-center text-center">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={active}
@@ -100,8 +94,8 @@ export function Scene() {
         </div>
 
         {/* The window, the same one all the way down. */}
-        <motion.div className="relative w-[min(1180px,92vw,calc((100svh-clamp(76px,11svh,112px)-clamp(150px,21svh,200px)-40px)*1.6))]" style={{ rotateX: tilt, scale, transformPerspective: 1600, transformOrigin: "50% 0%" }}>
-          <Aura level={level} intensity={1.15} speed={0.55} radius={20} className="rounded-[20px] p-[5px]">
+        <motion.div className="relative w-[min(1180px,92vw,calc((100svh-clamp(112px,17svh,168px)-clamp(170px,24svh,232px)-48px)*1.6))]" style={{ rotateX: tilt, scale, transformPerspective: 1600, transformOrigin: "50% 0%" }}>
+
             <div className="relative aspect-[1280/800] overflow-hidden rounded-[15px] bg-card shadow-[var(--shadow-window)] ring-1 ring-line-strong">
               {/* Where macOS draws its traffic lights, which the recordings leave out. */}
               <span aria-hidden className="absolute z-10 flex" style={{ left: "1.56%", top: "2.25%", width: "4.06%", gap: "0.625%" }}>
@@ -127,7 +121,6 @@ export function Scene() {
                 />
               ))}
             </div>
-          </Aura>
         </motion.div>
 
         {/* Where you are in the story, and a way to jump. */}
