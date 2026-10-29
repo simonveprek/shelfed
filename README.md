@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/simonveprek/shelf/releases/latest"><b>Download</b></a> ·
+  <a href="https://github.com/simonveprek/shelfed/releases/latest"><b>Download</b></a> ·
   <a href="https://shelfed.simonveprek.cz">Website</a> ·
   <a href="#build-it">Build it</a>
 </p>
@@ -62,7 +62,7 @@ Drag a book onto it to copy it across. When it isn't plugged in, the same drop s
 
 ## Install
 
-Download the installer for your system from [the latest release](https://github.com/simonveprek/shelf/releases/latest).
+Download the installer for your system from [the latest release](https://github.com/simonveprek/shelfed/releases/latest).
 
 The builds aren't signed yet:
 

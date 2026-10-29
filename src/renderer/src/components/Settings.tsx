@@ -581,8 +581,8 @@ function AboutSection() {
       {books > 0 && <p className="mt-2 text-caption text-muted">Keeping {plural(books, "book")} for you.</p>}
       <div className="mt-7 flex flex-wrap justify-center gap-2">
         <Button size="sm" icon={Globe02Icon} onClick={() => api.openExternal("https://simonveprek.github.io/shelf")}>Website</Button>
-        <Button size="sm" icon={GithubIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelf")}>Source</Button>
-        <Button size="sm" icon={LicenseIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelf/blob/main/LICENSE")}>Licence</Button>
+        <Button size="sm" icon={GithubIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelfed")}>Source</Button>
+        <Button size="sm" icon={LicenseIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelfed/blob/main/LICENSE")}>Licence</Button>
       </div>
       <div className="mt-8 w-full max-w-[460px] text-left">
         <Group>

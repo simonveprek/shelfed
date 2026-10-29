@@ -5,13 +5,13 @@
   "description": "A fast, quiet home for your books. Read, organise, convert and send them to your Kindle, on macOS and Windows.",
   "author": "Šimon Vepřek",
   "license": "SEE LICENSE IN LICENSE",
-  "homepage": "https://github.com/simonveprek/shelf#readme",
+  "homepage": "https://github.com/simonveprek/shelfed#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/simonveprek/shelf.git"
+    "url": "git+https://github.com/simonveprek/shelfed.git"
   },
   "bugs": {
-    "url": "https://github.com/simonveprek/shelf/issues"
+    "url": "https://github.com/simonveprek/shelfed/issues"
   },
   "keywords": [
     "ebook",

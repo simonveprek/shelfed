@@ -6,7 +6,7 @@ import { newer } from "../shared/version";
 
 const { autoUpdater } = updater;
 
-const REPO = "simonveprek/shelf";
+const REPO = "simonveprek/shelfed";
 const RELEASES = `https://github.com/${REPO}/releases/latest`;
 /** How often to look again while Shelfed stays open. */
 const EVERY = 6 * 60 * 60 * 1000;

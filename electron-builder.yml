@@ -43,5 +43,5 @@ nsis:
 publish:
   provider: github
   owner: simonveprek
-  repo: shelf
+  repo: shelfed
   releaseType: draft
