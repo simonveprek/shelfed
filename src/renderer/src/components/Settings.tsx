@@ -11,7 +11,7 @@ import {
 import { Point } from "@/components/fragms/points";
 import { api, isMac, revealLabel } from "@/lib/api";
 import { chooseIcon, iconSrc } from "@/lib/icon";
-import { useKindlePort } from "@/lib/kindle";
+import { PHONE_LIKE, useKindlePort, useOnKindle } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
@@ -293,6 +293,8 @@ function KindleSection() {
   const finish = model && kindle.finish && model.finishes.includes(kindle.finish) ? kindle.finish : model?.finishes[0];
   const reading = books.filter((b) => b.status === "reading").sort((a, b) => (b.opened ?? 0) - (a.opened ?? 0))[0];
   const plugged = found?.find((k) => k.model === model?.id);
+  const cable = useStore((s) => s.kindleCable);
+  const copied = useOnKindle()?.size ?? 0;
   const stranger = Boolean(found?.length) && !found?.some((k) => k.model);
   const set = (patch: Partial<typeof kindle>) => setSetting({ kindle: { ...useStore.getState().settings.kindle, ...patch } });
   // Settings steps aside first, so the welcome has the whole window.
@@ -321,7 +323,9 @@ function KindleSection() {
               {model && <span>{model.year}, {model.screen}″ {model.colour ? "colour " : ""}screen</span>}
               {plugged && <Badge tone="success">Plugged in</Badge>}
               {stranger && <Badge>A Kindle Shelfed doesn't know is plugged in</Badge>}
+              {copied > 0 && <span>{copied} of your books {copied === 1 ? "is" : "are"} on it.</span>}
             </p>
+            {cable === "phone" && <p className="mt-2 max-w-[44ch] text-caption text-muted">{PHONE_LIKE}</p>}
           </div>
           <Select
             label="Model"

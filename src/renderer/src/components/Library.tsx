@@ -3,7 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { motion } from "framer-motion";
 import {
   ArrowDataTransferHorizontalIcon, ArrowRight01Icon, BookOpen01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
-  FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon,
+  FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon, Tablet01Icon,
 } from "@hugeicons/core-free-icons";
 import type { Book } from "../../../shared/types";
 import { Badge, Button, ContextMenu, cx, DataTable, EASE, Icon, MenuItem, MenuLabel, MenuSeparator, Progress, type DataTableColumn } from "@/components/ui";
@@ -11,6 +11,7 @@ import { Empty } from "@/components/bits";
 import { addToCollection, openReader, pickAndImport, removeFromCollection } from "@/lib/actions";
 import { api, isMac, revealLabel } from "@/lib/api";
 import { newCollection, runAction } from "@/lib/commands";
+import { useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME, selectBook, targetIds } from "@/lib/select";
 import { useStore } from "@/lib/store";
 import { authorsOf, bytes, date, plural } from "@/lib/util";
@@ -151,7 +152,7 @@ export function useKeys(visible: Book[], columns: number, scrollTo: (index: numb
 /* Covers                                                                    */
 /* ------------------------------------------------------------------------ */
 
-const BookCard = memo(function BookCard({ book, selected, width, visible }: { book: Book; selected: boolean; width: number; visible: Book[] }) {
+const BookCard = memo(function BookCard({ book, selected, width, visible, onKindle = false }: { book: Book; selected: boolean; width: number; visible: Book[]; onKindle?: boolean }) {
   const progress = book.status === "reading" ? (book.progress ?? 0) : 0;
   return (
     <div
@@ -176,6 +177,12 @@ const BookCard = memo(function BookCard({ book, selected, width, visible }: { bo
             <Icon icon={FavouriteIcon} size={12} />
           </span>
         )}
+        {onKindle && (
+          <span title="On your Kindle" className="absolute top-1.5 left-1.5 flex h-6 items-center gap-1 rounded-full bg-black/45 px-2 text-[10.5px] font-medium text-white backdrop-blur-md">
+            <Icon icon={Tablet01Icon} size={11} />
+            Kindle
+          </span>
+        )}
         {progress > 0 && (
           <div className="absolute inset-x-2 bottom-2 rounded-full bg-black/35 p-px backdrop-blur-md">
             <div className="h-[3px] rounded-full bg-white" style={{ width: `${Math.max(4, progress * 100)}%` }} />
@@ -194,6 +201,7 @@ const BookCard = memo(function BookCard({ book, selected, width, visible }: { bo
 });
 
 export function Grid({ visible }: { visible: Book[] }) {
+  const onKindle = useOnKindle();
   const size = useStore((s) => s.settings.gridSize);
   const selection = useStore((s) => s.selection);
   const [ref, width] = useWidth<HTMLDivElement>();
@@ -237,7 +245,7 @@ export function Grid({ visible }: { visible: Book[] }) {
               style={{ transform: `translateY(${row.start}px)`, height: rowHeight, gap, padding: `0 ${pad}px` }}
             >
               {visible.slice(row.index * columns, row.index * columns + columns).map((book) => (
-                <BookCard key={book.id} book={book} width={cell} selected={selected.has(book.id)} visible={visible} />
+                <BookCard key={book.id} book={book} width={cell} selected={selected.has(book.id)} visible={visible} onKindle={onKindle?.has(book.id)} />
               ))}
             </div>
           ))}
@@ -322,6 +330,7 @@ export function List({ visible }: { visible: Book[] }) {
 /* ------------------------------------------------------------------------ */
 
 const Shelf = memo(function Shelf({ name, books, visible, by }: { name: string; books: Book[]; visible: Book[]; by: "author" | "series" | "tag" | "format" }) {
+  const onKindle = useOnKindle();
   const selection = useStore((s) => s.selection);
   return (
     <section className="pb-10">
@@ -335,7 +344,7 @@ const Shelf = memo(function Shelf({ name, books, visible, by }: { name: string; 
       </button>
       <div className="scroll flex gap-5 overflow-y-hidden px-6 pt-1 pb-3" style={{ scrollbarWidth: "none" }}>
         {books.map((book) => (
-          <BookCard key={book.id} book={book} width={116} selected={selection.includes(book.id)} visible={visible} />
+          <BookCard key={book.id} book={book} width={116} selected={selection.includes(book.id)} visible={visible} onKindle={onKindle?.has(book.id)} />
         ))}
       </div>
     </section>

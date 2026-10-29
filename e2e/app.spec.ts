@@ -146,3 +146,38 @@ test("makes Kindle, Word and FB2 files with nothing else installed", async ({ sh
     await expect(page.getByText(`Salt and Ink is now ${ext} too`)).toBeVisible({ timeout: 20_000 });
   }
 });
+
+test.describe("a Kindle plugged in as a drive", () => {
+  test.use({ kindle: "drive", onKindle: ["Salt and Ink - Ada Marsh.azw3", "Notes.txt"] });
+
+  test("shows which books are already on it", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    // In the side panel, on the cover, in the book's details, and as a place of its own.
+    await expect(page.locator("aside").getByText("1 of your books is on it", { exact: false })).toBeVisible();
+    await expect(card(page, "Salt and Ink").getByText("Kindle", { exact: true })).toBeVisible();
+    await expect(card(page, "A Winter Orchard").getByText("Kindle", { exact: true })).toHaveCount(0);
+    // The sidebar names the place; selecting the book adds its badge.
+    await expect(page.getByText("On your Kindle", { exact: true })).toHaveCount(1);
+    await card(page, "Salt and Ink").click();
+    await expect(page.getByText("On your Kindle", { exact: true })).toHaveCount(2);
+    await page.getByRole("button", { name: "On your Kindle", exact: true }).click();
+    await expect(card(page, "Salt and Ink")).toBeVisible();
+    await expect(card(page, "A Winter Orchard")).toHaveCount(0);
+  });
+});
+
+test.describe("a Kindle that connects like a phone", () => {
+  test.use({ kindle: "phone" });
+
+  test("says plainly it can't take books by cable", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await expect(page.locator("aside").getByText("It connects like a phone", { exact: false })).toBeVisible();
+    await card(page, "Salt and Ink").click({ button: "right" });
+    await page.getByRole("menuitem", { name: "Send to Kindle" }).click();
+    await page.getByRole("dialog").getByText("By cable").click();
+    await expect(page.getByText("This Kindle can't take books by cable")).toBeVisible();
+    await expect(page.getByText("connects like a phone", { exact: false }).last()).toBeVisible();
+  });
+});

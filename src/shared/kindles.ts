@@ -86,6 +86,12 @@ export const KINDLES: KindleModel[] = [
 
 export const kindleById = (id?: string) => KINDLES.find((k) => k.id === id);
 
+/**
+ * Kindles from 2024 on connect the way phones do (MTP), not as a drive, so
+ * nothing can copy files to them like a USB stick.
+ */
+export const connectsLikeAPhone = (model?: KindleModel) => Boolean(model && model.year >= 2024);
+
 /** The model a serial number belongs to, when Shelfed knows it. */
 export function kindleFromSerial(serial: string): KindleModel | undefined {
   const s = serial.toUpperCase().replace(/\s/g, "");

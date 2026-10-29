@@ -12,6 +12,8 @@ export type Section =
   | { kind: "collection"; id: string }
   | { kind: "browse"; by: Browse }
   | { kind: "discover" }
+  /** The books already on the Kindle plugged in by cable. */
+  | { kind: "kindle" }
   | { kind: "group"; by: Browse; value: string };
 
 export type Dialog =
@@ -53,6 +55,14 @@ type State = {
   kindleActivity: KindleActivity | null;
   /** Kindles on USB and the ones that open as a drive, once first looked for. */
   kindlePort: KindlePort | null;
+  /**
+   * How the Kindle plugged in takes books: as a drive, or not at all by
+   * cable because it connects like a phone. Waiting while one on USB might
+   * still be about to open as a drive.
+   */
+  kindleCable: "drive" | "phone" | "waiting" | null;
+  /** The book files on a Kindle plugged in as a drive, or null with none. */
+  kindleFiles: string[] | null;
   /** When a Kindle was last plugged in, for the welcome it gets. */
   kindleArrived: number | null;
   /** The welcome is showing. */
@@ -88,6 +98,8 @@ export const useStore = create<State>(() => ({
   carrying: null,
   kindleActivity: null,
   kindlePort: null,
+  kindleCable: null,
+  kindleFiles: null,
   kindleArrived: null,
   onboarding: false,
   update: { state: "idle" },

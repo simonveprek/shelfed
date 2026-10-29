@@ -1,8 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type { KindleDevice, KindleOnUsb } from "../../../shared/types";
-import { kindleById } from "../../../shared/kindles";
-import { api, isWin } from "./api";
+import { connectsLikeAPhone, kindleById } from "../../../shared/kindles";
+import { api, isMac, isWin } from "./api";
+import { booksOnKindle } from "./onkindle";
 import { setSetting, useStore } from "./store";
+
+/** How long a Kindle Shelfed doesn't know may take to open as a drive before it's taken to be one that won't. */
+const MOUNTING = 10_000;
+/** How often the books on a Kindle are looked at again while it's plugged in. */
+const RELIST = 15_000;
+
+/** Reads the book files on the Kindle plugged in as a drive, now. */
+export async function relistKindle() {
+  const drive = useStore.getState().kindlePort?.drives[0];
+  if (!drive) return useStore.setState({ kindleFiles: null });
+  const files = await api.deviceFiles(drive.path).catch(() => null);
+  if (files && useStore.getState().kindlePort?.drives[0]?.path === drive.path) useStore.setState({ kindleFiles: files });
+}
 
 /** In development, a pretend Kindle for trying out the plugged-in look: window.__fakeKindle = { usb, drives }. */
 const pretend = () => (import.meta.env.DEV ? (window as unknown as { __fakeKindle?: { usb: KindleOnUsb[]; drives: KindleDevice[] } }).__fakeKindle : undefined);
@@ -15,6 +29,8 @@ const pretend = () => (import.meta.env.DEV ? (window as unknown as { __fakeKindl
 export function useKindleWatch() {
   useEffect(() => {
     let alive = true;
+    let onUsbSince = 0;
+    let listed = { path: "", at: 0 };
     const look = async () => {
       const fake = pretend();
       // A hidden window has no one to show a Kindle to; it looks again when it's back.
@@ -30,6 +46,23 @@ export function useKindleWatch() {
         ...(before && now && !was ? { kindleArrived: Date.now() } : {}),
       });
       const known = kindleById(usb.find((k) => k.model)?.model ?? drives.find((d) => d.model)?.model);
+
+      // A drive takes books by cable. One only on USB connects like a phone,
+      // known from its model, or from not opening as a drive in good time.
+      if (usb.length && !drives.length) onUsbSince ||= Date.now();
+      else onUsbSince = 0;
+      const cable = drives.length ? "drive" : !usb.length ? null : connectsLikeAPhone(known) || Date.now() - onUsbSince > MOUNTING ? "phone" : "waiting";
+      if (useStore.getState().kindleCable !== cable) useStore.setState({ kindleCable: cable });
+
+      // What's on it, when it arrives and every little while after.
+      const drive = drives[0];
+      if (!drive) {
+        if (useStore.getState().kindleFiles) useStore.setState({ kindleFiles: null });
+      } else if (drive.path !== listed.path || Date.now() - listed.at > RELIST) {
+        listed = { path: drive.path, at: Date.now() };
+        relistKindle();
+      }
+
       const current = useStore.getState().settings.kindle;
       if (known && !current.picked && current.model !== known.id) setSetting({ kindle: { ...current, model: known.id, finish: known.finishes[0] } });
     };
@@ -47,3 +80,15 @@ export function useKindleWatch() {
 
 /** The Kindles plugged in right now, as last seen. */
 export const useKindlePort = () => useStore((s) => s.kindlePort);
+
+/** The books already on the Kindle plugged in as a drive, or null when there's none. */
+export function useOnKindle(): Set<string> | null {
+  const files = useStore((s) => s.kindleFiles);
+  const books = useStore((s) => s.books);
+  return useMemo(() => (files ? booksOnKindle(books, files) : null), [files, books]);
+}
+
+/** Why a Kindle on the cable can't take books that way, said plainly for this system. */
+export const PHONE_LIKE = isMac
+  ? "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead."
+  : "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.";

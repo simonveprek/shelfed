@@ -2,6 +2,7 @@ import { useDeferredValue, useMemo } from "react";
 import type { Book, SortKey } from "../../../shared/types";
 import { useStore, type Browse, type Section } from "./store";
 import { norm, sortAuthor, sortTitle } from "./util";
+import { useOnKindle } from "./kindle";
 
 const FORTNIGHT = 1000 * 60 * 60 * 24 * 14;
 
@@ -18,8 +19,10 @@ export function groupKeys(book: Book, by: Browse) {
   }
 }
 
-export function inSection(book: Book, section: Section) {
+export function inSection(book: Book, section: Section, onKindle?: Set<string> | null) {
   switch (section.kind) {
+    case "kindle":
+      return Boolean(onKindle?.has(book.id));
     case "all":
     case "browse":
     case "discover":
@@ -79,12 +82,13 @@ export function useVisibleBooks() {
   const query = useDeferredValue(useStore((s) => s.query));
   const sort = useStore((s) => s.settings.sort);
   const dir = useStore((s) => s.settings.sortDir);
+  const onKindle = useOnKindle();
   return useMemo(() => {
-    const found = books.filter((b) => inSection(b, section) && matches(b, query));
+    const found = books.filter((b) => inSection(b, section, onKindle) && matches(b, query));
     // Series read best in order, whatever the sort.
     if (section.kind === "group" && section.by === "series") return sortBooks(found, "series", "asc");
     return sortBooks(found, sort, dir);
-  }, [books, section, query, sort, dir]);
+  }, [books, section, query, sort, dir, onKindle]);
 }
 
 export function sectionTitle(section: Section, collections: { id: string; name: string }[]) {
@@ -98,6 +102,7 @@ export function sectionTitle(section: Section, collections: { id: string; name: 
     case "collection": return collections.find((c) => c.id === section.id)?.name ?? "Collection";
     case "browse": return { author: "Authors", series: "Series", tag: "Tags", format: "Formats" }[section.by];
     case "discover": return "Classics";
+    case "kindle": return "On your Kindle";
     case "group": return section.value;
   }
 }

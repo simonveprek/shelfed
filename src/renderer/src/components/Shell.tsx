@@ -4,7 +4,7 @@ import {
   Add01Icon, Book02Icon, BookOpen01Icon, Bookmark01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
   File01Icon, FileAddIcon, Folder01Icon, FolderAddIcon, FilterHorizontalIcon, GridViewIcon, Layers01Icon,
   LeftToRightListBulletIcon, Bookshelf01Icon, PencilEdit02Icon, Settings01Icon, SidebarRightIcon, SparklesIcon,
-  Tag01Icon, ThreeDViewIcon, UserIcon, ArrowLeft01Icon, Globe02Icon,
+  Tag01Icon, ThreeDViewIcon, UserIcon, ArrowLeft01Icon, Globe02Icon, Tablet01Icon,
 } from "@hugeicons/core-free-icons";
 import type { SortKey } from "../../../shared/types";
 import {
@@ -14,6 +14,7 @@ import {
 import { addToCollection, deleteCollection, pickAndImport } from "@/lib/actions";
 import { isMac, isWin, mod, shift } from "@/lib/api";
 import { newCollection } from "@/lib/commands";
+import { useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
 import { patchBooks, setSetting, useStore, type Browse, type Section } from "@/lib/store";
 import { sectionTitle, useVisibleBooks } from "@/lib/view";
@@ -66,6 +67,11 @@ const BROWSE: Array<{ by: Browse; label: string; icon: typeof Book02Icon }> = [
 
 export function AppSidebar() {
   const section = useStore((s) => s.section);
+  const onKindle = useOnKindle();
+  // Unplugged while looking at what's on it: back to every book.
+  useEffect(() => {
+    if (section.kind === "kindle" && !onKindle) useStore.setState({ section: { kind: "all" } });
+  }, [section.kind, onKindle]);
   const collections = useStore((s) => s.collections);
   const open = useStore((s) => s.settings.sidebar);
   const go = (next: Section) => useStore.setState({ section: next, selection: [] });
@@ -93,6 +99,11 @@ export function AppSidebar() {
             </SidebarItem>
           </DropTarget>
         ))}
+        {onKindle && (
+          <SidebarItem icon={Tablet01Icon} active={section.kind === "kindle"} onClick={() => go({ kind: "kindle" })}>
+            On your Kindle
+          </SidebarItem>
+        )}
       </SidebarGroup>
 
       <SidebarGroup label="Discover">

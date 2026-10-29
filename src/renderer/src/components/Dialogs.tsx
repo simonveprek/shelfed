@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { bookById, patchBooks, saveCollections, setSetting, useStore } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { Cover } from "./Cover";
+import { PHONE_LIKE, useOnKindle } from "@/lib/kindle";
 
 const close = () => useStore.setState({ dialog: null });
 
@@ -76,6 +77,9 @@ export function SendDialog({ ids }: { ids: string[] }) {
   const largest = Math.max(0, ...plans.map((p) => p.size));
   const tooBig = largest > KINDLE_LIMIT;
   const cablePlans = books.map((b) => usbPlan(b));
+  const cable = useStore((s) => s.kindleCable);
+  const onKindle = useOnKindle();
+  const already = books.filter((b) => onKindle?.has(b.id)).length;
 
   return (
     <Dialog open onClose={close} label="Send to Kindle" className="sm:max-w-[520px]">
@@ -139,6 +143,13 @@ export function SendDialog({ ids }: { ids: string[] }) {
         {mode === "cable" &&
           (devices === null ? (
             <div className="flex justify-center py-10"><Spinner /></div>
+          ) : devices.length === 0 && cable === "phone" ? (
+            <Empty
+              icon={TabletConnectedUsbIcon}
+              title="This Kindle can't take books by cable"
+              description={PHONE_LIKE}
+              action={<Button size="sm" onClick={() => setMode("email")}>Send by email</Button>}
+            />
           ) : devices.length === 0 ? (
             <Empty icon={TabletConnectedUsbIcon} title="Plug in your Kindle" description="Connect it with a USB cable and unlock it. Shelfed finds it on its own." />
           ) : (
@@ -157,6 +168,15 @@ export function SendDialog({ ids }: { ids: string[] }) {
                     ? "Books without a Kindle file get an AZW3 made first. Eject the Kindle before you unplug it."
                     : "Copies the Kindle files straight to the device. Eject it before you unplug it."}
               </p>
+              {already > 0 && (
+                <p className="text-label text-muted">
+                  {already === books.length
+                    ? books.length === 1
+                      ? "It's already on this Kindle. Copying it again replaces it."
+                      : "These are all already on this Kindle. Copying them again replaces them."
+                    : `${already} of these ${already === 1 ? "is" : "are"} already on this Kindle, and copying again replaces ${already === 1 ? "it" : "them"}.`}
+                </p>
+              )}
             </>
           ))}
       </div>

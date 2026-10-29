@@ -62,8 +62,17 @@ export type Shelf = {
 };
 
 /** Each test gets its own Shelfed, on its own empty library, never yours. */
-export const test = base.extend<{ shelf: Shelf }>({
-  shelf: async ({}, use) => {
+type Options = {
+  /** A demo Kindle plugged in from the start: a drive, or one that connects like a phone. */
+  kindle: "drive" | "phone" | undefined;
+  /** Book files already in that drive Kindle's documents folder. */
+  onKindle: string[];
+};
+
+export const test = base.extend<{ shelf: Shelf } & Options>({
+  kindle: [undefined, { option: true }],
+  onKindle: [[], { option: true }],
+  shelf: async ({ kindle, onKindle }, use) => {
     const dir = mkdtempSync(join(tmpdir(), "shelf-e2e-"));
     const data = join(dir, "data");
     mkdirSync(data);
@@ -74,6 +83,12 @@ export const test = base.extend<{ shelf: Shelf }>({
     // Always the small window GitHub's Mac runners open, so a book can sit half
     // out of view and the tests meet what a small screen does, wherever they run.
     writeFileSync(join(data, "window.json"), JSON.stringify({ x: 0, y: 0, width: 1024, height: 677 }));
+    // The demo Kindle's drive, with whatever books are already on it.
+    const demo = kindle === "phone" ? "phone" : kindle === "drive" ? join(dir, "Kindle") : undefined;
+    if (kindle === "drive") {
+      mkdirSync(join(dir, "Kindle", "documents"), { recursive: true });
+      for (const file of onKindle) writeFileSync(join(dir, "Kindle", "documents", file), "a book");
+    }
     const errors: string[] = [];
     let app!: ElectronApplication;
     let page!: Page;
@@ -82,7 +97,7 @@ export const test = base.extend<{ shelf: Shelf }>({
     const launch = async () => {
       // Linux CI can't run Chromium's sandbox.
       const args = process.platform === "linux" && process.env.CI ? [".", "--no-sandbox"] : ["."];
-      app = await electron.launch({ args, cwd: root, env: { ...process.env, SHELF_USERDATA: data } });
+      app = await electron.launch({ args, cwd: root, env: { ...process.env, SHELF_USERDATA: data, ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}) } });
       page = await app.firstWindow();
       page.on("pageerror", (error) => errors.push(error.message));
       page.on("console", (message) => message.type() === "error" && errors.push(message.text()));

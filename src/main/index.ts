@@ -7,11 +7,11 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import log from "electron-log/main";
-import type { Book, BootState, Collection, MetadataCandidate, Settings } from "../shared/types";
+import type { Book, BootState, Collection, KindleDevice, KindleOnUsb, MetadataCandidate, Settings } from "../shared/types";
 import { KINDLE_EMAIL, READABLE } from "../shared/types";
 import { epubToAzw3 } from "./azw3";
 import { docxToHtml, htmlToPdf } from "./convert";
-import { copyToDevice, findDevices, kindlePort, kindlesOnUsb, readClippings, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
+import { copyToDevice, deviceFiles, findDevices, kindlePort, kindlesOnUsb, readClippings, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks } from "./catalogues";
@@ -187,12 +187,15 @@ function shoot(target: BrowserWindow) {
 const send = (channel: string, ...args: unknown[]) => win?.webContents.send(channel, ...args);
 
 /**
- * For recording demos: SHELF_DEMO_KINDLE=<folder> pretends a Kindle Paperwhite
- * is plugged in, with that folder as its drive. Never in an installed app.
+ * For recording demos and tests: SHELF_DEMO_KINDLE=<folder> pretends a Kindle
+ * Paperwhite is plugged in, with that folder as its drive, and
+ * SHELF_DEMO_KINDLE=phone a Colorsoft, which connects like a phone and opens
+ * as no drive. Never in an installed app.
  */
-function demoKindle() {
+function demoKindle(): { usb: KindleOnUsb; drive?: KindleDevice } | null {
   const folder = !app.isPackaged && process.env.SHELF_DEMO_KINDLE;
   if (!folder) return null;
+  if (folder === "phone") return { usb: { serial: "G000DEMO", model: "colorsoft" } };
   return {
     usb: { serial: "G000DEMO", model: "pw5" },
     drive: { name: "Kindle", path: folder, free: 6_200_000_000, model: "pw5" },
@@ -349,13 +352,16 @@ const api = {
     await sendToKindle(getSettings().kindle, library.filePath(book, ext), format.file, book.title);
   },
 
-  devices: async () => [...(demoKindle() ? [demoKindle()!.drive] : []), ...(await findDevices())],
+  devices: async () => [...(demoKindle()?.drive ? [demoKindle()!.drive!] : []), ...(await findDevices())],
   async kindlePort() {
     const port = await kindlePort();
     const demo = demoKindle();
-    return demo ? { usb: [demo.usb, ...port.usb], drives: [demo.drive, ...port.drives] } : port;
+    return demo ? { usb: [demo.usb, ...port.usb], drives: [...(demo.drive ? [demo.drive] : []), ...port.drives] } : port;
   },
   kindles: () => kindlesOnUsb(),
+
+  /** The book files already on a Kindle plugged in as a drive. */
+  deviceFiles: (device: string) => deviceFiles(device),
 
   async copyToDevice(id: string, ext: string, device: string) {
     const book = library.get(id);

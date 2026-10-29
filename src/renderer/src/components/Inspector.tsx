@@ -16,6 +16,7 @@ import { addToCollection, canRead, openReader, removeFromCollection, toggleFavor
 import { api, revealLabel } from "@/lib/api";
 import { saveCover } from "@/lib/books";
 import { newCollection, runAction } from "@/lib/commands";
+import { useOnKindle } from "@/lib/kindle";
 import { patchBooks, upsert, useStore } from "@/lib/store";
 import { ago, authorsOf, bytes, coverUrl, date, duration, plural, published } from "@/lib/util";
 import { ColourPicker, RIBBONS, SPINES } from "./Colours";
@@ -252,6 +253,7 @@ const STATUS: Array<{ id: ReadStatus; label: string }> = [
 
 function One({ book }: { book: Book }) {
   const [dropping, setDropping] = useState(false);
+  const onKindle = useOnKindle()?.has(book.id);
   const progress = book.progress ?? 0;
   const library = useStore((s) => s.books);
   const kindred = useMemo(() => hasKindred(book, library), [book, library]);
@@ -313,6 +315,11 @@ function One({ book }: { book: Book }) {
               {book.series}
               {book.seriesIndex ? `, book ${book.seriesIndex}` : ""}
             </p>
+          )}
+          {onKindle && (
+            <div className="mt-2.5 flex justify-center">
+              <Badge tone="success">On your Kindle</Badge>
+            </div>
           )}
           <div className="mt-2 flex items-center justify-center gap-1">
             <Stars value={book.rating} onChange={(rating) => patchBooks([book.id], () => ({ rating }))} />

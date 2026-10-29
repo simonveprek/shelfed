@@ -2,6 +2,7 @@ import type { Book, Collection } from "../../../shared/types";
 import { KINDLE_EMAIL, KINDLE_LIMIT, KINDLE_USB } from "../../../shared/types";
 import { toast } from "@/components/ui";
 import { api } from "./api";
+import { relistKindle } from "./kindle";
 import { extractContent, parseBook, saveCover } from "./books";
 import { buildDocx } from "./docx";
 import { buildEpub, buildHtml, buildText } from "./epub";
@@ -303,6 +304,7 @@ export async function sendByCable(ids: string[], device: string) {
     }
   }
   kindle.end(failures === 0);
+  relistKindle();
   if (failures === books.length) job.fail(lastError);
   else if (failures) job.fail(`${failures} of ${books.length} were not copied`);
   else job.done(books.length === 1 ? "On your Kindle" : `Copied ${plural(books.length, "book")} to your Kindle`);

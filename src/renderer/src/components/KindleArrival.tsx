@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useMotionValue, useVelocity } from "framer-mot
 import { FINISHES, kindleById } from "../../../shared/kindles";
 import { Aura, AURA_PALETTES, type AuraColors } from "@/components/fragms/aura";
 import { EASE } from "@/components/ui";
+import { PHONE_LIKE, useOnKindle } from "@/lib/kindle";
 import { useStore } from "@/lib/store";
 import { isMac } from "@/lib/api";
 import { bytes } from "@/lib/util";
@@ -43,6 +44,8 @@ export function KindleArrival() {
   const books = useStore((s) => s.books);
   const panel = useStore((s) => s.settings.inspector);
   const [plugged, setPlugged] = useState(false);
+  const cable = useStore((s) => s.kindleCable);
+  const copied = useOnKindle()?.size ?? 0;
 
   // The edge of the window answers the Kindle: its speed as it rises, and
   // every pulse it gives, the plug going in, the screen waking, a tap.
@@ -130,8 +133,14 @@ export function KindleArrival() {
             transition={{ duration: 0.6, ease: EASE }}
           >
             <p className="text-[22px] leading-tight font-medium tracking-[-0.02em]">{model.name}</p>
-            <p className="mt-1 text-label text-muted">{drive ? `Plugged in, ${bytes(drive.free)} free` : "Plugged in"}</p>
-            <p className="mt-4 text-caption text-muted">{panel ? "Drop books on it in the side panel" : "Drag books onto it to copy them"}</p>
+            <p className="mt-1 text-label text-muted">
+              {drive ? `Plugged in, ${bytes(drive.free)} free${copied ? `, ${copied} of your books on it` : ""}` : "Plugged in"}
+            </p>
+            {cable === "phone" ? (
+              <p className="mt-4 max-w-[34rem] text-caption text-muted" style={{ textWrap: "balance" }}>{PHONE_LIKE}</p>
+            ) : (
+              <p className="mt-4 text-caption text-muted">{panel ? "Drop books on it in the side panel" : "Drag books onto it to copy them"}</p>
+            )}
           </motion.div>
         </motion.div>
       )}

@@ -2,7 +2,8 @@ import { useRef, useState, type DragEvent } from "react";
 import { motion } from "framer-motion";
 import { kindleById } from "../../../shared/kindles";
 import { sendByCable } from "@/lib/actions";
-import { useKindlePort } from "@/lib/kindle";
+import { isMac } from "@/lib/api";
+import { useKindlePort, useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
 import { useStore } from "@/lib/store";
 import { bytes } from "@/lib/util";
@@ -36,6 +37,8 @@ export function KindleDock() {
 
   const drive = drives[0];
   const onBus = Boolean(drive || usb?.length);
+  const cable = useStore((s) => s.kindleCable);
+  const copied = useOnKindle()?.size ?? 0;
   const model = kindleById(kindle.model ?? drive?.model ?? usb?.find((k) => k.model)?.model) ?? (onBus ? kindleById("pw5") : undefined);
   if (!model) return null;
 
@@ -107,10 +110,12 @@ export function KindleDock() {
               ? "Let go to copy it on"
               : "Let go to send it by email"
             : drive
-              ? `Plugged in, ${bytes(drive.free)} free. Drop a book on it to copy it.`
-              : onBus
-                ? "Plugged in, but it won't open as a drive. Drop a book on it to email it."
-                : carrying
+              ? `Plugged in, ${bytes(drive.free)} free. ${copied ? `${copied} of your books ${copied === 1 ? "is" : "are"} on it. ` : ""}Drop a book on it to copy it.`
+              : cable === "phone"
+                ? `It connects like a phone, so ${isMac ? "a Mac" : "Shelfed"} can't copy books to it by cable. Drop a book on it to email it.`
+                : onBus
+                  ? "Plugged in. Waiting for it to open as a drive."
+                  : carrying
                   ? "Drop it here to send it by email"
                   : "Not plugged in. Drop a book on it to email it."}
         </p>
