@@ -70,6 +70,23 @@ const words: Record<string, string> = {
   "Read on": "Číst dál",
   Speed: "Rychlost",
   Voice: "Hlas",
+
+  // The 3D bookcase.
+  Birch: "Bříza",
+  Cherry: "Třešeň",
+  Ebony: "Eben",
+  White: "Bílá",
+  Sage: "Šalvějová",
+  Navy: "Námořnická modrá",
+  "Order on the shelf": "Pořadí na polici",
+  "As the library is sorted": "Jak je seřazená knihovna",
+  "Rainbow, by spine colour": "Duha, podle barvy hřbetu",
+  "By title": "Podle názvu",
+  "By author": "Podle autora",
+  "Shelf lights": "Osvětlení polic",
+  "A warm light under every shelf.": "Teplé světlo pod každou policí.",
+  "Bookends and plants": "Zarážky a kytky",
+  "Bookends hold every shelf, with a plant, a lamp or a few books lying flat beside them.": "Zarážky drží každou polici a vedle nich stojí kytka, lampička nebo pár knih naležato.",
 };
 
 export default words;

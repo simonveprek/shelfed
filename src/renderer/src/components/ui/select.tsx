@@ -227,6 +227,7 @@ export function Select<T extends string>({
               ref={list}
               id={id}
               role="listbox"
+              data-floating
               aria-label={label}
               initial={{ opacity: 0, scale: 0.97, y: place.above ? 4 : -4 }}
               animate={{

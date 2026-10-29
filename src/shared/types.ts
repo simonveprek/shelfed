@@ -114,7 +114,13 @@ export type ReaderPrefs = {
 export type BookcasePrefs = {
   /** One run of shelves, or a shelf of its own for each author, series and so on. */
   group: "none" | "author" | "series" | "collection" | "status" | "format";
-  material: "paper" | "oak" | "walnut" | "slate";
+  material: "paper" | "oak" | "walnut" | "slate" | "birch" | "cherry" | "ebony" | "white" | "sage" | "navy";
+  /** How books stand along a shelf: as the library sorts them, by spine colour, title or author. */
+  order?: "library" | "colour" | "title" | "author";
+  /** A warm light under every shelf. */
+  lights?: boolean;
+  /** Bookends at both ends of a shelf, and a plant, lamp or a stack of books in the room left. */
+  decor?: boolean;
   /** Spines in their cover's colour, in bookbinder's cloth, or in shades of ink. */
   spines: "cover" | "cloth" | "ink";
   /** Grows a small library to fill the window. */

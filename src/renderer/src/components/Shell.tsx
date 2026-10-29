@@ -236,10 +236,22 @@ function BookcaseOptions() {
             { id: "format", label: t("By file type") },
           ]}
         />
+        <Select
+          label={t("Order on the shelf")}
+          size="sm"
+          value={prefs.order ?? "library"}
+          onChange={(order) => set({ order })}
+          options={[
+            { id: "library", label: t("As the library is sorted") },
+            { id: "colour", label: t("Rainbow, by spine colour") },
+            { id: "title", label: t("By title") },
+            { id: "author", label: t("By author") },
+          ]}
+        />
       </Section>
       <Rule />
       <Section title={t("The case")}>
-        <div className="grid grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-5 gap-2.5">
           {(Object.keys(MATERIALS) as Array<keyof typeof MATERIALS>).map((key) => {
             const on = prefs.material === key;
             return (
@@ -292,6 +304,8 @@ function BookcaseOptions() {
               <ColourPicker value={prefs.ribbon} options={RIBBONS} onChange={(ribbon) => set({ ribbon: ribbon ?? "accent" })} />
             </div>
           )}
+          <SwitchRow label={t("Shelf lights")} hint={t("A warm light under every shelf.")} checked={Boolean(prefs.lights)} onChange={(lights) => set({ lights })} />
+          <SwitchRow label={t("Bookends and plants")} hint={t("Bookends hold every shelf, with a plant, a lamp or a few books lying flat beside them.")} checked={Boolean(prefs.decor)} onChange={(decor) => set({ decor })} />
           <SwitchRow label={t("Lean toward the pointer")} checked={prefs.lean} onChange={(lean) => set({ lean })} />
         </div>
       </Section>

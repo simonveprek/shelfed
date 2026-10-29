@@ -132,6 +132,8 @@ export function Popover({
     const away = (event: PointerEvent) => {
       const target = event.target as Node;
       if (anchor.current?.contains(target) || surface.current?.contains(target)) return;
+      // A list opened from inside, like a select's options, floats outside but belongs here.
+      if ((target as Element).closest?.("[data-floating]")) return;
       setOpen(false);
     };
     const escape = (event: KeyboardEvent) => {
