@@ -1,0 +1,4 @@
+# Netlify: set the base directory to site/ and it builds the plain files.
+[build]
+  command = "npm run build"
+  publish = "out"

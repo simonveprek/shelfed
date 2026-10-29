@@ -36,15 +36,21 @@ Shelves by author, series, collection or reading status. Paper, oak, walnut or s
 
 <p align="center"><img src="docs/media/bookcase.gif" width="880" alt="The 3D bookcase changing material, spines and shelves" /></p>
 
+### Make it yours
+
+Eight app icons, from plain paper to holographic foil and striped candy, picked in Settings.
+
+<p align="center"><img src="docs/media/icons.gif" width="880" alt="Settings switching between Shelf's app icons" /></p>
+
 ### Your Kindle, recognised
 
-Plug a Kindle in and Shelf knows which one it is, from the Kindle 2 to the Colorsoft and Scribe, from its serial number. It shows it in 3D, in its own colour.
+Plug a Kindle in and Shelf knows which one it is, from the Kindle 2 to the Colorsoft and Scribe, from its serial number. It shows it in 3D, in its own colour, and the window's edges light up as it arrives.
 
-<p align="center"><img src="docs/media/kindle-plug.gif" width="880" alt="A Kindle being plugged in, rising over the library" /></p>
+<p align="center"><img src="docs/media/kindle-plug.gif" width="880" alt="A Kindle being plugged in, rising over the library as the window's edges light up" /></p>
 
 Drag a book onto it to copy it across. When it isn't plugged in, the same drop sends it by email.
 
-<p align="center"><img src="docs/media/kindle-drop.gif" width="880" alt="The Great Gatsby dragged from the bookcase onto the Kindle" /></p>
+<p align="center"><img src="docs/media/kindle-drop.gif" width="880" alt="The Great Gatsby dropped onto a plugged-in Kindle and copied across" /></p>
 
 ### A reader that remembers
 
@@ -82,6 +88,8 @@ npm run dev
 | `npm run check` | Typechecks, then runs the tests |
 | `npm run dist:mac` | Makes the macOS installer in `dist` |
 | `npm run dist:win` | Makes the Windows installer in `dist` |
+| `npm run site` | Runs the website at localhost:4173 |
+| `npm run record` | Records the README GIFs and the website's videos |
 
 The tests cover the library on disk under hundreds of imports at once, Kindle highlights, recommendations, the book sanitiser, EPUB making and Kindle recognition. The app tests start Shelf on an empty library of made-up books and use it: adding books, the right-click menu, every view and place, search, reading, removing and undoing, settings and restarting. Any error the page throws fails them. CI runs both, and packs the app, on macOS, Windows and Linux.
 
@@ -101,7 +109,8 @@ If Shelf goes wrong, Settings → About Shelf → Log shows its log file, and a 
 | `tools/azw3` | The EPUB to AZW3 converter, in Go, built to `resources/azw3.wasm` |
 | `test` | Tests, with Vitest |
 | `e2e` | App tests, with Playwright |
-| `site` | The website |
+| `site` | The website, in Next.js, built to plain files for Netlify or GitHub Pages |
+| `scripts` | Recording the demos, the app icon, naming the development app |
 
 ## Privacy
 

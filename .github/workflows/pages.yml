@@ -1,6 +1,7 @@
 name: Site
 
-# Publishes site/ to GitHub Pages whenever it changes on main.
+# Builds the site in site/ with Next.js and publishes it to GitHub Pages
+# whenever it changes on main.
 on:
   push:
     branches: [main]
@@ -26,9 +27,20 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci --prefix site
+      # A project site lives under /shelf on GitHub Pages.
+      - run: npm run build --prefix site
+        env:
+          SITE_BASE: /shelf
+          SITE_URL: https://simonveprek.github.io
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: site/out
       - id: deployment
         uses: actions/deploy-pages@v4

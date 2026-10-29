@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* The app's own colours, from its kit, so the site looks like what you download. */
+:root {
+  --background: #f6f5f1;
+  --foreground: #1d1b18;
+  --muted: #77716a;
+  --card: #fdfcfa;
+  --well: #f3f1ec;
+  --tile: #efede8;
+  --control: #edebe6;
+  --control-hover: #e6e3dd;
+  --border: rgb(46 36 20 / 0.08);
+  --line-strong: rgb(46 36 20 / 0.12);
+  --accent: #3d7bff;
+  --success: #2f8f5b;
+  --shadow-card: 0 1px 2px rgb(60 44 22 / 0.04), 0 10px 28px -18px rgb(60 44 22 / 0.14);
+  --shadow-window: 0 40px 90px -30px rgb(60 44 22 / 0.35), 0 12px 30px -12px rgb(60 44 22 / 0.18);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0e0e0f;
+    --foreground: #ededed;
+    --muted: #8f8f8f;
+    --card: #161617;
+    --well: #121213;
+    --tile: #1e1e1f;
+    --control: #212122;
+    --control-hover: #2a2a2b;
+    --border: rgb(255 255 255 / 0.07);
+    --line-strong: rgb(255 255 255 / 0.11);
+    --accent: #6b9bff;
+    --success: #5fc48c;
+    --shadow-card: none;
+    --shadow-window: 0 40px 100px -30px rgb(0 0 0 / 0.85), 0 12px 30px -12px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-well: var(--well);
+  --color-tile: var(--tile);
+  --color-control: var(--control);
+  --color-control-hover: var(--control-hover);
+  --color-border: var(--border);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans), -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Charter, "Sitka Text", Cambria, Georgia, serif;
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+/* The aurora, Shelf's one colour, on the leaning spine and a few accents. */
+.aurora-text {
+  background: linear-gradient(100deg, #2b4bff, #a23bff 35%, #ff2d55 70%, #ffb020);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

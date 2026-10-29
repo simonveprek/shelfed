@@ -1,0 +1,26 @@
+{
+  "name": "shelf-site",
+  "private": true,
+  "description": "Shelf's website, built to plain files for Netlify or GitHub Pages",
+  "scripts": {
+    "dev": "next dev -p 4173",
+    "build": "next build",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hugeicons/core-free-icons": "^4.4.0",
+    "@hugeicons/react": "^1.1.10",
+    "geist": "^1.8.2",
+    "next": "^16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
+  }
+}

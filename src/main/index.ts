@@ -183,6 +183,19 @@ function shoot(target: BrowserWindow) {
 
 const send = (channel: string, ...args: unknown[]) => win?.webContents.send(channel, ...args);
 
+/**
+ * For recording demos: SHELF_DEMO_KINDLE=<folder> pretends a Kindle Paperwhite
+ * is plugged in, with that folder as its drive. Never in an installed app.
+ */
+function demoKindle() {
+  const folder = !app.isPackaged && process.env.SHELF_DEMO_KINDLE;
+  if (!folder) return null;
+  return {
+    usb: { serial: "G000DEMO", model: "pw5" },
+    drive: { name: "Kindle", path: folder, free: 6_200_000_000, model: "pw5" },
+  };
+}
+
 /* ------------------------------------------------------------------------ */
 /* The app icon you chose                                                    */
 /* ------------------------------------------------------------------------ */
@@ -333,8 +346,12 @@ const api = {
     await sendToKindle(getSettings().kindle, library.filePath(book, ext), format.file, book.title);
   },
 
-  devices: () => findDevices(),
-  kindlePort: () => kindlePort(),
+  devices: async () => [...(demoKindle() ? [demoKindle()!.drive] : []), ...(await findDevices())],
+  async kindlePort() {
+    const port = await kindlePort();
+    const demo = demoKindle();
+    return demo ? { usb: [demo.usb, ...port.usb], drives: [demo.drive, ...port.drives] } : port;
+  },
   kindles: () => kindlesOnUsb(),
 
   async copyToDevice(id: string, ext: string, device: string) {
