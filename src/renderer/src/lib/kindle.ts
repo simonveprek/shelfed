@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import type { KindleDevice, KindleOnUsb } from "../../../shared/types";
 import { connectsLikeAPhone, kindleById } from "../../../shared/kindles";
 import { api, isMac, isWin } from "./api";
-import { booksOnKindle, finishedOnKindle } from "./onkindle";
+import { booksOnKindle, finishedOnKindle, notInLibrary } from "./onkindle";
 import { toast } from "@/components/ui";
 import { bytes } from "./util";
 import { t, tn } from "../../../shared/i18n";
@@ -96,6 +96,13 @@ export function useFinishedOnKindle() {
   const files = useStore((s) => s.kindleFiles);
   const books = useStore((s) => s.books);
   return useMemo(() => (files ? finishedOnKindle(books, files) : null), [files, books]);
+}
+
+/** Books on the Kindle plugged in as a drive that aren't in the library yet, or null when there's none. */
+export function useNotInLibrary() {
+  const files = useStore((s) => s.kindleFiles);
+  const books = useStore((s) => s.books);
+  return useMemo(() => (files ? notInLibrary(books, files) : null), [files, books]);
 }
 
 /** Takes the finished books off the Kindle, after asking. They stay in the library. */

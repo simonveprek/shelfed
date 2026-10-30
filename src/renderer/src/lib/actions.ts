@@ -3,6 +3,7 @@ import { KINDLE_EMAIL, KINDLE_LIMIT, KINDLE_USB } from "../../../shared/types";
 import { toast } from "@/components/ui";
 import { api, isMac } from "./api";
 import { relistKindle } from "./kindle";
+import { notInLibrary } from "./onkindle";
 import { extractContent, parseBook, saveCover } from "./books";
 import { readCalibreOpf } from "./calibre";
 import { findCopies, inherit } from "../../../shared/copies";
@@ -76,7 +77,7 @@ async function pool<T>(items: T[], limit: number, task: (item: T) => Promise<voi
  * separate copies before, and its details put right what was read from files.
  */
 /** What an import did, for whoever asked for it. */
-export type Imported = { added: number; skipped: number; joined: number; ids: string[] };
+export type Imported = { added: number; skipped: number; joined: number; ids: string[]; books: Record<string, string> };
 
 export async function importPaths(paths: string[], open = false, from?: string): Promise<Imported | null> {
   if (!paths.length) return null;
@@ -94,6 +95,8 @@ export async function importPaths(paths: string[], open = false, from?: string):
   let done = 0;
   const touched = new Set<string>();
   const fresh = new Set<string>();
+  // Which book each file went into.
+  const filed = new Map<string, string>();
   let last: Book | null = null;
   try {
     await pool(books, 3, async ([first, ...others]) => {
@@ -124,12 +127,14 @@ export async function importPaths(paths: string[], open = false, from?: string):
           if (folded) {
             drop([folded]);
             touched.delete(folded);
+            for (const [file, id] of filed) if (id === folded) filed.set(file, current.id);
             joined++;
           }
           current = grown;
         }
         upsert(current);
         touched.add(current.id);
+        for (const path of [first, ...others]) filed.set(path, current.id);
         last = current;
       } catch {
         // One bad file does not stop the rest.
@@ -157,7 +162,14 @@ export async function importPaths(paths: string[], open = false, from?: string):
     // A single file handed over opens; a folder, even of one book, doesn't.
     if (book && open && paths.length === 1 && books.length === 1 && books[0][0] === paths[0]) openReader(book.id);
     else if (book) set({ selection: [book.id], anchor: book.id });
-    return { added, skipped, joined, ids: [...touched].map((id) => into.get(id) ?? id).filter((id, i, all) => all.indexOf(id) === i) };
+    const final = (id: string) => into.get(id) ?? id;
+    return {
+      added,
+      skipped,
+      joined,
+      ids: [...touched].map(final).filter((id, i, all) => all.indexOf(id) === i),
+      books: Object.fromEntries([...filed].map(([path, id]) => [path, final(id)])),
+    };
   } catch (error) {
     set({ mood: null });
     job.fail(error);
@@ -449,6 +461,33 @@ export async function sendByCable(ids: string[], device: string) {
   if (failures === books.length) job.fail(lastError);
   else if (failures) job.fail(t("{n} of {total} were not copied", { n: String(failures), total: String(books.length) }));
   else job.done(books.length === 1 ? t("On your Kindle") : tn(books.length, "Copied {n} book to your Kindle", "Copied {n} books to your Kindle"));
+}
+
+/**
+ * Brings over the books on the Kindle plugged in that aren't in the library
+ * yet. They're copied, so they stay on the Kindle too, and each remembers its
+ * name there so it counts as on it. Books bought from Amazon are locked to
+ * Kindles and stay where they are.
+ */
+export async function bringFromKindle() {
+  const drive = get().kindlePort?.drives[0];
+  const files = get().kindleFiles;
+  if (!drive || !files) return;
+  const { files: theirs, locked } = notInLibrary(get().books, files);
+  const root = drive.path.replace(/[\\/]+$/, "");
+  const paths = theirs.map((file) => `${root}/documents/${file.path}`);
+  const result = paths.length ? await importPaths(paths, false, "your Kindle") : null;
+  const names = new Map<string, string[]>();
+  theirs.forEach((file, i) => {
+    const id = result?.books[paths[i]];
+    if (id) names.set(id, [...(names.get(id) ?? []), file.name]);
+  });
+  if (names.size) await patchBooks([...names.keys()], (b) => ({ kindleNames: [...new Set([...(b.kindleNames ?? []), ...names.get(b.id)!])] }));
+  if (locked) {
+    toast(tn(locked, "{n} book bought from Amazon stays on your Kindle", "{n} books bought from Amazon stay on your Kindle"), {
+      description: t("Amazon locks the books it sells to Kindles and its apps, so no other app can open them."),
+    });
+  }
 }
 
 /* ------------------------------------------------------------------------ */

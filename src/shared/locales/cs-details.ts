@@ -68,7 +68,6 @@ const words: Record<string, string> = {
 
   // Nothing chosen: the library at a glance
   Books: "Knihy",
-  "{n} authors|{n} authors": "{n} autor|{n} autoři|{n} autorů",
   "{n}% of them": "{n} % z nich",
   "Pick up where you left off": "Pokračujte, kde jste přestali",
   "Books you start reading wait for you here. Double click a cover to open it.":
@@ -151,6 +150,8 @@ const words: Record<string, string> = {
   "Hot take": "Horký názor",
   "Skip intro": "Přeskočit úvod",
   "Seen by 2 million": "Vidělo 2 miliony lidí",
+  "{n} book on it isn't in Shelfed. Bring it over|{n} books on it aren't in Shelfed. Bring them over":
+    "{n} kniha v něm není v Shelfedu. Přenést|{n} knihy v něm nejsou v Shelfedu. Přenést|{n} knih v něm není v Shelfedu. Přenést",
 };
 
 export default words;

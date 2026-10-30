@@ -213,6 +213,12 @@ const words: Record<string, string> = {
   "Wilkie Collins again": "Zase Wilkie Collins",
   "Homer, the war before the voyage": "Homér, válka před plavbou",
   "How to live, written for oneself": "Jak žít, psáno pro sebe",
+  // Bringing books over from a Kindle (lib/actions.ts). {place} carries its preposition.
+  "your Kindle": "z vašeho Kindlu",
+  "{n} book bought from Amazon stays on your Kindle|{n} books bought from Amazon stay on your Kindle":
+    "{n} kniha koupená na Amazonu zůstává v Kindlu|{n} knihy koupené na Amazonu zůstávají v Kindlu|{n} knih koupených na Amazonu zůstává v Kindlu",
+  "Amazon locks the books it sells to Kindles and its apps, so no other app can open them.":
+    "Amazon zamyká knihy, které prodává, pro Kindle a své aplikace, takže je žádná jiná aplikace neotevře.",
 };
 
 export default words;

@@ -15,6 +15,7 @@ function isTheBook(book: Book, name: string) {
   const title = norm(book.title);
   if (!title || !name) return false;
   if (book.formats.some((f) => words(f.file) === name) || name === title) return true;
+  if (book.kindleNames?.some((file) => words(file) === name)) return true;
   // After the title, only a writer of it may follow: "Dune Frank Herbert" is
   // Dune, "Dune Messiah Frank Herbert" isn't.
   if (!name.startsWith(`${title} `)) return false;
@@ -53,4 +54,19 @@ export function finishedOnKindle(books: Book[], files: KindleFile[]) {
     for (const file of mine) if (!theirs.includes(file)) theirs.push(file);
   }
   return { books: finished, files: theirs, bytes: theirs.reduce((n, f) => n + f.size, 0) };
+}
+
+/** What a Kindle keeps in its documents folder that isn't someone's book: its dictionaries and its own guide. */
+const KINDLES_OWN = /^dictionaries\/|(^|\/)kindle_.*guide[^/]*$/i;
+
+/**
+ * The books on a Kindle that aren't in the library yet, to bring over: the
+ * ones Shelfed can read, and how many more are locked to the Kindle.
+ */
+export function notInLibrary(books: Book[], files: KindleFile[]) {
+  const theirs = files.filter((file) => !KINDLES_OWN.test(file.path)).filter((file) => {
+    const name = words(file.name);
+    return name && !books.some((book) => isTheBook(book, name));
+  });
+  return { files: theirs.filter((f) => !f.locked), locked: theirs.filter((f) => f.locked).length };
 }

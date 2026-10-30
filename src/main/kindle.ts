@@ -1,4 +1,4 @@
-import { access, copyFile, mkdir, readdir, readFile, rm, stat, statfs } from "node:fs/promises";
+import { access, copyFile, mkdir, open, readdir, readFile, rm, stat, statfs } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -36,8 +36,20 @@ function transport(settings: KindleSettings) {
   });
 }
 
+/**
+ * A mail service turning the password away, said as what to do about it. The
+ * password someone signs in with is the usual mistake, and the big services
+ * only take an app password made for one program.
+ */
+export function plainMailError(error: unknown): unknown {
+  const code = (error as { code?: string; responseCode?: number } | null)?.code;
+  const response = (error as { responseCode?: number } | null)?.responseCode;
+  if (code !== "EAUTH" && response !== 535 && response !== 534) return error;
+  return new Error(t("Your mail didn't take that password. It wants an app password, not the one you sign in with. Settings, Sending, says where to make one."));
+}
+
 export async function verifyMail(settings: KindleSettings) {
-  await transport(settings).verify();
+  await transport(settings).verify().catch((error) => Promise.reject(plainMailError(error)));
   return true;
 }
 
@@ -49,7 +61,7 @@ export async function sendToKindle(settings: KindleSettings, file: string, name:
     subject: title,
     text: t("{title}, sent from Shelfed.", { title }),
     attachments: [{ filename: name, path: file }],
-  });
+  }).catch((error) => Promise.reject(plainMailError(error)));
 }
 
 /** Whether a path exists, giving up rather than hanging on a drive that won't answer. */
@@ -196,10 +208,42 @@ const ON_DEVICE = /\.(azw3?|kfx|mobi|prc|pdf|txt|epub|docx)$/i;
 const CLIPPINGS = /^my clippings\.txt$/i;
 const isBookFile = (path: string) => ON_DEVICE.test(path) && !CLIPPINGS.test(basename(path));
 
+/** The Kindle formats Shelfed reads when no DRM locks them. */
+const MOBI = /\.(azw3?|mobi|prc|kf8)$/i;
+
+/**
+ * Whether a book on a Kindle is locked to it. Books bought from Amazon come
+ * as KFX, which only a Kindle reads, as Topaz, or as MOBI with DRM, which the
+ * header of its first record says. Books put on it by cable or email aren't.
+ */
+export async function isLocked(path: string): Promise<boolean> {
+  if (/\.kfx$/i.test(path)) return true;
+  if (!MOBI.test(path)) return false;
+  const file = await open(path, "r").catch(() => null);
+  if (!file) return false;
+  try {
+    const head = Buffer.alloc(82);
+    if ((await file.read(head, 0, 82, 0)).bytesRead < 82) return false;
+    if (head.toString("latin1", 0, 3) === "TPZ") return true;
+    if (head.toString("latin1", 60, 68) !== "BOOKMOBI") return false;
+    // The first record starts with the PalmDOC header; its seventh field is the encryption.
+    const doc = Buffer.alloc(14);
+    if ((await file.read(doc, 0, 14, head.readUInt32BE(78))).bytesRead < 14) return false;
+    return doc.readUInt16BE(12) !== 0;
+  } catch {
+    return false;
+  } finally {
+    await file.close();
+  }
+}
+
+/** What was found locked, by path, size and time, so a file is only looked inside once. */
+const lockedCache = new Map<string, boolean>();
+
 /**
  * The book files in a Kindle's documents folder, a few folders deep, with
- * their sizes. Kindles keep each book's notes in a .sdr folder beside it;
- * those are skipped.
+ * their sizes and whether they're locked to it. Kindles keep each book's
+ * notes in a .sdr folder beside it; those are skipped.
  */
 export async function deviceFiles(device: string): Promise<KindleFile[]> {
   const found: KindleFile[] = [];
@@ -210,8 +254,12 @@ export async function deviceFiles(device: string): Promise<KindleFile[]> {
       const path = join(dir, entry.name);
       if (entry.isDirectory() && depth < 3 && !entry.name.endsWith(".sdr") && !entry.name.startsWith(".")) await walk(path, depth + 1);
       else if (entry.isFile() && isBookFile(entry.name)) {
-        const size = (await stat(path).catch(() => null))?.size ?? 0;
-        found.push({ name: entry.name, path: relative(docs, path).split(sep).join("/"), size });
+        const info = await stat(path).catch(() => null);
+        const size = info?.size ?? 0;
+        const key = `${path}\0${size}\0${info?.mtimeMs ?? 0}`;
+        let locked = lockedCache.get(key);
+        if (locked === undefined) lockedCache.set(key, (locked = await isLocked(path)));
+        found.push({ name: entry.name, path: relative(docs, path).split(sep).join("/"), size, ...(locked ? { locked } : {}) });
       }
     }
   };

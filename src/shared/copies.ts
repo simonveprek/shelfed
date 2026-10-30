@@ -70,6 +70,8 @@ export function inherit(keep: Book, copies: Book[]): Partial<Book> {
   if (tags.length !== keep.tags.length) patch.tags = tags;
   const collections = union((b) => b.collections);
   if (collections.length !== keep.collections.length) patch.collections = collections;
+  const kindleNames = union((b) => b.kindleNames ?? []);
+  if (kindleNames.length !== (keep.kindleNames ?? []).length) patch.kindleNames = kindleNames;
   const rating = Math.max(...all.map((b) => b.rating));
   if (rating !== keep.rating) patch.rating = rating;
   if (!keep.favorite && copies.some((c) => c.favorite)) patch.favorite = true;

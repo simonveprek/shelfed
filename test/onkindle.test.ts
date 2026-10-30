@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { connectsLikeAPhone, kindleById } from "../src/shared/kindles";
-import { booksOnKindle, finishedOnKindle } from "../src/renderer/src/lib/onkindle";
+import { booksOnKindle, finishedOnKindle, notInLibrary } from "../src/renderer/src/lib/onkindle";
 import { book } from "./helpers";
 
 describe("books already on a Kindle", () => {
@@ -72,3 +72,26 @@ describe("finished books still on a Kindle", () => {
   });
 });
 
+
+describe("books on a Kindle that aren't in the library", () => {
+  const file = (path: string, locked = false) => ({ name: path.split("/").pop()!, path, size: 1, ...(locked ? { locked } : {}) });
+
+  it("are the ones no book claims, readable ones to bring over and locked ones counted", () => {
+    const dracula = book({ title: "Dracula", authors: ["Bram Stoker"] });
+    const files = [file("Dracula - Bram Stoker.azw3"), file("Notes.txt"), file("Emma_B00ABCDEFG_EBOK.azw", true), file("Dune_B00HIJKLMN.kfx", true)];
+    const found = notInLibrary([dracula], files);
+    expect(found.files.map((f) => f.path)).toEqual(["Notes.txt"]);
+    expect(found.locked).toBe(2);
+  });
+
+  it("leave out the Kindle's own dictionaries and guide", () => {
+    const found = notInLibrary([], [file("dictionaries/Oxford Dictionary of English.azw"), file("Kindle_Users_Guide.azw3"), file("Essay.pdf")]);
+    expect(found.files.map((f) => f.path)).toEqual(["Essay.pdf"]);
+  });
+
+  it("know a book brought over by the name it has on the Kindle, whatever it's called now", () => {
+    const dorian = book({ title: "The Picture of Dorian Gray", authors: ["Oscar Wilde"], kindleNames: ["Dorian Gray_B00ABCDEFG.azw3"] });
+    expect(notInLibrary([dorian], [file("Dorian Gray_B00ABCDEFG.azw3")]).files).toEqual([]);
+    expect(booksOnKindle([dorian], ["Dorian Gray_B00ABCDEFG.azw3"])).toEqual(new Set([dorian.id]));
+  });
+});

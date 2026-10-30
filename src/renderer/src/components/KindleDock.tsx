@@ -1,9 +1,9 @@
 import { useRef, useState, type DragEvent } from "react";
 import { motion } from "framer-motion";
 import { kindleById } from "../../../shared/kindles";
-import { sendByCable } from "@/lib/actions";
+import { bringFromKindle, sendByCable } from "@/lib/actions";
 import { isMac } from "@/lib/api";
-import { useFinishedOnKindle, useKindlePort, useOnKindle } from "@/lib/kindle";
+import { useFinishedOnKindle, useKindlePort, useNotInLibrary, useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
 import { useStore } from "@/lib/store";
 import { bytes } from "@/lib/util";
@@ -41,6 +41,8 @@ export function KindleDock() {
   const cable = useStore((s) => s.kindleCable);
   const copied = useOnKindle()?.size ?? 0;
   const finished = useFinishedOnKindle();
+  const missing = useNotInLibrary();
+  const [bringing, setBringing] = useState(false);
   const model = kindleById(kindle.model ?? drive?.model ?? usb?.find((k) => k.model)?.model) ?? (onBus ? kindleById("pw5") : undefined);
   if (!model) return null;
 
@@ -123,6 +125,19 @@ export function KindleDock() {
                   ? t("Drop it here to send it by email")
                   : t("Not plugged in. Drop a book on it to email it.")}
         </p>
+        {drive && !over && missing && missing.files.length > 0 && (
+          <button
+            type="button"
+            disabled={bringing}
+            onClick={async () => {
+              setBringing(true);
+              await bringFromKindle().finally(() => setBringing(false));
+            }}
+            className="mt-2.5 rounded-full bg-control px-3 py-1 text-caption text-muted transition-colors hover:bg-control-hover hover:text-foreground disabled:opacity-60"
+          >
+            {tn(missing.files.length, "{n} book on it isn't in Shelfed. Bring it over", "{n} books on it aren't in Shelfed. Bring them over")}
+          </button>
+        )}
         {drive && !over && finished && finished.books.length > 0 && (
           <button
             type="button"

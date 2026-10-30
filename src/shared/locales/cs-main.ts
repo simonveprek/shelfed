@@ -57,6 +57,8 @@ const words: Record<string, string> = {
   "Shelfed only downloads from Standard Ebooks and Project Gutenberg.": "Shelfed stahuje jen ze Standard Ebooks a Project Gutenberg.",
   "The download stopped with {status}": "Stahování skončilo chybou {status}",
   "Could not download from {host}": "Z {host} se nepodařilo stáhnout",
+  "Your mail didn't take that password. It wants an app password, not the one you sign in with. Settings, Sending, says where to make one.":
+    "Pošta to heslo nepřijala. Chce heslo pro aplikaci, ne to, se kterým se přihlašujete. Kde ho vytvořit, najdete v Nastavení, v části Odesílání.",
 };
 
 export default words;

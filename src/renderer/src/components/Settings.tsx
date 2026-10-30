@@ -10,12 +10,12 @@ import {
 } from "@/components/ui";
 import { Point } from "@/components/fragms/points";
 import { api, isMac, revealLabel } from "@/lib/api";
-import { bringCalibreOver, joinCopies } from "@/lib/actions";
+import { bringCalibreOver, bringFromKindle, joinCopies } from "@/lib/actions";
 import { useCalibre } from "@/lib/findcalibre";
 import { fromLocale, LANGUAGES, t, tn, type Language, tc } from "../../../shared/i18n";
 import { findCopies } from "../../../shared/copies";
 import { chooseIcon, iconSrc } from "@/lib/icon";
-import { PHONE_LIKE, useFinishedOnKindle, useKindlePort, useOnKindle } from "@/lib/kindle";
+import { PHONE_LIKE, useFinishedOnKindle, useKindlePort, useNotInLibrary, useOnKindle } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
 import { bytes } from "@/lib/util";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
@@ -58,6 +58,34 @@ function Row({ label, hint, children, wrap }: { label: ReactNode; hint?: ReactNo
       </div>
       {children && <div className="shrink-0">{children}</div>}
     </div>
+  );
+}
+
+/** Where each big mail service makes app passwords, by the domain of the address. */
+const APP_PASSWORDS: Array<{ domains: string[]; service: string; href: string; link: string }> = [
+  { domains: ["gmail.com", "googlemail.com"], service: "Gmail", href: "https://myaccount.google.com/apppasswords", link: "Google’s app passwords" },
+  { domains: ["icloud.com", "me.com", "mac.com"], service: "iCloud", href: "https://account.apple.com/account/manage", link: "your Apple Account" },
+  { domains: ["outlook.com", "hotmail.com", "live.com"], service: "Outlook", href: "https://account.live.com/proofs/AppPassword", link: "your Microsoft account" },
+  { domains: ["yahoo.com"], service: "Yahoo", href: "https://login.yahoo.com/account/security/app-passwords", link: "Yahoo’s account security" },
+];
+
+/**
+ * What to put in the password box, for the service the address belongs to.
+ * The password someone signs in with is what everyone types first, and the
+ * big services turn it away, so the hint says so and links to where the right
+ * one is made.
+ */
+function PasswordHint({ from }: { from: string }) {
+  const domain = from.split("@")[1]?.toLowerCase() ?? "";
+  const known = APP_PASSWORDS.find((s) => s.domains.includes(domain));
+  if (!known) return <>{t("Gmail, iCloud, Outlook and Yahoo want an app password, made in your account’s security settings.")}</>;
+  const link = <TextLink href={known.href}>{t(known.link)}</TextLink>;
+  return (
+    <>
+      {known.service === "Gmail"
+        ? withLink(t("Not the password you sign in to Gmail with. Google wants an app password: turn on 2-Step Verification, then make one in {link} and paste its 16 letters here."), link)
+        : withLink(t("Not the password you sign in to {service} with. Make an app password in {link} and paste it here.", { service: known.service }), link)}
+    </>
   );
 }
 
@@ -402,6 +430,7 @@ function KindleSection() {
   const cable = useStore((s) => s.kindleCable);
   const copied = useOnKindle()?.size ?? 0;
   const finished = useFinishedOnKindle();
+  const missing = useNotInLibrary();
   const stranger = Boolean(found?.length) && !found?.some((k) => k.model);
   const set = (patch: Partial<typeof kindle>) => setSetting({ kindle: { ...useStore.getState().settings.kindle, ...patch } });
   // Settings steps aside first, so the welcome has the whole window.
@@ -444,6 +473,14 @@ function KindleSection() {
                   )}
                 </p>
                 <Button size="sm" onClick={() => useStore.setState({ confirmTidy: true })}>{t("Take them off")}</Button>
+              </div>
+            )}
+            {missing && missing.files.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <p className="text-caption text-muted">
+                  {tn(missing.files.length, "{n} book on it isn't in Shelfed yet.", "{n} books on it aren't in Shelfed yet.")}
+                </p>
+                <Button size="sm" onClick={() => bringFromKindle()}>{t("Bring them over")}</Button>
               </div>
             )}
           </div>
@@ -575,7 +612,7 @@ function SendingSection() {
                   {t("App password")} {kindle.hasPassword && <Badge tone="success">{isMac ? t("Saved in the Keychain") : t("Saved in the system vault")}</Badge>}
                 </span>
               }
-              hint={t("Gmail, iCloud, Outlook and Yahoo want an app password, made in your account’s security settings.")}
+              hint={<PasswordHint from={kindle.from} />}
             >
               <Input type="password" placeholder={kindle.hasPassword ? t("Saved") : t("App password")} value={password} onChange={(e) => setPassword(e.target.value)} />
             </Field>

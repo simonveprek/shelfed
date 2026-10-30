@@ -216,6 +216,18 @@ const words: Record<string, string> = {
   Violet: "Fialová",
   Pink: "Růžová",
   Ivory: "Slonovinová",
+
+  // The app password, said for the service the address belongs to.
+  "Google’s app passwords": "heslech aplikací Google",
+  "your Apple Account": "svém účtu Apple",
+  "your Microsoft account": "svém účtu Microsoft",
+  "Yahoo’s account security": "zabezpečení účtu Yahoo",
+  "Not the password you sign in to Gmail with. Google wants an app password: turn on 2-Step Verification, then make one in {link} and paste its 16 letters here.":
+    "Nezadávejte heslo, se kterým se přihlašujete do Gmailu. Google chce heslo pro aplikaci: zapněte dvoufázové ověření, pak si ho vytvořte v {link} a vložte sem jeho 16 písmen.",
+  "Not the password you sign in to {service} with. Make an app password in {link} and paste it here.":
+    "Nezadávejte heslo, se kterým se přihlašujete k účtu {service}. Vytvořte si heslo pro aplikaci v {link} a vložte ho sem.",
+  "{n} book on it isn't in Shelfed yet.|{n} books on it aren't in Shelfed yet.":
+    "{n} kniha v něm ještě není v Shelfedu.|{n} knihy v něm ještě nejsou v Shelfedu.|{n} knih v něm ještě není v Shelfedu.",
 };
 
 export default words;

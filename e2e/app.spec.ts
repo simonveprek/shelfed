@@ -181,6 +181,22 @@ test.describe("a Kindle plugged in as a drive", () => {
     await page.getByRole("button", { name: "On your Kindle", exact: true }).click();
     await expect(card(page, "Salt and Ink")).toBeVisible();
     await expect(card(page, "A Winter Orchard")).toHaveCount(0);
+    // The side panel counts the books on this shelf, not the whole library.
+    await page.keyboard.press("Escape");
+    await expect(page.locator("aside").getByText("1 author", { exact: true })).toBeVisible();
+  });
+
+  test("brings over the books on it that aren't in the library", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await page.keyboard.press("Escape");
+    const offer = page.locator("aside").getByRole("button", { name: "1 book on it isn't in Shelfed. Bring it over" });
+    await offer.click();
+    await expect(page.getByText("Added 1 book from your Kindle")).toBeVisible();
+    await expect(card(page, "Notes")).toBeVisible();
+    // Brought over, it counts as on the Kindle, and isn't offered again.
+    await expect(offer).toHaveCount(0);
+    await expect(page.locator("aside").getByText("2 of your books are on it", { exact: false })).toBeVisible();
   });
 
   test("takes finished books off it, after asking, and keeps them in the library", async ({ shelf }) => {

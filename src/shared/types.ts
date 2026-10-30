@@ -67,6 +67,8 @@ export type Book = {
   tint?: string;
   added: number;
   modified: number;
+  /** The names of the files it was brought over from on a Kindle, so it's known to be on it. */
+  kindleNames?: string[];
   /** When someone last changed its title, authors or series by hand; an import then leaves them be. */
   edited?: number;
   opened?: number;
@@ -204,7 +206,8 @@ export type BootState = {
 export type KindleDevice = { name: string; path: string; free: number; model?: string };
 
 /** A book file on a Kindle plugged in as a drive: its name, where it is inside documents, and its size. */
-export type KindleFile = { name: string; path: string; size: number };
+/** A book file on a Kindle, by its path inside the documents folder. Locked ones are Amazon's, readable only on Kindles. */
+export type KindleFile = { name: string; path: string; size: number; locked?: boolean };
 
 /** A Kindle on the USB bus, mounted as a drive or not. */
 export type KindleOnUsb = { serial: string; model?: string };
