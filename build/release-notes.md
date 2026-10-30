@@ -1,11 +1,9 @@
 Shelfed is a quiet home for your books, on Mac and Windows. Free and open source.
 
-## New in 0.1.2
+## New in 0.1.3
 
-- **Bring books over from your Kindle.** Plug in a Kindle and Shelfed shows the books on it that aren't in your library yet, and brings them over in one click. They're copied, so they stay on the Kindle too. Books bought from Amazon are locked to Kindles and stay where they are; Shelfed says how many.
-- **Clearer email setup.** Gmail, iCloud, Outlook and Yahoo don't take the password you sign in with. Settings now says so for the service you use, and links straight to where you make an app password. If the mail still turns the password away, the error says what to do.
-- **The right count.** The numbers in the side panel are for the shelf you're on, so On your Kindle counts the books on it, not your whole library.
-- **Library warnings are logged from the start**, not only after the library is moved.
+- **See what a free book is before adding it.** Click a book under You may also like, or on the Classics page, and a window shows its whole title, what it's about and where it comes from. You can add it from there.
+- **A suggestion that couldn't be found gets another try.** If a free book shows up without its cover or Free button, opening it looks again.
 
 ## What's in it
 
@@ -23,9 +21,9 @@ Shelfed is a quiet home for your books, on Mac and Windows. Free and open source
 
 | | |
 | --- | --- |
-| Mac with Apple silicon (M1 and later) | `Shelfed-0.1.2-mac-arm64.dmg` |
-| Mac with Intel | `Shelfed-0.1.2-mac-x64.dmg` |
-| Windows, ARM PCs too | `Shelfed-0.1.2-win-x64.exe` |
+| Mac with Apple silicon (M1 and later) | `Shelfed-0.1.3-mac-arm64.dmg` |
+| Mac with Intel | `Shelfed-0.1.3-mac-x64.dmg` |
+| Windows, ARM PCs too | `Shelfed-0.1.3-win-x64.exe` |
 
 ## Opening it the first time
 
