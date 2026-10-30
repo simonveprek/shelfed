@@ -7,7 +7,7 @@ import { Empty } from "@/components/bits";
 import { api } from "@/lib/api";
 import { addFree } from "@/lib/free";
 import { useWidth } from "./Library";
-import { useBecauseYouRead, useFree } from "./Suggestions";
+import { FreeInfo, useBecauseYouRead, useFree } from "./Suggestions";
 import { useStore } from "@/lib/store";
 import { norm } from "@/lib/util";
 import { t } from "../../../shared/i18n";
@@ -27,6 +27,7 @@ type Source = keyof typeof SOURCES;
 
 function FreeCard({ book, owned, onAdd, busy, index }: { book: FreeBook; owned: boolean; onAdd: () => void; busy: boolean; index: number }) {
   const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(false);
   return (
     <motion.div
       className="group flex flex-col"
@@ -50,21 +51,26 @@ function FreeCard({ book, owned, onAdd, busy, index }: { book: FreeBook; owned: 
             <span className="serif line-clamp-5 text-[15px] leading-snug">{book.title}</span>
           </div>
         )}
-        <div className={`absolute inset-x-2 bottom-2 flex justify-end transition-opacity duration-150 ${owned || busy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"}`}>
+        <button aria-label={book.title} onClick={() => setOpen(true)} className="absolute inset-0" />
+        <div className={`pointer-events-none absolute inset-x-2 bottom-2 flex justify-end transition-opacity duration-150 ${owned || busy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"}`}>
           <Button
             size="sm"
             variant={owned ? "secondary" : "primary"}
             icon={busy ? <Spinner size="sm" /> : owned ? Tick02Icon : Add01Icon}
             disabled={owned || busy}
             onClick={onAdd}
-            className="shadow-float"
+            className="pointer-events-auto shadow-float"
           >
             {owned ? t("In Shelfed") : busy ? t("Adding") : t("Add")}
           </Button>
         </div>
       </div>
-      <p className="mt-3 line-clamp-2 text-label leading-snug font-medium">{book.title}</p>
-      <p className="mt-0.5 line-clamp-1 text-caption text-muted">{book.author}</p>
+      {/* The cover is the way in for the keyboard; the words are one more place to click. */}
+      <button tabIndex={-1} aria-hidden onClick={() => setOpen(true)} className="text-left">
+        <span className="mt-3 line-clamp-2 text-label leading-snug font-medium">{book.title}</span>
+        <span className="mt-0.5 line-clamp-1 text-caption text-muted">{book.author}</span>
+      </button>
+      {open && <FreeInfo title={book.title} author={book.author} free={book} state={owned ? "owned" : busy ? "adding" : "idle"} onAdd={onAdd} onClose={() => setOpen(false)} />}
     </motion.div>
   );
 }
@@ -81,20 +87,23 @@ function KindredItem({ title, author, why, after, owned, busy, onAdd }: {
 }) {
   const free = useFree(title, author);
   const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(false);
   if (free === null) return null;
   const have = free ? owned(free) : false;
   const adding = free ? busy.has(free.id) : false;
   return (
-    <div className="group flex min-w-0 items-center gap-3">
-      <span className="relative aspect-[2/3] w-11 shrink-0 overflow-hidden rounded-[3px] bg-tile shadow-[var(--shadow-book)]">
-        {free?.cover && <img src={free.cover} alt="" data-loaded={loaded} onLoad={() => setLoaded(true)} className="cover-img absolute inset-0 size-full object-cover" />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="line-clamp-1 text-label font-medium">{title}</span>
-        <span className="line-clamp-1 text-caption text-muted" title={t("{why}. After {after}.", { why, after })}>
-          {why}
+    <div className="group -m-2 flex min-w-0 items-center gap-3 rounded-item p-2 hover:bg-control">
+      <button onClick={() => setOpen(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <span className="relative aspect-[2/3] w-11 shrink-0 overflow-hidden rounded-[3px] bg-tile shadow-[var(--shadow-book)]">
+          {free?.cover && <img src={free.cover} alt="" data-loaded={loaded} onLoad={() => setLoaded(true)} className="cover-img absolute inset-0 size-full object-cover" />}
         </span>
-      </span>
+        <span className="min-w-0 flex-1">
+          <span className="line-clamp-1 text-label font-medium">{title}</span>
+          <span className="line-clamp-1 text-caption text-muted" title={t("{why}. After {after}.", { why, after })}>
+            {why}
+          </span>
+        </span>
+      </button>
       <IconButton
         className="shrink-0"
         label={have ? t("{title} is in Shelfed", { title }) : t("Add {title}", { title })}
@@ -102,6 +111,7 @@ function KindredItem({ title, author, why, after, owned, busy, onAdd }: {
         disabled={!free || have || adding}
         onClick={() => free && onAdd(free)}
       />
+      {open && <FreeInfo title={title} author={author} why={why} free={free} state={have ? "owned" : adding ? "adding" : "idle"} onAdd={() => free && onAdd(free)} onClose={() => setOpen(false)} />}
     </div>
   );
 }

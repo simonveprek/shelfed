@@ -138,6 +138,8 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
         ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}),
         // On someone's own computer the test books are deleted, not put in their Trash.
         ...(process.env.CI ? {} : { SHELF_NO_TRASH: "1" }),
+        // Nor does its window get in their way. SHELF_SHOW=1 shows it, to watch a test.
+        ...(process.env.CI || process.env.SHELF_SHOW ? {} : { SHELF_QUIET: "1" }),
       };
       // SHELF_APP=<the packaged app's executable> tests an installer's app instead of the build.
       app = process.env.SHELF_APP

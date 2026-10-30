@@ -81,7 +81,7 @@ async function fromStandIn(folder: string, query: string): Promise<FreeBook[]> {
     .filter((name) => name.endsWith(".epub") && words.every((w) => name.toLowerCase().includes(w)))
     .map((name) => {
       const [title, author = ""] = name.replace(/\.epub$/, "").split(" - ");
-      return { id: `test:${name}`, source: "standard" as const, title, author, epub: `file://${join(folder, name)}`, page: "" };
+      return { id: `test:${name}`, source: "standard" as const, title, author, epub: `file://${join(folder, name)}`, page: "", summary: `What ${title} is about.` };
     });
 }
 
@@ -90,6 +90,18 @@ export const freeBooks = (source: "standard" | "gutenberg", query: string) => {
   if (folder) return fromStandIn(folder, query);
   return source === "standard" ? standard(query) : gutenberg(query);
 };
+
+/** The summary in a Gutenberg book's own feed, as it's written there. */
+export function summaryIn(feed: string) {
+  const found = feed.match(/<p>\s*Summary:\s*([\s\S]*?)<\/p>/)?.[1];
+  return found ? decode(found.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim() : null;
+}
+
+/** What a Gutenberg book is about. Its search results don't say, so this asks for the one book. */
+export async function freeSummary(id: string) {
+  const n = id.match(/^pg:(\d+)$/)?.[1];
+  return n ? summaryIn(await text(`https://www.gutenberg.org/ebooks/${n}.opds`)) : null;
+}
 
 /** Fetches a free book to a temporary file, ready to be added like any other. */
 export async function downloadBook(url: string, name: string) {

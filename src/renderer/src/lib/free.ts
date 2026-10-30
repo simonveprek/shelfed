@@ -29,6 +29,22 @@ export function findFree(title: string, author: string) {
   return found.get(key)!;
 }
 
+const summaries = new Map<string, Promise<string | null>>();
+
+/** What a free book is about, looked up once per session. Null when nobody says, or can't be reached. */
+export function findSummary(book: FreeBook) {
+  if (book.summary) return Promise.resolve(book.summary);
+  if (!summaries.has(book.id))
+    summaries.set(
+      book.id,
+      api.freeSummary(book.id).catch(() => {
+        summaries.delete(book.id);
+        return null;
+      }),
+    );
+  return summaries.get(book.id)!;
+}
+
 /** Downloads a free book and adds it to the library. */
 export async function addFree(book: FreeBook) {
   let path: string | null = null;

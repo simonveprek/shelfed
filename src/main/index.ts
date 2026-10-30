@@ -14,7 +14,7 @@ import { docxToHtml, htmlToPdf } from "./convert";
 import { copyToDevice, deviceFiles, findDevices, kindlePort, kindlesOnUsb, readClippings, removeFromDevice, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
-import { downloadBook, forgetDownload, freeBooks } from "./catalogues";
+import { downloadBook, forgetDownload, freeBooks, freeSummary } from "./catalogues";
 import { fromLocale, setLanguage, t, tc } from "../shared/i18n";
 import "../shared/locales";
 import { findCalibre } from "./calibre";
@@ -24,6 +24,18 @@ import { checkForUpdates, installUpdate, updateState, watchUpdates } from "./upd
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const isMac = process.platform === "darwin";
+
+/**
+ * For running the app tests on a computer someone is using: the window can't
+ * be seen or clicked and never takes focus, there's no dock icon, and it keeps
+ * running as if it were on screen. Never in an installed app.
+ */
+const quiet = !app.isPackaged && !!process.env.SHELF_QUIET;
+if (quiet) {
+  app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
+  app.commandLine.appendSwitch("disable-renderer-backgrounding");
+  app.dock?.hide();
+}
 const isWin = process.platform === "win32";
 
 // The kit's background, so the window never flashes another colour.
@@ -104,14 +116,18 @@ function createWindow() {
       contextIsolation: true,
       spellcheck: false,
       // Scripted checks run in a window behind others, which must not be paused.
-      backgroundThrottling: !process.env.SHELF_SHOT,
+      backgroundThrottling: !process.env.SHELF_SHOT && !quiet,
     },
   });
   if (bounds?.maximized) win.maximize();
   // Scripted checks open without taking focus, so they never catch someone's typing.
   win.once("ready-to-show", () => {
     if (process.env.SHELF_SHOT) console.log("[startup] window ready", Math.round(process.uptime() * 1000), "ms after launch");
-    return process.env.SHELF_SHOT ? win?.showInactive() : win?.show();
+    if (quiet) {
+      win?.setOpacity(0);
+      win?.setIgnoreMouseEvents(true);
+    }
+    return process.env.SHELF_SHOT || quiet ? win?.showInactive() : win?.show();
   });
   win.on("close", () => {
     if (!win || win.isMinimized()) return;
@@ -418,6 +434,7 @@ const api = {
   },
 
   freeBooks: (source: "standard" | "gutenberg", query: string) => freeBooks(source, query),
+  freeSummary: (id: string) => freeSummary(id),
   downloadBook: (url: string, name: string) => downloadBook(url, name),
   forgetDownload: (path: string) => forgetDownload(path),
 
@@ -640,7 +657,7 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler((_wc, _permission, done) => done(false));
   queued.push(...process.argv.slice(1).filter(isBook));
   // While developing, the dock shows Shelfed's icon instead of Electron's.
-  if (isMac && !app.isPackaged) app.dock?.setIcon(join(here, "../../build/icon.png"));
+  if (isMac && !app.isPackaged && !quiet) app.dock?.setIcon(join(here, "../../build/icon.png"));
   library = await openLibrary(getSettings().libraryPath);
   serve();
   speak();

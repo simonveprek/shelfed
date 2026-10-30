@@ -516,11 +516,45 @@ test("an empty library starts with a few classics in one click", async ({ shelf 
   await expect(card(page, "Dracula")).toBeVisible();
 });
 
+test("a suggested free book opens to say what it is, and can be added from there", async ({ shelf }) => {
+  const { page, free } = shelf;
+  writeFileSync(join(free, "The King in Yellow - Robert W. Chambers.epub"), epub({ title: "The King in Yellow", author: "Robert W. Chambers" }));
+  await shelf.add([{ title: "The Picture of Dorian Gray", author: "Oscar Wilde" }, BOOKS[0]]);
+  await card(page, "The Picture of Dorian Gray").click();
+  await page.locator("aside").getByRole("button", { name: /The King in Yellow/ }).click();
+  const info = page.getByRole("dialog", { name: "The King in Yellow" });
+  await expect(info.getByRole("heading", { name: "The King in Yellow" })).toBeVisible();
+  await expect(info.getByText("Robert W. Chambers")).toBeVisible();
+  await expect(info.getByText("Decadent, beautiful and dangerous")).toBeVisible();
+  await expect(info.getByText("What The King in Yellow is about.")).toBeVisible();
+  await info.getByRole("button", { name: "Add for free" }).click();
+  await expect(card(page, "The King in Yellow")).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator("header").getByText("3", { exact: true })).toBeVisible();
+});
+
+test("a book on the Classics page opens to say what it is, and can be added from there", async ({ shelf }) => {
+  const { page, free } = shelf;
+  writeFileSync(join(free, "Carmilla - J. Sheridan Le Fanu.epub"), epub({ title: "Carmilla", author: "J. Sheridan Le Fanu" }));
+  await page.getByRole("button", { name: "Classics", exact: true }).click();
+  await page.getByRole("button", { name: "Carmilla", exact: true }).click();
+  const info = page.getByRole("dialog", { name: "Carmilla" });
+  await expect(info.getByText("What Carmilla is about.")).toBeVisible();
+  await info.getByRole("button", { name: "Add for free" }).click();
+  await expect(info.getByRole("button", { name: "In Shelfed" })).toBeDisabled({ timeout: 30_000 });
+  await info.getByRole("button", { name: "Close" }).click();
+  await expect(info).toHaveCount(0);
+  // The words under the cover open it too.
+  await page.locator("main button").filter({ hasText: /^CarmillaJ\. Sheridan Le Fanu$/ }).click();
+  await expect(info).toBeVisible();
+});
+
 test("reads a book aloud from the page, and stops", async ({ shelf }) => {
   const { page } = shelf;
   await shelf.add();
   await card(page, "The Lighthouse Keeper").dblclick();
   await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+  // On someone's own computer the voice stays silent, so a test never talks over them.
+  if (!process.env.CI) await page.evaluate(() => { speechSynthesis.speak = () => {}; });
   await page.getByRole("button", { name: "Read aloud" }).click();
   const bar = page.getByRole("button", { name: "Stop reading aloud" }).last();
   await expect(bar).toBeVisible();

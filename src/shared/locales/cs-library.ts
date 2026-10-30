@@ -154,6 +154,9 @@ const words: Record<string, string> = {
 
   // Suggestions
   "Free": "Zdarma",
+  "Add for free": "Přidat zdarma",
+  "See it on {source}": "Zobrazit na {source}",
+  "Couldn't find a free copy of this one just now.": "Bezplatnou kopii této knihy se teď nepodařilo najít.",
   "Read (finished)": "Přečteno",
   "In your library": "Ve vaší knihovně",
 
