@@ -134,6 +134,12 @@ export type BookcasePrefs = {
   ribbon: string;
   /** The case leans toward the pointer. */
   lean: boolean;
+  /** Books being read lie in a pile on top of the case. */
+  pile: boolean;
+  /** A series stands together, the same height, with a band across its spines. */
+  boxSets: boolean;
+  /** Each shelf runs through the colours. */
+  rainbow: boolean;
 };
 
 export type KindleSettings = {

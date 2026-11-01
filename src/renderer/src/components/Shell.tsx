@@ -6,6 +6,7 @@ import {
   LeftToRightListBulletIcon, Bookshelf01Icon, PencilEdit02Icon, Settings01Icon, SidebarRightIcon, SparklesIcon,
   Tag01Icon, ThreeDViewIcon, UserIcon, ArrowLeft01Icon, Globe02Icon, Tablet01Icon,
   ArrowUp01Icon,
+  QuoteDownIcon,
 } from "@hugeicons/core-free-icons";
 import type { SortKey } from "../../../shared/types";
 import {
@@ -113,6 +114,9 @@ export function AppSidebar() {
             </SidebarItem>
           </DropTarget>
         ))}
+        <SidebarItem icon={QuoteDownIcon} active={section.kind === "commonplace"} onClick={() => go({ kind: "commonplace" })}>
+          {t("Commonplace book")}
+        </SidebarItem>
         {onKindle && (
           <SidebarItem icon={Tablet01Icon} active={section.kind === "kindle"} onClick={() => go({ kind: "kindle" })}>
             {t("On your Kindle")}
@@ -305,6 +309,9 @@ function BookcaseOptions() {
               <ColourPicker value={prefs.ribbon} options={RIBBONS} onChange={(ribbon) => set({ ribbon: ribbon ?? "accent" })} />
             </div>
           )}
+          <SwitchRow label={t("Reading pile")} hint={t("Books you're partway through lie on top of the case.")} checked={prefs.pile} onChange={(pile) => set({ pile })} />
+          <SwitchRow label={t("Box sets")} hint={t("A series stands together, with a band across its spines.")} checked={prefs.boxSets} onChange={(boxSets) => set({ boxSets })} />
+          {prefs.spines !== "ink" && <SwitchRow label={t("Rainbow order")} hint={t("Each shelf runs through the colours.")} checked={prefs.rainbow} onChange={(rainbow) => set({ rainbow })} />}
           <SwitchRow label={t("Lean toward the pointer")} checked={prefs.lean} onChange={(lean) => set({ lean })} />
         </div>
       </Section>
@@ -319,7 +326,7 @@ export function Header() {
   const settings = useStore((s) => s.settings);
   const total = useStore((s) => s.books.length);
   const visible = useVisibleBooks();
-  const own = section.kind === "discover";
+  const own = section.kind === "discover" || section.kind === "commonplace";
   const browsing = section.kind === "browse" || own;
 
   return (

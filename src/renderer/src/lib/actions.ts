@@ -258,6 +258,12 @@ export async function pickAndImport(folder = false) {
 /* Reading                                                                   */
 /* ------------------------------------------------------------------------ */
 
+/** Opens a book at a place in it, such as a line marked there. */
+export function openReaderAt(id: string, place: string, ext?: string) {
+  set({ readAt: place });
+  openReader(id, ext);
+}
+
 export function openReader(id: string, ext?: string) {
   const book = bookById(id);
   const format = ext ?? (book && readingFormat(book));

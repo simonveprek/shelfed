@@ -1,6 +1,7 @@
 import { copyFileSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Page } from "@playwright/test";
 import { BOOKS, card, epub, expect, openSettings, test } from "./shelf";
 
 const broken = (page: import("@playwright/test").Page) => expect(page.getByText("Something went wrong")).toHaveCount(0);
@@ -644,6 +645,107 @@ test.describe("the polish that has to stay", () => {
     });
   });
 
+  test.describe("the 3D bookcase", () => {
+    const many = Array.from({ length: 40 }, (_, i) => ({ ...BOOKS[i % BOOKS.length], title: `${BOOKS[i % BOOKS.length].title} ${i + 1}` }));
+    const whole = (page: Page) => page.locator("main .book-whole");
+    /** A book near the top: which one varies, and shelves far off screen aren't built at all. */
+    const spine = (page: Page, n = 3) => page.locator("main .group[draggable=true]").nth(n);
+
+    async function open(shelf: { page: Page; add: (books: typeof many) => Promise<void> }) {
+      await shelf.add(many);
+      await shelf.page.keyboard.press("Escape");
+      await shelf.page.getByRole("radio", { name: "Bookcase in 3D" }).click();
+      await expect(spine(shelf.page)).toBeVisible();
+      await shelf.page.mouse.move(2, 2);
+      await expect(whole(shelf.page)).toHaveCount(0);
+    }
+
+    test("builds only what can be seen", async ({ shelf }) => {
+      await open(shelf);
+      const look = () =>
+        shelf.page.evaluate(() => {
+          const books = document.querySelectorAll("main .group[draggable=true]").length;
+          const planes = [...document.querySelectorAll("main *")].filter((el) => getComputedStyle(el).transform !== "none").length;
+          return { books, ratio: planes / books, covers: document.querySelectorAll("main [style*='container-type']").length };
+        });
+      // Once the view it came from has faded out: no covers on sides nobody sees.
+      await expect.poll(async () => (await look()).covers).toBe(0);
+      const counts = await look();
+      expect(counts.books).toBeGreaterThan(10);
+      // There used to be over five planes a book. A shelf's own boards count too, so a small window reads higher.
+      expect(counts.ratio).toBeLessThan(3.5);
+    });
+
+    test("a book pointed at rises whole, and settles back", async ({ shelf }) => {
+      const { page } = shelf;
+      await open(shelf);
+      await spine(page).hover();
+      await expect(whole(page)).toHaveCount(1);
+      await page.mouse.move(2, 2);
+      await expect(whole(page)).toHaveCount(0);
+    });
+
+    test("a book picked turns out its cover, and goes back when let go", async ({ shelf }) => {
+      const { page } = shelf;
+      await open(shelf);
+      await spine(page).click();
+      await expect(page.locator("main aside").getByRole("radio", { name: "Want to read" }).first()).toBeVisible();
+      await page.mouse.move(2, 2);
+      await expect(whole(page)).toHaveCount(1);
+      await expect(whole(page).locator("[style*='container-type']")).toHaveCount(1);
+      await page.keyboard.press("Escape");
+      await expect(whole(page)).toHaveCount(0);
+    });
+
+    test("a spine still opens a book, and has its menu", async ({ shelf }) => {
+      const { page } = shelf;
+      await open(shelf);
+      await spine(page).click({ button: "right" });
+      await expect(page.getByRole("menuitemradio", { name: "Mark as finished" })).toBeVisible();
+      await page.keyboard.press("Escape");
+      await page.mouse.move(2, 2);
+      await spine(page, 5).dblclick();
+      await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+    });
+
+    test("a picked book can be opened from its turned-out cover", async ({ shelf }) => {
+      const { page } = shelf;
+      await open(shelf);
+      await spine(page).click();
+      await page.mouse.move(2, 2);
+      await expect(whole(page).locator("[style*='container-type']")).toHaveCount(1);
+      await page.waitForTimeout(600);
+      const cover = await whole(page).locator("[style*='container-type']").boundingBox();
+      await page.mouse.dblclick(cover!.x + cover!.width / 2, cover!.y + cover!.height / 2);
+      await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+    });
+
+    test("no book stays pulled up once the pointer has gone, even after scrolling under it", async ({ shelf }) => {
+      const { page } = shelf;
+      await open(shelf);
+      await spine(page).hover();
+      await expect(whole(page)).toHaveCount(1);
+      for (let i = 0; i < 6; i++) await page.mouse.wheel(0, 200);
+      await page.mouse.move(2, 2);
+      await expect(whole(page)).toHaveCount(0);
+    });
+
+    test("shelves far off screen aren't built, and appear when scrolled to", async ({ shelf }) => {
+      const { app, page } = shelf;
+      await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(900, 620));
+      await shelf.add(Array.from({ length: 120 }, (_, i) => ({ ...BOOKS[i % BOOKS.length], title: `${BOOKS[i % BOOKS.length].title} ${i + 1}` })));
+      await page.keyboard.press("Escape");
+      await page.getByRole("radio", { name: "Bookcase in 3D" }).click();
+      await expect(spine(page)).toBeVisible();
+      const built = () => page.locator("main .group[draggable=true]").count();
+      await expect.poll(built).toBeLessThan(120);
+      const before = await page.locator("main .group[draggable=true]").first().textContent();
+      await page.mouse.move(400, 300);
+      for (let i = 0; i < 40; i++) await page.mouse.wheel(0, 400);
+      await expect.poll(() => page.locator("main .group[draggable=true]").first().textContent()).not.toBe(before);
+    });
+  });
+
   test("the bottom of the sidebar stays in reach in a short window", async ({ shelf }) => {
     const { page } = shelf;
     await shelf.add();
@@ -666,6 +768,129 @@ test.describe("the polish that has to stay", () => {
     await page.getByRole("button", { name: "Aa Paper", exact: true }).click();
     await expect.poll(background).toBe("rgb(251, 250, 247)");
     await expect(page.locator(".fixed.inset-0.z-\\[45\\]")).toHaveClass(/\blight\b/);
+  });
+});
+
+test.describe("the book features", () => {
+  /** Changes books in the library directly, by title, then reloads so the page sees it. */
+  async function change(page: Page, patches: Record<string, Record<string, unknown>>) {
+    await page.evaluate(async (all) => {
+      const { books } = (await window.shelf.call("boot")) as { books: Array<{ id: string; title: string }> };
+      for (const book of books) if (all[book.title]) await window.shelf.call("update", book.id, all[book.title]);
+    }, patches);
+    await page.reload();
+    await expect(page.getByRole("button", { name: "All books" })).toBeVisible();
+  }
+
+  test("a commonplace book gathers every line, searches them, and opens where one was marked", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await page.getByRole("button", { name: "Commonplace book", exact: true }).click();
+    await expect(page.getByText("Nothing marked yet")).toBeVisible();
+    await change(page, {
+      "Salt and Ink": { annotations: [{ id: "a", kind: "highlight", created: 2, text: "The sea remembers everything", note: "Lovely" }, { id: "k", kind: "kindle", created: 1, text: "From a Kindle", where: "Location 180" }, { id: "b", kind: "bookmark", created: 3, cfi: "x" }] },
+      "A Winter Orchard": { annotations: [{ id: "c", kind: "highlight", created: 9, text: "Frost on the žluté apples" }] },
+    });
+    await page.getByRole("button", { name: "Commonplace book", exact: true }).click();
+    const main = page.locator("main");
+    await expect(main.getByText("3 lines")).toBeVisible();
+    await expect(main.getByText("The sea remembers everything")).toBeVisible();
+    await expect(main.getByText("Lovely")).toBeVisible();
+    await expect(main.getByText("Location 180")).toBeVisible();
+    // Accents don't matter, and nothing else stays when searching.
+    await page.getByPlaceholder("Search what you've marked").fill("zlute");
+    await expect(main.getByText("Frost on the žluté apples")).toBeVisible();
+    await expect(main.getByText("The sea remembers everything")).toHaveCount(0);
+    await page.getByPlaceholder("Search what you've marked").fill("no such words");
+    await expect(main.getByText("Nothing you've marked says that.")).toBeVisible();
+    await expect(page.locator("main aside")).toHaveCount(0);
+  });
+
+  test("the last page marks the moment, takes a rating and says what's next in the series", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add([{ title: "Book One", author: "Ada Marsh", series: "Tides" }, { title: "Book Two", author: "Ada Marsh", series: "Tides" }]);
+    await change(page, { "Book One": { seriesIndex: 1 }, "Book Two": { seriesIndex: 2 } });
+    await card(page, "Book One").dblclick();
+    await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+    await page.getByRole("slider").last().focus();
+    await page.keyboard.press("End");
+    const moment = page.getByRole("dialog", { name: "You finished Book One" });
+    await expect(moment).toBeVisible({ timeout: 15_000 });
+    await expect(moment.getByText("Next in Tides")).toBeVisible();
+    await moment.getByRole("radio", { name: "4 stars" }).click();
+    await expect(moment.getByRole("radio", { name: "4 stars" })).toHaveAttribute("aria-checked", "true");
+    await moment.getByRole("button", { name: "Read Book Two" }).click();
+    await expect(moment).toHaveCount(0);
+    await expect(page.getByText("Book Two", { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+  });
+
+  test("the moment only comes once, and can be left to keep reading", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await card(page, "The Lighthouse Keeper").dblclick();
+    await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+    await page.getByRole("slider").last().focus();
+    await page.keyboard.press("End");
+    const moment = page.getByRole("dialog", { name: "You finished The Lighthouse Keeper" });
+    await expect(moment).toBeVisible({ timeout: 15_000 });
+    await moment.getByRole("button", { name: "Keep reading" }).click();
+    await expect(moment).toHaveCount(0);
+    await page.getByRole("slider").last().focus();
+    await page.keyboard.press("Home");
+    await page.waitForTimeout(900);
+    await page.keyboard.press("End");
+    await page.waitForTimeout(1500);
+    await expect(moment).toHaveCount(0);
+  });
+
+  test("in the bookcase, what's being read lies on a pile, and isn't on the shelf as well", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await change(page, { "Salt and Ink": { status: "reading", opened: 5, progress: 0.4 } });
+    await page.getByRole("radio", { name: "Bookcase in 3D" }).click();
+    await expect(page.locator("main .group[draggable=true]").first()).toBeVisible();
+    await expect(page.locator("main .group[draggable=true]").filter({ hasText: "Salt and Ink" })).toHaveCount(1);
+    const lying = await page.locator("main .group[draggable=true]").filter({ hasText: "Salt and Ink" }).evaluate((el) => el.getBoundingClientRect().width > el.getBoundingClientRect().height);
+    expect(lying).toBe(true);
+    await page.locator("main .group[draggable=true]").filter({ hasText: "Salt and Ink" }).dblclick();
+    await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+  });
+
+  test("a series in the bookcase stands together, the same height, with a band", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add([{ title: "Alpha", author: "A", series: "Set" }, { title: "Loose", author: "B" }, { title: "Beta", author: "A", series: "Set" }, { title: "Gamma", author: "A", series: "Set" }]);
+    await change(page, { Alpha: { seriesIndex: 1 }, Beta: { seriesIndex: 2 }, Gamma: { seriesIndex: 3 } });
+    await page.getByRole("radio", { name: "Bookcase in 3D" }).click();
+    const spines = page.locator("main .group[draggable=true]");
+    await expect(spines).toHaveCount(4);
+    const titles = (await spines.allTextContents()).map((text) => text.replace(/[^A-Za-z]/g, ""));
+    const at = (word: string) => titles.findIndex((title) => title.startsWith(word));
+    expect(Math.abs(at("Alpha") - at("Beta"))).toBe(1);
+    expect(at("Gamma") - at("Beta")).toBe(1);
+    const heights = await spines.evaluateAll((els) => els.filter((el) => /Alpha|Beta|Gamma/.test(el.textContent ?? "")).map((el) => Math.round(el.getBoundingClientRect().height)));
+    expect(new Set(heights).size).toBe(1);
+  });
+
+  test("the bookcase can run through the colours", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await page.keyboard.press("Escape");
+    await page.getByRole("radio", { name: "Bookcase in 3D" }).click();
+    await page.getByLabel("Bookcase", { exact: true }).click();
+    await page.getByRole("switch", { name: "Rainbow order" }).click();
+    await expect(page.getByRole("switch", { name: "Rainbow order" })).toHaveAttribute("aria-checked", "true");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("main .group[draggable=true]")).toHaveCount(3);
+  });
+
+  test("Settings offers what's new", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await openSettings(page);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "About Shelfed", exact: true }).click();
+    await expect(dialog.getByRole("button", { name: "What's new" })).toBeVisible();
   });
 });
 

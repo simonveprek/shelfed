@@ -84,3 +84,11 @@ textarea,
 .cover-img[data-loaded="true"] {
   opacity: 1;
 }
+
+/* A whole book in the bookcase: it rises from where it rested, and moves between poses smoothly. */
+.book-whole {
+  transition: transform 500ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
+  @starting-style {
+    transform: var(--rest);
+  }
+}

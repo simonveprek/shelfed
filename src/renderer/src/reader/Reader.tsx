@@ -104,7 +104,7 @@ export const saveProgress = debounce(async (id: string, progress: number, locati
   await api.update(id, patch);
   if (finished) {
     flashMood("excited", 3000);
-    toast.success(t("Finished {title}", { title: book.title }), { description: t("Marked as read") });
+    useStore.setState({ finishing: id });
   }
 }, 700);
 
@@ -558,7 +558,10 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
           });
         });
         setToc(el.book.toc ?? []);
-        const place = !book.readFormat || book.readFormat === ext ? book.location : undefined;
+        // A marked line to go to, once; otherwise where it was left.
+        const asked = useStore.getState().readAt;
+        if (asked) useStore.setState({ readAt: null });
+        const place = asked ?? (!book.readFormat || book.readFormat === ext ? book.location : undefined);
         try {
           await el.init({ lastLocation: place, showTextStart: !place });
         } catch {

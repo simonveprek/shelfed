@@ -148,9 +148,9 @@ function FreeRow({ s }: { s: Extract<Suggestion, { kind: "free" }> }) {
   );
 }
 
-function OwnedRow({ book, why, note }: { book: Book; why: string; note?: string }) {
+function OwnedRow({ book, why, note, onOpen }: { book: Book; why: string; note?: string; onOpen?: (id: string) => void }) {
   return (
-    <button onClick={() => select(book.id)} className="flex items-center gap-3 rounded-item p-2 text-left hover:bg-control">
+    <button onClick={() => (onOpen ? onOpen(book.id) : select(book.id))} className="flex items-center gap-3 rounded-item p-2 text-left hover:bg-control">
       <Cover book={book} className="w-10 shrink-0 rounded-[3px] shadow-[var(--shadow-book)]" />
       <span className="min-w-0 flex-1">
         <span className="line-clamp-1 text-label font-medium">{book.title}</span>
@@ -162,14 +162,14 @@ function OwnedRow({ book, why, note }: { book: Book; why: string; note?: string 
 }
 
 /** Books that go with this one: yours first, then free classics. */
-export function Kindred({ book }: { book: Book }) {
+export function Kindred({ book, limit, onOpen, except }: { book: Book; limit?: number; onOpen?: (id: string) => void; except?: string }) {
   const books = useStore((s) => s.books);
-  const list = useMemo(() => suggestionsFor(book, books), [book, books]);
+  const list = useMemo(() => suggestionsFor(book, books, limit && except ? limit + 1 : limit).filter((s) => s.kind !== "owned" || s.book.id !== except).slice(0, limit), [book, books, limit, except]);
   if (!list.length) return null;
   return (
     <div className="-mx-2 flex flex-col">
       {list.map((s) =>
-        s.kind === "owned" ? <OwnedRow key={s.book.id} book={s.book} why={s.why} /> : <FreeRow key={s.title} s={s} />,
+        s.kind === "owned" ? <OwnedRow key={s.book.id} book={s.book} why={s.why} onOpen={onOpen} /> : <FreeRow key={s.title} s={s} />,
       )}
     </div>
   );

@@ -27,6 +27,7 @@ export function inSection(book: Book, section: Section, onKindle?: Set<string> |
     case "all":
     case "browse":
     case "discover":
+    case "commonplace":
       return true;
     case "reading":
     case "unread":
@@ -103,6 +104,7 @@ export function sectionTitle(section: Section, collections: { id: string; name: 
     case "collection": return collections.find((c) => c.id === section.id)?.name ?? t("Collection");
     case "browse": return t({ author: "Authors", series: "Series", tag: "Tags", format: "Formats" }[section.by]);
     case "discover": return t("Classics");
+    case "commonplace": return t("Commonplace book");
     case "kindle": return t("On your Kindle");
     case "group": return section.value;
   }

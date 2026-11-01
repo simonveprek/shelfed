@@ -7,6 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   return [
     { url: `${SITE}/`, lastModified: now, changeFrequency: "monthly", priority: 1 },
+    { url: `${SITE}/changelog/`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE}/llms.txt`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE}/llms-full.txt`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
   ];

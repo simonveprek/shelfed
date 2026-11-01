@@ -170,7 +170,10 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
           return path;
         });
         await app.evaluate(({ BrowserWindow }, files) => BrowserWindow.getAllWindows()[0].webContents.send("open-files", files), paths);
-        for (const book of books) await expect(page.locator("main").getByText(book.title).first()).toBeVisible();
+        // A long list isn't all on screen, and what's off it isn't built, so it goes by the count instead.
+        // Its message comes last, once the import has finished selecting what it added.
+        if (books.length > 12) await expect(page.getByText(`Added ${books.length} books`)).toBeVisible({ timeout: 30_000 });
+        else for (const book of books) await expect(page.locator("main").getByText(book.title).first()).toBeVisible();
       },
       async restart() {
         await app.close();

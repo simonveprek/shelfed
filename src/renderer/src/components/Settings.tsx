@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import {
   ArrowDataTransferHorizontalIcon, BookOpen01Icon, Cancel01Icon, CheckmarkCircle02Icon, Folder01Icon, GithubIcon, Globe02Icon,
   InformationCircleIcon, LicenseIcon, MailSend01Icon, PaintBoardIcon, PlayCircleIcon, Tablet01Icon,
+  SparklesIcon,
 } from "@hugeicons/core-free-icons";
 import {
   Badge, Button, cx, Dialog, EASE, Field, Icon, IconButton, Input, Segmented, Select, SwitchRow, TextLink, toast, type IconLike,
@@ -747,7 +748,8 @@ function AboutSection() {
       <p className="serif mt-5 max-w-[30ch] text-[17px] leading-snug">{t("A quiet home for your books.")}</p>
       {books > 0 && <p className="mt-2 text-caption text-muted">{tn(books, "Keeping {n} book for you.", "Keeping {n} books for you.")}</p>}
       <div className="mt-7 flex flex-wrap justify-center gap-2">
-        <Button size="sm" icon={Globe02Icon} onClick={() => api.openExternal("https://simonveprek.github.io/shelf")}>{t("Website")}</Button>
+        <Button size="sm" icon={Globe02Icon} onClick={() => api.openExternal("https://shelfed.simonveprek.cz")}>{t("Website")}</Button>
+        <Button size="sm" icon={SparklesIcon} onClick={() => api.openExternal("https://shelfed.simonveprek.cz/changelog/")}>{t("What's new")}</Button>
         <Button size="sm" icon={GithubIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelfed")}>{t("Source")}</Button>
         <Button size="sm" icon={LicenseIcon} onClick={() => api.openExternal("https://github.com/simonveprek/shelfed/blob/main/LICENSE")}>{t("Licence")}</Button>
       </div>

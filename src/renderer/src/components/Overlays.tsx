@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Book02Icon, BookOpen01Icon, Bookshelf01Icon, FileAddIcon, FolderAddIcon, GridViewIcon, Layers01Icon,
   LeftToRightListBulletIcon, Settings01Icon, Tablet01Icon, ThreeDViewIcon, UserIcon, Globe02Icon,
+  QuoteDownIcon,
 } from "@hugeicons/core-free-icons";
 import { Command, EASE, Panel, Progress, type CommandItem } from "@/components/ui";
 import { Point } from "@/components/fragms/points";
@@ -141,6 +142,7 @@ export function Palette() {
       { id: "add-folder", label: t("Add a folder of books"), group: t("Do"), icon: FolderAddIcon, onSelect: () => pickAndImport(true) },
       { id: "collection", label: t("New collection"), group: t("Do"), icon: FolderAddIcon, onSelect: () => newCollection(useStore.getState().selection) },
       { id: "kindle", label: t("Set up Send to Kindle"), group: t("Do"), icon: Tablet01Icon, onSelect: () => useStore.setState({ dialog: { kind: "settings", tab: "sending" } }) },
+      { id: "commonplace", label: t("Commonplace book"), group: t("Go to"), icon: QuoteDownIcon, keywords: ["highlights", "notes", "quotes"], onSelect: go({ kind: "commonplace" }) },
       { id: "classics", label: t("Classics"), group: t("Go to"), icon: Globe02Icon, keywords: ["free books", "public domain", t("free books"), t("public domain"), "Gutenberg", "Standard Ebooks"], onSelect: go({ kind: "discover" }) },
       { id: "clippings", label: t("Import Kindle highlights"), group: t("Do"), icon: Tablet01Icon, onSelect: () => runCommand("clippings") },
       { id: "welcome", label: t("Show the welcome again"), group: t("Do"), icon: Book02Icon, onSelect: () => useStore.setState({ onboarding: true }) },

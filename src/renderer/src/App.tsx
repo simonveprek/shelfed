@@ -14,6 +14,7 @@ import { AppSidebar, Header } from "@/components/Shell";
 import { LibraryView } from "@/components/Library";
 import { Inspector } from "@/components/Inspector";
 import { CalibreDialog, ConvertDialog, EditDialog, RemoveConfirm, RenameCollection, SendDialog, TidyConfirm } from "@/components/Dialogs";
+import { Finished } from "@/components/Finished";
 import { MetadataDialog } from "@/components/Metadata";
 import { SettingsDialog } from "@/components/Settings";
 import { DropZone, Jobs, Palette } from "@/components/Overlays";
@@ -142,7 +143,7 @@ class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
 function Library() {
   const inspector = useStore((s) => s.settings.inspector);
   // Nothing to say about an empty library, or beside the free books unless one is selected.
-  const showPanel = useStore((s) => s.books.length > 0 && (s.section.kind !== "discover" || s.selection.length > 0));
+  const showPanel = useStore((s) => s.books.length > 0 && ((s.section.kind !== "discover" && s.section.kind !== "commonplace") || s.selection.length > 0));
   // The library steps back while a Kindle that was just plugged in says hello.
   const welcoming = useStore((s) => Boolean(s.kindleArrived && !s.reading && !s.onboarding && !s.dialog));
   return (
@@ -239,6 +240,7 @@ export function App() {
           <Palette />
           <RemoveConfirm />
           <TidyConfirm />
+          <Finished />
           <Jobs />
           <DropZone />
           <Onboarding />

@@ -12,6 +12,8 @@ export type Section =
   | { kind: "collection"; id: string }
   | { kind: "browse"; by: Browse }
   | { kind: "discover" }
+  /** Every line marked in every book. */
+  | { kind: "commonplace" }
   /** The books already on the Kindle plugged in by cable. */
   | { kind: "kindle" }
   | { kind: "group"; by: Browse; value: string };
@@ -48,6 +50,10 @@ type State = {
   selection: string[];
   anchor: string | null;
   reading: { id: string; ext: string } | null;
+  /** A place to open the next book at, instead of where it was left. */
+  readAt: string | null;
+  /** The book whose last page was just reached, to mark the moment. */
+  finishing: string | null;
   dialog: Dialog | null;
   confirmRemove: string[] | null;
   palette: boolean;
@@ -96,6 +102,8 @@ export const useStore = create<State>(() => ({
   selection: [],
   anchor: null,
   reading: null,
+  readAt: null,
+  finishing: null,
   dialog: null,
   confirmRemove: null,
   palette: false,

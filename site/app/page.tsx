@@ -8,7 +8,7 @@ import { Mark } from "@/components/mark";
 import { Scene } from "@/components/scene";
 import { Schema } from "@/components/schema";
 import { GROUPS, MAKES, OPENS, QUESTIONS, REASONS } from "@/content";
-import { REPO } from "@/lib";
+import { asset, REPO } from "@/lib";
 
 /*
  * One scene carries the page: the app's window pinned while its story
@@ -202,6 +202,7 @@ function Footer() {
           .
         </span>
         <span className="flex gap-5">
+          <a href={asset("changelog/")} className="hover:text-foreground">What&apos;s new</a>
           <a href={REPO} className="hover:text-foreground">Source</a>
           <a href={`${REPO}/blob/main/LICENSE`} className="hover:text-foreground">MIT licence</a>
         </span>

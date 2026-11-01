@@ -21,8 +21,6 @@ const words: Record<string, string> = {
   Zoom: "Přiblížení",
   "Zoom out": "Oddálit",
   "Zoom in": "Přiblížit",
-  "Finished {title}": "Dočteno: {title}",
-  "Marked as read": "Označeno jako přečtené",
   "This {format} could not be opened. {error}": "Soubor {format} se nepodařilo otevřít. {error}",
   "This PDF could not be opened. {error}": "PDF se nepodařilo otevřít. {error}",
 

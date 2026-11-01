@@ -20,7 +20,7 @@ export function defaults(): Settings {
     pdfPage: "A5",
     kindle: { to: "", from: "", host: "", port: 465, secure: true, user: "", hasPassword: false, format: "epub" },
     reader: { theme: "auto", font: "publisher", size: 18, spacing: 1.5, width: 680, flow: "paginated", justify: true },
-    bookcase: { group: "none", material: "paper", spines: "cover", fit: true, authors: true, ribbons: true, lean: true, ribbon: "accent" },
+    bookcase: { group: "none", material: "paper", spines: "cover", fit: true, authors: true, ribbons: true, lean: true, ribbon: "accent", pile: true, boxSets: true, rainbow: false },
   };
 }
 

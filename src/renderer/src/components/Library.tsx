@@ -19,6 +19,7 @@ import { useStore } from "@/lib/store";
 import { authorsOf, bytes, date, plural } from "@/lib/util";
 import { groupKeys, sortBooks, useVisibleBooks } from "@/lib/view";
 import { Bookcase } from "./Bookcase";
+import { Commonplace } from "./Commonplace";
 import { Discover } from "./Discover";
 import { Cover } from "./Cover";
 import { t, tn } from "../../../shared/i18n";
@@ -427,7 +428,7 @@ const EMPTY: Record<string, string> = {
 export function LibraryView() {
   const section = useStore((s) => s.section);
   const view = useStore((s) => s.settings.view);
-  const key = JSON.stringify(section) + (section.kind === "browse" || section.kind === "discover" ? "" : view);
+  const key = JSON.stringify(section) + (section.kind === "browse" || section.kind === "discover" || section.kind === "commonplace" ? "" : view);
   return (
     <motion.div
       key={key}
@@ -451,6 +452,7 @@ function Page() {
   const query = useStore((s) => s.query);
 
   if (section.kind === "discover") return <Discover />;
+  if (section.kind === "commonplace") return <Commonplace />;
   if (!total)
     return (
       <Centered>
