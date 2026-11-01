@@ -17,7 +17,7 @@ import { api, revealLabel } from "@/lib/api";
 import { saveCover } from "@/lib/books";
 import { newCollection, runAction } from "@/lib/commands";
 import { useOnKindle } from "@/lib/kindle";
-import { inSection } from "@/lib/view";
+import { useVisibleBooks } from "@/lib/view";
 import { patchBooks, upsert, useStore } from "@/lib/store";
 import { ago, authorsOf, bytes, coverUrl, date, duration, plural, published } from "@/lib/util";
 import { ColourPicker, RIBBONS, SPINES } from "./Colours";
@@ -250,7 +250,7 @@ function Collections({ book }: { book: Book }) {
 
 // English here, made Czech where it's shown: this runs before the language is set.
 const STATUS: Array<{ id: ReadStatus; label: string }> = [
-  { id: "unread", label: "To read" },
+  { id: "unread", label: "Want to read" },
   { id: "reading", label: "Reading" },
   { id: "finished", label: "Finished" },
 ];
@@ -516,20 +516,23 @@ function Many({ books }: { books: Book[] }) {
 function Overview() {
   const books = useStore((s) => s.books);
   const reading = useMemo(() => books.filter((b) => b.status === "reading").sort((a, b) => (b.opened ?? 0) - (a.opened ?? 0)).slice(0, 5), [books]);
-  // The numbers are for the shelf on screen: on your Kindle, the books on it.
+  // The numbers are for what's on screen: on your Kindle the books on it, and when searching the ones found.
   const section = useStore((s) => s.section);
-  const onKindle = useOnKindle();
-  const shelf = useMemo(() => books.filter((b) => inSection(b, section, onKindle)), [books, section, onKindle]);
+  const shelf = useVisibleBooks();
   const authors = useMemo(() => new Set(shelf.flatMap((b) => b.authors)).size, [shelf]);
   const finished = shelf.filter((b) => b.status === "finished").length;
   const carrying = useStore((s) => Boolean(s.carrying || s.kindleActivity));
   if (!books.length) return null;
   return (
     <div className="flex flex-col gap-3 p-3">
-      <div className="grid grid-cols-2 gap-3">
-        <Stat label={t("Books")} value={shelf.length.toLocaleString()} hint={tn(authors, "{n} author", "{n} authors")} />
-        <Stat label={t("Finished")} value={finished.toLocaleString()} hint={t("{n}% of them", { n: shelf.length ? Math.round((finished / shelf.length) * 100) : 0 })} />
-      </div>
+      {shelf.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          <Stat label={t("Books")} value={shelf.length.toLocaleString()} hint={tn(authors, "{n} author", "{n} authors")} />
+          <Stat label={t("Finished")} value={finished.toLocaleString()} hint={finished ? t("{n}% of them", { n: Math.round((finished / shelf.length) * 100) }) : t("None yet")} />
+        </div>
+      )}
+      {/* Reading's own page already says this when it's empty. */}
+      {(reading.length > 0 || section.kind !== "reading") && (
       <Block title={t("Pick up where you left off")}>
         {reading.length === 0 && <p className="text-label text-muted">{t("Books you start reading wait for you here. Double click a cover to open it.")}</p>}
         <div className="-mx-2 flex flex-col">
@@ -544,6 +547,7 @@ function Overview() {
           ))}
         </div>
       </Block>
+      )}
       {/* While books are dragged, the Kindle comes first so it's in reach. */}
       <div style={{ order: carrying ? -1 : undefined }}>
         <KindleDock />

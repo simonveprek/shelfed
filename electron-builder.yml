@@ -16,6 +16,18 @@ extraFiles:
   - LICENSE-FRAGMS-PERSONAL.md
   - THIRD_PARTY_NOTICES.md
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+# Switches built into Electron itself. Off: every way of running code through
+# the installed app instead of as it. On: loading only the app's own archive,
+# and checking that archive hasn't been changed. .github/workflows run
+# scripts/launch-check.mjs to see that the result really starts.
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  onlyLoadAppFromAsar: true
+  enableEmbeddedAsarIntegrityValidation: true
+  # Changing these switches changes the program, so a Mac's signature on it has to be redone.
+  resetAdHocDarwinSignature: true
 fileAssociations:
   - ext: [epub, mobi, azw3, azw, prc, fb2, fbz, cbz, pdf]
     name: E-book

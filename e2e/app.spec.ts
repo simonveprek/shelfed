@@ -203,7 +203,7 @@ test.describe("a Kindle plugged in as a drive", () => {
     const { page } = shelf;
     await shelf.add();
     await card(page, "Salt and Ink").click({ button: "right" });
-    await page.getByRole("menuitemradio", { name: "Read it" }).click();
+    await page.getByRole("menuitemradio", { name: "Mark as finished" }).click();
     await openSettings(page);
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("button", { name: "Kindle", exact: true }).click();
@@ -546,6 +546,127 @@ test("a book on the Classics page opens to say what it is, and can be added from
   // The words under the cover open it too.
   await page.locator("main button").filter({ hasText: /^CarmillaJ\. Sheridan Le Fanu$/ }).click();
   await expect(info).toBeVisible();
+});
+
+test.describe("the polish that has to stay", () => {
+  test("an empty library has its welcome in the middle, with no empty panel beside it", async ({ shelf }) => {
+    const { page } = shelf;
+    await expect(page.getByRole("button", { name: "Add books", exact: true }).first()).toBeVisible();
+    await expect(page.locator("main aside")).toHaveCount(0);
+    await expect(page.getByLabel("Details", { exact: true })).toHaveCount(0);
+  });
+
+  test("the list keeps titles readable in a small window, and shows more as it grows", async ({ shelf }) => {
+    const { app, page } = shelf;
+    await shelf.add();
+    await page.getByRole("radio", { name: "List" }).click();
+    const title = page.locator("main table span.font-medium").getByText("The Lighthouse Keeper", { exact: true });
+    const fits = () => title.evaluate((el) => el.scrollWidth <= el.clientWidth && el.clientWidth > 100);
+    await expect.poll(fits).toBe(true);
+    await expect(page.getByRole("columnheader", { name: "Size" })).toHaveCount(0);
+    await expect(page.getByRole("checkbox")).toHaveCount(0);
+    await expect(page.getByText("Rows", { exact: true })).toHaveCount(0);
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1600, 1000));
+    await expect(page.getByRole("columnheader", { name: "Size" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Series" })).toBeVisible();
+  });
+
+  test("a long row of an author's books keeps every cover the same size", async ({ shelf }) => {
+    const { page } = shelf;
+    const many = Array.from({ length: 16 }, (_, i) => ({ title: i % 2 ? `The Very Long Title Number ${i}` : `Short ${i}`, author: "Ada Marsh" }));
+    await shelf.add(many);
+    await page.getByRole("button", { name: "Authors", exact: true }).click();
+    const widths = await page.locator("main [draggable=true]").evaluateAll((cards) => cards.map((c) => Math.round(c.getBoundingClientRect().width)));
+    expect(widths.length).toBeGreaterThan(8);
+    expect(new Set(widths).size).toBe(1);
+  });
+
+  test("a book's state is called the same everywhere", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await card(page, "Salt and Ink").click();
+    await expect(page.locator("main aside").getByRole("radio", { name: "Want to read" }).first()).toBeVisible();
+    await expect(page.getByText("To read", { exact: true })).toHaveCount(0);
+    await card(page, "Salt and Ink").click({ button: "right" });
+    await expect(page.getByRole("menuitemradio", { name: "Mark as finished" })).toBeVisible();
+  });
+
+  test("the side panel's numbers follow a search, and don't say 0% of nothing", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await page.keyboard.press("Escape");
+    const panel = page.locator("aside");
+    await expect(panel.getByText("3", { exact: true })).toBeVisible();
+    await expect(panel.getByText("None yet", { exact: true })).toBeVisible();
+    await page.getByPlaceholder("Search your books").fill("orchard");
+    await expect(panel.getByText("1", { exact: true })).toBeVisible();
+    await page.getByPlaceholder("Search your books").fill("nothing like this at all");
+    await expect(panel.getByText("Books", { exact: true })).toHaveCount(0);
+  });
+
+  test("the free books get the whole window until one is selected", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await page.getByRole("button", { name: "Classics", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Something to read next" })).toBeVisible();
+    await expect(page.locator("main aside")).toHaveCount(0);
+  });
+
+  test("a new version stays in sight until it's dealt with", async ({ shelf }) => {
+    const { app, page } = shelf;
+    await shelf.add();
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send("update", { state: "available", version: "9.9.9", url: "https://example.com" }));
+    const marker = page.getByRole("button", { name: "Shelfed 9.9.9 is out" });
+    await expect(marker).toBeVisible();
+    // Long after any pop-up has gone.
+    await page.waitForTimeout(100);
+    await page.getByRole("button", { name: "Reading", exact: true }).click();
+    await expect(marker).toBeVisible();
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send("update", { state: "ready", version: "9.9.9" }));
+    await expect(page.getByRole("button", { name: "Restart to update" }).first()).toBeVisible();
+  });
+
+  test.describe("in Czech, in a small window", () => {
+    test.use({ language: "cs" });
+    test("every button in the header fits, whole", async ({ shelf }) => {
+      const { page } = shelf;
+      await shelf.add();
+      const header = await page.locator("header").evaluate((el) => {
+        const edge = el.getBoundingClientRect().right;
+        return [...el.querySelectorAll("button")].map((b) => {
+          const box = b.getBoundingClientRect();
+          return { width: box.width, inside: box.right <= edge + 0.5 };
+        });
+      });
+      expect(header.length).toBeGreaterThan(5);
+      expect(header.every((b) => b.inside), "a button runs off the edge").toBe(true);
+      expect(header.filter((b) => b.width > 0).every((b) => b.width >= 24), "a button is squeezed").toBe(true);
+    });
+  });
+
+  test("the bottom of the sidebar stays in reach in a short window", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    const collapse = page.getByRole("button", { name: "Collapse", exact: true });
+    await expect(collapse).toBeInViewport({ ratio: 1 });
+  });
+
+  test("the reader's page follows the app, and its controls follow the page", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    const background = () => page.locator(".fixed.inset-0.z-\\[45\\]").evaluate((el) => getComputedStyle(el).backgroundColor);
+    await page.evaluate(() => localStorage.setItem("theme", "dark"));
+    await page.reload();
+    await expect(page.getByRole("button", { name: "All books" })).toBeVisible();
+    await card(page, "The Lighthouse Keeper").dblclick();
+    await expect(page.getByRole("button", { name: "Next page" })).toBeVisible();
+    await expect.poll(background).toBe("rgb(27, 27, 28)");
+    // Paper chosen in a dark app: a light page, with controls drawn for a light page.
+    await page.getByRole("button", { name: "Text and page" }).click();
+    await page.getByRole("button", { name: "Aa Paper", exact: true }).click();
+    await expect.poll(background).toBe("rgb(251, 250, 247)");
+    await expect(page.locator(".fixed.inset-0.z-\\[45\\]")).toHaveClass(/\blight\b/);
+  });
 });
 
 test("reads a book aloud from the page, and stops", async ({ shelf }) => {

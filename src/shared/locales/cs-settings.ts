@@ -96,7 +96,6 @@ const words: Record<string, string> = {
   "Plug your Kindle in and Shelfed recognises it. Or pick it here, and choose its colour.":
     "Připojte Kindle a Shelfed ho pozná. Nebo ho vyberte tady a zvolte jeho barvu.",
   "Plug it in, or pick it from the list": "Připojte ho, nebo ho vyberte ze seznamu",
-  "Not known yet": "Zatím neznámý",
   "{year}, {size}″ screen": "{year}, displej {size}″",
   "{year}, {size}″ colour screen": "{year}, barevný displej {size}″",
   "Plugged in": "Připojený",
@@ -143,7 +142,6 @@ const words: Record<string, string> = {
   "Signed in to your mail. Ready to send": "Přihlášeno k vaší poště. Můžete posílat",
   "Ready to send to {address}": "Připraveno posílat na {address}",
   "Not set up yet. Three steps, once.": "Zatím nenastaveno. Tři kroky, jen jednou.",
-  "Let your address send to your Kindle": "Povolte své adrese posílat do Kindlu",
   "In Amazon’s {link}, under Preferences and Personal Document Settings, add the address you’ll send from to the approved list.":
     "Na stránce Amazonu {link} v části Preferences a Personal Document Settings přidejte na seznam schválených adresu, ze které budete posílat.",
   "Your Kindle’s address": "Adresa vašeho Kindlu",

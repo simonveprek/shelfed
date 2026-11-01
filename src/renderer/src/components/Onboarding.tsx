@@ -61,8 +61,8 @@ const Small = ({ children, delay }: { children: string; delay?: number }) => (
 function Page() {
   return (
     <div className="relative mb-14 h-[150px] w-[220px]" style={{ perspective: 900 }}>
-      <div className="absolute inset-y-0 left-0 w-1/2 rounded-l-[6px] border border-border bg-card shadow-card" />
-      <div className="absolute inset-y-0 right-0 w-1/2 rounded-r-[6px] border border-border bg-card shadow-card" />
+      <div className="absolute inset-y-0 left-0 w-1/2 rounded-l-[6px] border border-line-strong bg-card shadow-card" />
+      <div className="absolute inset-y-0 right-0 w-1/2 rounded-r-[6px] border border-line-strong bg-card shadow-card" />
       {[0, 1, 2, 3, 4].map((i) => (
         <motion.div
           key={i}
@@ -74,7 +74,7 @@ function Page() {
         />
       ))}
       <motion.div
-        className="absolute inset-y-0 left-1/2 w-1/2 rounded-r-[6px] border border-border bg-card"
+        className="absolute inset-y-0 left-1/2 w-1/2 rounded-r-[6px] border border-line-strong bg-card"
         style={{ transformOrigin: "left center", transformStyle: "preserve-3d" }}
         initial={{ rotateY: 0 }}
         animate={{ rotateY: -172 }}

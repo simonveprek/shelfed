@@ -94,7 +94,6 @@ const words: Record<string, string> = {
   "Add to a collection": "Přidat do sbírky",
   "Take out of this collection": "Vyjmout z této sbírky",
   "Favorite": "Oblíbená",
-  "Read it": "Přečteno",
   "Join into one book": "Spojit do jedné knihy",
   "Remove {n} book|Remove {n} books": "Odebrat {n} knihu|Odebrat {n} knihy|Odebrat {n} knih",
   "Remove from library": "Odebrat z knihovny",

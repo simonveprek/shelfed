@@ -64,7 +64,7 @@ export function BookMenu({ ids }: { ids: string[] }) {
       <MenuSeparator />
       <MenuItem icon={FavouriteIcon} selected={books.every((b) => b.favorite)} onSelect={() => runAction("favorite", ids)}>{t("Favorite")}</MenuItem>
       <MenuItem icon={CheckmarkCircle02Icon} selected={books.every((b) => b.status === "finished")} onSelect={() => runAction(books.every((b) => b.status === "finished") ? "unread" : "finished", ids)}>
-        {t("Read it")}
+        {t("Mark as finished")}
       </MenuItem>
       {one && <MenuItem icon={FolderOpenIcon} onSelect={() => api.reveal(one.id)}>{t(revealLabel)}</MenuItem>}
       {books.length > 1 && <MenuItem icon={Layers01Icon} onSelect={() => joinSelected(ids)}>{t("Join into one book")}</MenuItem>}
@@ -160,7 +160,7 @@ const BookCard = memo(function BookCard({ book, selected, width, visible, onKind
   const progress = book.status === "reading" ? (book.progress ?? 0) : 0;
   return (
     <div
-      className="group flex flex-col"
+      className="group flex shrink-0 flex-col"
       style={{ width }}
       onMouseDown={(e) => e.button === 0 && selectBook(e, book.id, visible)}
       onContextMenu={() => targetIds(book.id)}
@@ -265,13 +265,19 @@ export function Grid({ visible }: { visible: Book[] }) {
 
 const STATUS = { unread: "Want to read", reading: "Reading", finished: "Finished" } as const;
 
+/** The width each column needs before it's shown, so the title always has room. */
+const LIST_NEEDS: Record<string, number> = { progress: 400, added: 560, series: 700, size: 780, formats: 880 };
+
 export function List({ visible }: { visible: Book[] }) {
   const selection = useStore((s) => s.selection);
-  const columns: DataTableColumn<Book>[] = useMemo(
-    () => [
+  const [ref, width] = useWidth<HTMLDivElement>();
+  const columns = useMemo(() => {
+    const all: DataTableColumn<Book>[] = [
       {
         id: "title",
         header: t("Title"),
+        // Takes all the room the others leave, rather than sharing it out.
+        className: "w-full max-w-0",
         sortValue: (b) => b.title.toLowerCase(),
         cell: (b) => (
           <button
@@ -308,21 +314,20 @@ export function List({ visible }: { visible: Book[] }) {
       { id: "formats", header: t("Files"), hideOnMobile: true, cell: (b) => <span className="flex gap-1">{b.formats.map((f) => <Badge key={f.ext}>{f.ext.toUpperCase()}</Badge>)}</span> },
       { id: "size", header: t("Size"), align: "right", sortValue: (b) => b.formats.reduce((n, f) => n + f.size, 0), cell: (b) => <span className="whitespace-nowrap text-muted tabular-nums">{bytes(b.formats.reduce((n, f) => n + f.size, 0))}</span> },
       { id: "added", header: t("Added"), align: "right", sortValue: (b) => b.added, cell: (b) => <span className="whitespace-nowrap text-muted tabular-nums">{date(b.added)}</span> },
-    ],
-    [visible],
-  );
+    ];
+    return all.filter((column) => !width || width >= (LIST_NEEDS[column.id] ?? 0));
+  }, [visible, width]);
   return (
     <BooksMenu>
-      <div className="scroll h-full px-6 pt-5 pb-24">
+      <div ref={ref} className="scroll h-full px-6 pt-5 pb-24">
         <DataTable
           rows={visible}
           columns={columns}
           rowId={(b) => b.id}
           label={t("Books")}
-          selectable
           selected={selection}
-          onSelectedChange={(ids) => useStore.setState({ selection: ids, anchor: ids[ids.length - 1] ?? null })}
-          pageSizes={[50, 100, 250]}
+          pageSizes={[100]}
+          quiet
         />
       </div>
     </BooksMenu>
@@ -346,7 +351,7 @@ const Shelf = memo(function Shelf({ name, books, visible, by }: { name: string; 
         <span className="text-label text-muted">{plural(books.length, "book")}</span>
         <Icon icon={ArrowRight01Icon} size={15} className="text-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
       </button>
-      <div className="scroll flex gap-5 overflow-y-hidden px-6 pt-1 pb-3" style={{ scrollbarWidth: "none" }}>
+      <div className="scroll flex gap-5 overflow-y-hidden px-6 pt-1 pb-3" style={{ scrollbarWidth: "thin" }}>
         {books.map((book) => (
           <BookCard key={book.id} book={book} width={116} selected={selection.includes(book.id)} visible={visible} onKindle={onKindle?.has(book.id)} />
         ))}
@@ -378,7 +383,7 @@ export function Shelves({ visible }: { visible: Book[] }) {
       <Centered>
         <Empty point={{ shape: "cookie", mood: "curious" }}>
           <p className="text-[15px] font-medium text-foreground">{t("Nothing to show yet")}</p>
-          <p className="mt-1">{by === "series" ? t("Books from a series gather here once their details say so. Find details online to fill them in.") : t("As your library grows, it sorts itself here.")}</p>
+          <p className="mt-1">{by === "tag" ? t("Tags come from a book's details. Find details online, or add your own in the side panel.") : by === "series" ? t("Books from a series gather here once their details say so. Find details online to fill them in.") : t("As your library grows, it sorts itself here.")}</p>
         </Empty>
       </Centered>
     );

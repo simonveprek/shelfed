@@ -10,7 +10,7 @@ const words: Record<string, string> = {
   "Reading@settings": "Čtení",
   Finished: "Dočtené",
   "Finished@status": "Dočteno",
-  "To read@status": "Chci číst",
+  "Want to read@status": "Chci si přečíst",
   "Paper@page": "Světlé",
   Paper: "Papír",
 

@@ -454,7 +454,7 @@ function KindleSection() {
         </div>
         <div className="flex min-w-[220px] flex-1 flex-col gap-4">
           <div>
-            <p className="text-[20px] leading-tight font-medium tracking-[-0.02em]">{model?.name ?? t("Not known yet")}</p>
+            <p className="text-[20px] leading-tight font-medium tracking-[-0.02em]">{model?.name ?? t("No Kindle yet")}</p>
             <p className="mt-1.5 flex flex-wrap items-center gap-2 text-caption text-muted">
               {model && <span>{t(model.colour ? "{year}, {size}″ colour screen" : "{year}, {size}″ screen", { year: String(model.year), size: model.screen })}</span>}
               {plugged && <Badge tone="success">{t("Plugged in")}</Badge>}
@@ -579,7 +579,7 @@ function SendingSection() {
         <p className="flex-1 text-label">{ready ? t("Ready to send to {address}", { address: kindle.to }) : t("Not set up yet. Three steps, once.")}</p>
       </div>
       <Group>
-        <Step n={1} title={t("Let your address send to your Kindle")} done={ready}>
+        <Step n={1} title={t("Approve your address at Amazon")} done={ready}>
           <p className="text-caption text-muted">
             {/* Amazon's page keeps its own English name; the sentence around it is translated. */}
             {withLink(

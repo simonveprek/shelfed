@@ -40,6 +40,12 @@ function FreeThumb({ src, title, big }: { src?: string; title: string; big?: boo
   );
 }
 
+/** Where a summary comes from, when that's worth saying: Gutenberg's are written by a program, and any in English might surprise someone. */
+function about(source?: FreeBook["source"]) {
+  if (source === "gutenberg") return t("Summary written automatically by Project Gutenberg.");
+  return language() === "en" ? "" : t("Description by Standard Ebooks, in English.");
+}
+
 /** What a suggested book is, before deciding on it: its whole title, what it's about, and where it's from. */
 export function FreeInfo({ title, author, why, free, state, onAdd, onClose }: {
   title: string;
@@ -76,7 +82,12 @@ export function FreeInfo({ title, author, why, free, state, onAdd, onClose }: {
               <Skeleton shape="line" className="w-2/3" />
             </div>
           ) : (
-            summary && <p className="selectable serif mt-4 text-[14px] leading-relaxed">{summary}</p>
+            summary && (
+              <>
+                <p className="selectable serif mt-4 text-[14px] leading-relaxed whitespace-pre-line">{summary}</p>
+                {about(free?.source) && <p className="mt-2 text-caption text-muted">{about(free?.source)}</p>}
+              </>
+            )
           )}
         </div>
       </div>

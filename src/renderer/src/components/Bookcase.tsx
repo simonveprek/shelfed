@@ -6,8 +6,9 @@ import { EASE } from "@/components/ui";
 import { openReader } from "@/lib/actions";
 import { selectBook, targetIds } from "@/lib/select";
 import { useStore, type Section } from "@/lib/store";
+import { spineOf } from "@/lib/spine";
 import { authorsOf, bestFormat, hashString, sortAuthor } from "@/lib/util";
-import { CLOTH, ribbonColour } from "./Colours";
+import { ribbonColour } from "./Colours";
 import { Cover } from "./Cover";
 import { BooksMenu, dragBooks, useKeys } from "./Library";
 import { t } from "../../../shared/i18n";
@@ -35,29 +36,6 @@ function sizeOf(book: Book, scale: number): Size {
 /* ------------------------------------------------------------------------ */
 /* Spines                                                                    */
 /* ------------------------------------------------------------------------ */
-
-// For covers that give no colour of their own.
-const BRIGHT = ["#1d1b18", "#3d7bff", "#8c857c", "#c4372b", "#2f8f5b", "#5b4b8a", "#b5651d", "#2b4bff", "#a23bff"];
-// Shades of the kit's ink, so they follow light and dark.
-const INK = [92, 80, 68, 56, 44, 32];
-
-const lightness = (hex: string) => {
-  const n = parseInt(hex.slice(1), 16);
-  return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
-};
-
-/** The spine's colour and the ink that reads on it, in the chosen style. */
-function spineOf(book: Book, style: BookcasePrefs["spines"]) {
-  // A colour picked for this book wins over the style.
-  if (book.spine) return { base: book.spine, ink: lightness(book.spine) > 0.6 ? "#1d1b18" : "#f6f5f1" };
-  const hash = hashString(book.id);
-  if (style === "ink") {
-    const share = INK[hash % INK.length];
-    return { base: `color-mix(in oklab, var(--foreground) ${share}%, var(--background))`, ink: share > 55 ? "var(--background)" : "var(--foreground)" };
-  }
-  const base = style === "cloth" ? CLOTH[hash % CLOTH.length] : (book.tint ?? BRIGHT[hash % BRIGHT.length]);
-  return { base, ink: lightness(base) > 0.6 ? "#1d1b18" : "#f6f5f1" };
-}
 
 /* ------------------------------------------------------------------------ */
 /* What the case is made of                                                  */
@@ -427,7 +405,9 @@ export function Bookcase({ visible }: { visible: Book[] }) {
   // whose shelves still fit on screen wins, and the cover size setting is the least it gets.
   const scale = useMemo(() => {
     if (!prefs.fit || !width || !height || visible.length > 400) return chosen;
-    for (let s = 2.4; s > chosen; s -= 0.05) {
+    // A book pulled out comes toward you and looks half as big again, so that has to fit too.
+    const largest = Math.min(2.4, (height - 48) / (TALLEST * 1.5));
+    for (let s = largest; s > chosen; s -= 0.05) {
       if (pack(groups, s, rowWidth).length * rowHeightAt(s) <= height - 48) return s;
     }
     return chosen;

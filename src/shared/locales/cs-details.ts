@@ -25,7 +25,6 @@ const words: Record<string, string> = {
   Collection: "Sbírka",
   Collections: "Sbírky",
   "New collection": "Nová sbírka",
-  "To read": "Chci číst",
   Reading: "Čtu",
   Finished: "Dočteno",
   "Cover changed": "Obálka změněna",
@@ -152,6 +151,15 @@ const words: Record<string, string> = {
   "Seen by 2 million": "Vidělo 2 miliony lidí",
   "{n} book on it isn't in Shelfed. Bring it over|{n} books on it aren't in Shelfed. Bring them over":
     "{n} kniha v něm není v Shelfedu. Přenést|{n} knihy v něm nejsou v Shelfedu. Přenést|{n} knih v něm není v Shelfedu. Přenést",
+  "Mark as finished": "Označit jako dočtené",
+  "None yet": "Zatím žádné",
+  "Auto@page": "Auto",
+  "No Kindle yet": "Zatím bez Kindlu",
+  "Approve your address at Amazon": "Schvalte svou adresu u Amazonu",
+  "Tags come from a book's details. Find details online, or add your own in the side panel.": "Štítky pocházejí z údajů o knize. Najděte údaje online, nebo přidejte vlastní v postranním panelu.",
+  "Summary written automatically by Project Gutenberg.": "Shrnutí napsal automaticky Project Gutenberg, proto je anglicky.",
+  "Description by Standard Ebooks, in English.": "Popis od Standard Ebooks, anglicky.",
+  "Your Kindle isn't plugged in any more.": "Váš Kindle už není připojený.",
 };
 
 export default words;

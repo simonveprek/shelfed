@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Settings } from "../shared/types";
+import { savedReader } from "../shared/reader";
 
 const file = () => join(app.getPath("userData"), "settings.json");
 const secretFile = () => join(app.getPath("userData"), "smtp.bin");
@@ -18,7 +19,7 @@ export function defaults(): Settings {
     sidebar: true,
     pdfPage: "A5",
     kindle: { to: "", from: "", host: "", port: 465, secure: true, user: "", hasPassword: false, format: "epub" },
-    reader: { theme: "light", font: "publisher", size: 18, spacing: 1.5, width: 680, flow: "paginated", justify: true },
+    reader: { theme: "auto", font: "publisher", size: 18, spacing: 1.5, width: 680, flow: "paginated", justify: true },
     bookcase: { group: "none", material: "paper", spines: "cover", fit: true, authors: true, ribbons: true, lean: true, ribbon: "accent" },
   };
 }
@@ -35,7 +36,7 @@ export function getSettings(): Settings {
         ...base,
         ...saved,
         kindle: { ...base.kindle, ...saved.kindle },
-        reader: { ...base.reader, ...saved.reader },
+        reader: { ...base.reader, ...savedReader(saved.reader ?? {}) },
         bookcase: { ...base.bookcase, ...saved.bookcase },
       };
     }

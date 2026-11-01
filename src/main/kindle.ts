@@ -122,7 +122,9 @@ async function readBus(): Promise<Bus> {
   return { serials };
 }
 
-const toKindles = (serials: string[]): KindleOnUsb[] => [...new Set(serials)].map((serial) => ({ serial, model: kindleFromSerial(serial)?.id }));
+/** A device names its own serial, so one that isn't short and plain doesn't count. */
+export const toKindles = (serials: string[]): KindleOnUsb[] =>
+  [...new Set(serials)].filter((serial) => /^[\x21-\x7e]{1,64}$/.test(serial)).map((serial) => ({ serial, model: kindleFromSerial(serial)?.id }));
 
 /** Folders a Kindle could be mounted at. */
 async function mountPoints(bus: Bus): Promise<string[]> {
@@ -164,9 +166,13 @@ async function drivesOn(bus: Bus): Promise<KindleDevice[]> {
 
 const safeBus = () => readBus().catch((): Bus => ({ serials: [] }));
 
+/** The drives last seen, so checking one doesn't mean asking the system all over again. */
+let lastDrives: KindleDevice[] = [];
+
 /** Kindles that open as a drive, so books can be copied straight on. */
 export async function findDevices(): Promise<KindleDevice[]> {
-  return drivesOn(await safeBus());
+  lastDrives = await drivesOn(await safeBus());
+  return lastDrives;
 }
 
 /**
@@ -186,7 +192,8 @@ let looking: Promise<{ usb: KindleOnUsb[]; drives: KindleDevice[] }> | null = nu
 export function kindlePort() {
   looking ??= (async () => {
     const bus = await safeBus();
-    return { usb: toKindles(bus.serials), drives: await drivesOn(bus) };
+    lastDrives = await drivesOn(bus);
+    return { usb: toKindles(bus.serials), drives: lastDrives };
   })().finally(() => (looking = null));
   return looking;
 }
@@ -294,4 +301,14 @@ export async function copyToDevice(device: string, file: string, name: string) {
   const target = join(docs, name);
   await copyFile(file, target);
   return (await stat(target)).size;
+}
+
+/**
+ * Whether a path is a Kindle plugged in right now. What the page asks to read
+ * or change on a Kindle goes through this first, so that it can only ever be
+ * a Kindle, never somewhere else on this computer.
+ */
+export async function isPluggedIn(device: string) {
+  const known = (list: KindleDevice[]) => list.some((d) => d.path === device);
+  return known(lastDrives) || known(await findDevices());
 }

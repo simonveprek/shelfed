@@ -11,7 +11,7 @@ import type { Book, BootState, Collection, KindleDevice, KindleOnUsb, MetadataCa
 import { KINDLE_EMAIL, READABLE } from "../shared/types";
 import { epubToAzw3 } from "./azw3";
 import { docxToHtml, htmlToPdf } from "./convert";
-import { copyToDevice, deviceFiles, findDevices, kindlePort, kindlesOnUsb, readClippings, removeFromDevice, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
+import { copyToDevice, deviceFiles, findDevices, isPluggedIn, kindlePort, kindlesOnUsb, readClippings, removeFromDevice, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks, freeSummary } from "./catalogues";
@@ -206,6 +206,15 @@ function shoot(target: BrowserWindow) {
 
 const send = (channel: string, ...args: unknown[]) => win?.webContents.send(channel, ...args);
 
+/** A path the page gave as a Kindle, once it's known to be one. */
+async function aKindle(device: string) {
+  if (typeof device !== "string") throw new Error(t("Your Kindle isn't plugged in any more."));
+  const demo = demoKindle();
+  const plugged = demo?.drive ? demo.drive.path === device : await isPluggedIn(device);
+  if (!plugged) throw new Error(t("Your Kindle isn't plugged in any more."));
+  return device;
+}
+
 /**
  * For recording demos and tests: SHELF_DEMO_KINDLE=<folder> pretends a Kindle
  * Paperwhite is plugged in, with that folder as its drive, and
@@ -396,16 +405,16 @@ const api = {
   kindles: () => kindlesOnUsb(),
 
   /** The book files already on a Kindle plugged in as a drive. */
-  deviceFiles: (device: string) => deviceFiles(device),
+  deviceFiles: async (device: string) => deviceFiles(await aKindle(device)),
   /** The Calibre libraries on this computer, to offer bringing one over. */
   findCalibre: () => findCalibre(),
   /** Takes book files off a Kindle plugged in as a drive. */
-  removeFromDevice: (device: string, files: string[]) => removeFromDevice(device, files),
+  removeFromDevice: async (device: string, files: string[]) => removeFromDevice(await aKindle(device), files),
 
   async copyToDevice(id: string, ext: string, device: string) {
     const book = library.get(id);
     const format = book.formats.find((f) => f.ext === ext)!;
-    return copyToDevice(device, library.filePath(book, ext), format.file);
+    return copyToDevice(await aKindle(device), library.filePath(book, ext), format.file);
   },
 
   searchMetadata(source: "openlibrary" | "google", q: { title: string; author?: string; isbn?: string }): Promise<MetadataCandidate[]> {

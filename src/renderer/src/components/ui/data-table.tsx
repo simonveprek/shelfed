@@ -59,6 +59,7 @@ export function DataTable<Row>({
   selected: held,
   onSelectedChange,
   pageSizes = [10, 20, 50],
+  quiet = false,
   defaultPageSize,
   actions,
   empty,
@@ -79,6 +80,8 @@ export function DataTable<Row>({
   selected?: string[];
   onSelectedChange?: (ids: string[]) => void;
   pageSizes?: number[];
+  /** No footer unless there's more than one page. */
+  quiet?: boolean;
   defaultPageSize?: number;
   /** Buttons beside the search, like New invoice. */
   actions?: ReactNode;
@@ -247,7 +250,7 @@ export function DataTable<Row>({
             const id = rowId(row);
             const on = ticked.includes(id);
             return (
-              <TableRow key={id} selected={on}>
+              <TableRow key={id} selected={on} aria-selected={on || undefined}>
                 {selectable && (
                   <TableCell className="w-0 pr-0">
                     <Checkbox
@@ -284,6 +287,7 @@ export function DataTable<Row>({
         </TableBody>
       </Table>
 
+      {(!quiet || pages > 1) && (
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border py-2.5 pr-3 pl-5 text-caption text-muted">
         <p className="tabular-nums">
           {selectable && tickedFound.length > 0
@@ -330,6 +334,7 @@ export function DataTable<Row>({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

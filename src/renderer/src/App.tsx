@@ -141,6 +141,8 @@ class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
 
 function Library() {
   const inspector = useStore((s) => s.settings.inspector);
+  // Nothing to say about an empty library, or beside the free books unless one is selected.
+  const showPanel = useStore((s) => s.books.length > 0 && (s.section.kind !== "discover" || s.selection.length > 0));
   // The library steps back while a Kindle that was just plugged in says hello.
   const welcoming = useStore((s) => Boolean(s.kindleArrived && !s.reading && !s.onboarding && !s.dialog));
   return (
@@ -163,7 +165,7 @@ function Library() {
           <div className="relative min-w-0 flex-1">
             <LibraryView />
           </div>
-          {inspector && <Inspector />}
+          {inspector && showPanel && <Inspector />}
         </div>
       </main>
     </motion.div>

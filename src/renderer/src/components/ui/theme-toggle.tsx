@@ -58,7 +58,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       onClick={toggle}
       whileTap={{ scale: 0.9 }}
-      className={`relative flex size-8 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-pill text-foreground transition-colors hover:bg-tile ${className}`}
+      className={`relative flex size-8 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-pill text-foreground transition-colors hover:bg-tile ${className}`}
     >
       <AnimatePresence mode="popLayout" initial={false}>
         {mounted && (

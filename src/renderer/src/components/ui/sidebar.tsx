@@ -82,13 +82,18 @@ export function Sidebar({
         transition={{ duration: collapsed ? 0.15 : 0.25, ease: EASE }}
         className={cx("shrink-0 overflow-hidden", className)}
       >
-        <div className="flex h-full flex-col gap-7 overflow-x-hidden overflow-y-auto px-3 py-4">
+        <div className="flex h-full flex-col gap-7 overflow-hidden px-3 py-4">
           {header && <div className="min-w-0 shrink-0 overflow-hidden">{header}</div>}
-          <nav aria-label={label} className="flex flex-col gap-6">
+          <nav
+            aria-label={label}
+            className="-mx-3 flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto px-3 pb-3"
+            // Fades out at the bottom, so places below it read as being there.
+            style={{ scrollbarWidth: "none", maskImage: "linear-gradient(to bottom, black calc(100% - 20px), transparent)" }}
+          >
             {children}
           </nav>
           {(footer || collapsible) && (
-            <div className="mt-auto flex flex-col gap-0.5">
+            <div className="flex shrink-0 flex-col gap-0.5">
               {footer}
               {collapsible && (
                 <SidebarItem icon={SidebarLeftIcon} onClick={toggle}>

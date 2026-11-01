@@ -144,7 +144,7 @@ export function KindleArrival() {
             {cable === "phone" ? (
               <p className="mt-4 max-w-[34rem] text-caption text-muted" style={{ textWrap: "balance" }}>{t(PHONE_LIKE)}</p>
             ) : (
-              <p className="mt-4 text-caption text-muted">{panel ? t("Drop books on it in the side panel") : t("Drag books onto it to copy them")}</p>
+              <p className="mt-4 text-caption text-foreground/75">{panel ? t("Drop books on it in the side panel") : t("Drag books onto it to copy them")}</p>
             )}
           </motion.div>
         </motion.div>

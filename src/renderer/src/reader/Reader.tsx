@@ -23,12 +23,15 @@ import { t, tc } from "../../../shared/i18n";
 import { useReadAloud, type Speaking } from "./aloud";
 
 /** The page itself. These are the paper, not the app, so they keep their own colours. Labels are English here and translated where shown. */
-const PAPERS: Record<ReaderPrefs["theme"], { bg: string; fg: string; link: string; dark: boolean; label: string }> = {
+const PAPERS: Record<Exclude<ReaderPrefs["theme"], "auto">, { bg: string; fg: string; link: string; dark: boolean; label: string }> = {
   light: { bg: "#fbfaf7", fg: "#1d1b18", link: "#2f5fd0", dark: false, label: "Paper" },
   sepia: { bg: "#f2e9d5", fg: "#4f3f2f", link: "#8a4b1f", dark: false, label: "Sepia" },
   dark: { bg: "#1b1b1c", fg: "#d8d6d0", link: "#8fb4ff", dark: true, label: "Dusk" },
   black: { bg: "#000000", fg: "#c9c7c2", link: "#8fb4ff", dark: true, label: "Night" },
 };
+
+/** The page's colours, with auto settled by whether the app is dark right now. */
+const paperOf = (theme: ReaderPrefs["theme"]) => PAPERS[theme === "auto" ? (document.documentElement.classList.contains("dark") ? "dark" : "light") : theme];
 
 const FONTS = {
   publisher: "",
@@ -40,7 +43,7 @@ type TocItem = { label: string; href: string; subitems?: TocItem[] };
 
 /** The reader's typography, laid over the book's own styles. */
 function bookCss(p: ReaderPrefs) {
-  const paper = PAPERS[p.theme];
+  const paper = paperOf(p.theme);
   const font = FONTS[p.font];
   return `
     @namespace epub "http://www.idpf.org/2007/ops";
@@ -112,9 +115,21 @@ export const saveProgress = debounce(async (id: string, progress: number, locati
 function TypeSettings({ prefs, set, pdf }: { prefs: ReaderPrefs; set: (p: Partial<ReaderPrefs>) => void; pdf?: boolean }) {
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="grid grid-cols-4 gap-2">
-        {(Object.keys(PAPERS) as Array<ReaderPrefs["theme"]>).map((key) => (
-          <button key={key} onClick={() => set({ theme: key })} className="flex flex-col items-center gap-1.5">
+      <div className="grid grid-cols-5 gap-2">
+        <button onClick={() => set({ theme: "auto", picked: true })} className="flex flex-col items-center gap-1.5">
+          <span
+            className={cx(
+              "serif flex h-11 w-full items-center justify-center rounded-item text-[15px] font-medium transition-shadow duration-150",
+              prefs.theme === "auto" ? "shadow-[0_0_0_2px_var(--foreground)]" : "shadow-[inset_0_0_0_1px_var(--line-strong)]",
+            )}
+            style={{ background: `linear-gradient(135deg, ${PAPERS.light.bg} 50%, ${PAPERS.dark.bg} 50%)`, color: "#808080" }}
+          >
+            Aa
+          </span>
+          <span className="text-caption text-muted">{tc("page", "Auto")}</span>
+        </button>
+        {(Object.keys(PAPERS) as Array<keyof typeof PAPERS>).map((key) => (
+          <button key={key} onClick={() => set({ theme: key, picked: true })} className="flex flex-col items-center gap-1.5">
             <span
               className={cx(
                 "serif flex h-11 w-full items-center justify-center rounded-item text-[15px] font-medium transition-shadow duration-150",
@@ -196,7 +211,7 @@ function Frame({
   /** Reading aloud: whether it's going, and the button that starts and stops it. */
   aloud?: { on: boolean; toggle: () => void };
 }) {
-  const paper = PAPERS[prefs.theme];
+  const paper = paperOf(prefs.theme);
   const chrome = useChrome();
   const contents = panel !== null;
   const close = () => useStore.setState({ reading: null });
@@ -223,7 +238,7 @@ function Frame({
 
   return (
     <motion.div
-      className={cx("fixed inset-0 z-[45] flex flex-col", paper.dark && "dark")}
+      className={cx("fixed inset-0 z-[45] flex flex-col", paper.dark ? "dark" : "light")}
       style={{ background: paper.bg, color: paper.fg, colorScheme: paper.dark ? "dark" : "light" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { duration: 0.25, ease: EASE } }}
@@ -880,7 +895,7 @@ function PdfReader({ book }: { book: Book }) {
   }, [doc, page, goTo]);
 
   const pages = useMemo(() => (doc ? Array.from({ length: doc.numPages }, (_, i) => i + 1) : []), [doc]);
-  const dark = PAPERS[prefs.theme].dark;
+  const dark = paperOf(prefs.theme).dark;
   const bookmark = bookmarksOf(live).find((b) => (!b.ext || b.ext === "pdf") && b.cfi === String(page));
 
   // Looks through the words of each page in turn, from pdf.js's text.

@@ -141,7 +141,8 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
         // Nor does its window get in their way. SHELF_SHOW=1 shows it, to watch a test.
         ...(process.env.CI || process.env.SHELF_SHOW ? {} : { SHELF_QUIET: "1" }),
       };
-      // SHELF_APP=<the packaged app's executable> tests an installer's app instead of the build.
+      // SHELF_APP=<a packed app's executable> tests it instead of the build. Packed for release it refuses
+      // this, since its lockdown turns off what drives it: add -c.electronFuses.enableNodeCliInspectArguments=true.
       app = process.env.SHELF_APP
         ? await electron.launch({ executablePath: process.env.SHELF_APP, args: args.slice(1), env })
         : await electron.launch({ args, cwd: root, env });

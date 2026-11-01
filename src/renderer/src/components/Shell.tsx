@@ -5,6 +5,7 @@ import {
   File01Icon, FileAddIcon, Folder01Icon, FolderAddIcon, FilterHorizontalIcon, GridViewIcon, Layers01Icon,
   LeftToRightListBulletIcon, Bookshelf01Icon, PencilEdit02Icon, Settings01Icon, SidebarRightIcon, SparklesIcon,
   Tag01Icon, ThreeDViewIcon, UserIcon, ArrowLeft01Icon, Globe02Icon, Tablet01Icon,
+  ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
 import type { SortKey } from "../../../shared/types";
 import {
@@ -12,7 +13,7 @@ import {
   Select, Sidebar, SidebarGroup, SidebarItem, Slider, SwitchRow, ThemeToggle,
 } from "@/components/ui";
 import { addToCollection, deleteCollection, pickAndImport } from "@/lib/actions";
-import { isMac, isWin, mod, shift } from "@/lib/api";
+import { api, isMac, isWin, mod, shift } from "@/lib/api";
 import { newCollection } from "@/lib/commands";
 import { useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
@@ -66,6 +67,17 @@ const BROWSE: Array<{ by: Browse; label: string; icon: typeof Book02Icon }> = [
   { by: "format", label: "Formats", icon: File01Icon },
 ];
 
+/** A new version, kept in sight until it's dealt with, however briefly its pop-up showed. */
+function UpdateMarker() {
+  const update = useStore((s) => s.update);
+  if (update.state !== "ready" && update.state !== "available") return null;
+  return (
+    <SidebarItem icon={ArrowUp01Icon} onClick={() => api.installUpdate()}>
+      {update.state === "ready" ? t("Restart to update") : t("Shelfed {version} is out", { version: update.version })}
+    </SidebarItem>
+  );
+}
+
 export function AppSidebar() {
   const section = useStore((s) => s.section);
   const onKindle = useOnKindle();
@@ -79,6 +91,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar
+      footer={<UpdateMarker />}
       collapsed={!open}
       onCollapsedChange={(collapsed) => setSetting({ sidebar: !collapsed })}
       className="h-full border-r border-border"
@@ -198,7 +211,7 @@ function Search() {
         }
         if (e.key === "Enter" || e.key === "ArrowDown") (e.target as HTMLInputElement).blur();
       }}
-      className="w-[clamp(170px,24vw,280px)]"
+      className="w-[240px] min-w-[120px] shrink"
     />
   );
 }
@@ -403,7 +416,7 @@ export function Header() {
         <MenuItem icon={Settings01Icon} onSelect={() => useStore.setState({ dialog: { kind: "settings" } })}>{t("Settings")}</MenuItem>
       </Menu>
       <ThemeToggle />
-      <IconButton label={t("Details")} icon={SidebarRightIcon} active={settings.inspector} onClick={() => setSetting({ inspector: !settings.inspector })} />
+      {total > 0 && <IconButton label={t("Details")} icon={SidebarRightIcon} active={settings.inspector} onClick={() => setSetting({ inspector: !settings.inspector })} />}
     </header>
   );
 }

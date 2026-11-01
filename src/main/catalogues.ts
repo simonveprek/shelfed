@@ -27,6 +27,17 @@ const attr = (el: string, name: string) => el.match(new RegExp(`${name}="([^"]*)
 const decode = (s = "") =>
   s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'");
 
+/** The start of a book's description, as plain paragraphs. Stops at a paragraph's end, not partway through one. */
+export function descriptionIn(html: string, longest = 1200) {
+  const paragraphs = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map((m) => decode(m[1].replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim()).filter(Boolean);
+  let out = "";
+  for (const paragraph of paragraphs) {
+    if (out && out.length + paragraph.length > longest) break;
+    out += `${out ? "\n\n" : ""}${paragraph}`;
+  }
+  return out;
+}
+
 async function standard(query: string): Promise<FreeBook[]> {
   const url = query.trim()
     ? `https://standardebooks.org/feeds/atom/all?query=${encodeURIComponent(query.trim())}`
@@ -44,7 +55,7 @@ async function standard(query: string): Promise<FreeBook[]> {
       cover: attr(e.match(/<media:thumbnail [^>]*>/)?.[0] ?? "", "url"),
       epub: decode(attr(epub, "href")),
       page: decode(attr(page ?? "", "href")),
-      summary: decode(tag(e, "summary")),
+      summary: descriptionIn(decode(tag(e, "content"))) || decode(tag(e, "summary")),
     }];
   });
 }
@@ -94,7 +105,8 @@ export const freeBooks = (source: "standard" | "gutenberg", query: string) => {
 /** The summary in a Gutenberg book's own feed, as it's written there. */
 export function summaryIn(feed: string) {
   const found = feed.match(/<p>\s*Summary:\s*([\s\S]*?)<\/p>/)?.[1];
-  return found ? decode(found.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim() : null;
+  // The window says who wrote it, in the reader's own language, so this note isn't needed in the text.
+  return found ? decode(found.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").replace(/\s*\(This is an automatically generated summary\.\)\s*$/i, "").trim() : null;
 }
 
 /** What a Gutenberg book is about. Its search results don't say, so this asks for the one book. */

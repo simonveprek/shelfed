@@ -13,7 +13,7 @@
   font-display: block;
 }
 
-:root {
+:root, .light {
   --font-geist-sans: "Geist";
   --font-geist-mono: "Geist Mono";
   --font-serif: "Iowan Old Style", "Charter", "New York", "Sitka Text", Cambria, Georgia, serif;
@@ -62,7 +62,7 @@ textarea,
 }
 
 /* Windows draws its own scrollbars, light unless told the page is dark. */
-:root {
+:root, .light {
   color-scheme: light;
 }
 .dark {

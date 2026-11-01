@@ -57,7 +57,7 @@ function Dot({ label, on, onClick, style, className, children }: {
         onClick={onClick}
         className={cx(
           "relative flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full transition-transform duration-150 outline-none hover:scale-110 focus-visible:scale-110",
-          on ? ring : "shadow-[inset_0_0_0_1px_rgb(0_0_0/0.12)]",
+          on ? ring : "shadow-[inset_0_0_0_1px_var(--line-strong)]",
           className,
         )}
         style={style}

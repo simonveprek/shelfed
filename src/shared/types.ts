@@ -102,7 +102,10 @@ export type Collection = {
 export type ThemeMode = "system" | "light" | "dark";
 
 export type ReaderPrefs = {
-  theme: "light" | "sepia" | "dark" | "black";
+  /** The page's colour. Auto follows the app's light or dark. */
+  theme: "auto" | "light" | "sepia" | "dark" | "black";
+  /** Whether someone chose that colour, as opposed to it being what everyone once started on. */
+  picked?: boolean;
   font: "publisher" | "serif" | "sans";
   size: number;
   spacing: number;

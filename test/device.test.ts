@@ -1,11 +1,11 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({ app: { getPath: () => tmpdir() }, safeStorage: { isEncryptionAvailable: () => false } }));
-const { deviceFiles, isLocked, plainMailError, removeFromDevice } = await import("../src/main/kindle");
+const { deviceFiles, isLocked, plainMailError, removeFromDevice, isPluggedIn, toKindles } = await import("../src/main/kindle");
 
 let device: string;
 beforeEach(async () => {
@@ -68,5 +68,44 @@ describe("a mail service turning a password away", () => {
     expect((plainMailError(refused) as Error).message).toMatch(/app password/);
     const offline = Object.assign(new Error("getaddrinfo ENOTFOUND"), { code: "EDNS" });
     expect(plainMailError(offline)).toBe(offline);
+  });
+});
+
+describe("paths the page gives", () => {
+  it("doesn't take a folder on this computer for a Kindle", async () => {
+    expect(await isPluggedIn(tmpdir())).toBe(false);
+    expect(await isPluggedIn(device)).toBe(false);
+  }, 30_000);
+});
+
+describe("serials off the USB bus", () => {
+  it("keeps ordinary ones, once each", () => {
+    expect(toKindles(["G0901234", "G0901234", "B024ABCD"]).map((k) => k.serial)).toEqual(["G0901234", "B024ABCD"]);
+  });
+
+  it.each(["", "with space", "new\nline", "\u202eevil", "x".repeat(65), "žluť"])("drops %j", (serial) => {
+    expect(toKindles([serial])).toEqual([]);
+  });
+});
+
+describe("how the app is packed and built", () => {
+  const read = (path: string) => readFileSync(join(import.meta.dirname, "..", path), "utf8");
+
+  it.each(["runAsNode", "enableNodeOptionsEnvironmentVariable", "enableNodeCliInspectArguments"])("keeps %s off, so nothing can run code through the app", (fuse) => {
+    expect(read("electron-builder.yml")).toMatch(new RegExp(`^  ${fuse}: false\\r?$`, "m"));
+  });
+
+  it.each(["onlyLoadAppFromAsar", "enableEmbeddedAsarIntegrityValidation", "resetAdHocDarwinSignature"])("keeps %s on", (fuse) => {
+    expect(read("electron-builder.yml")).toMatch(new RegExp(`^  ${fuse}: true\\r?$`, "m"));
+  });
+
+  it.each(["ci", "pages", "release", "screens"])("pins every action in %s to an exact commit", (name) => {
+    const uses = [...read(`.github/workflows/${name}.yml`).matchAll(/uses:\s*(\S+)/g)].map((m) => m[1]);
+    expect(uses.length).toBeGreaterThan(0);
+    for (const action of uses) expect(action).toMatch(/@[0-9a-f]{40}$/);
+  });
+
+  it.each(["ci", "screens"])("gives %s no more than read access", (name) => {
+    expect(read(`.github/workflows/${name}.yml`)).toMatch(/^permissions:\r?\n  contents: read\r?$/m);
   });
 });

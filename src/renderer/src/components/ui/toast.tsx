@@ -79,7 +79,7 @@ const ICONS = {
 export function Toaster() {
   const list = useSyncExternalStore(subscribe, () => items, () => EMPTY);
   return (
-    <div aria-live="polite" className="pointer-events-none fixed right-4 bottom-4 z-[60] flex w-[min(360px,calc(100vw-2rem))] flex-col items-end gap-2">
+    <div aria-live="polite" className="pointer-events-none fixed bottom-4 left-1/2 z-[60] flex w-[min(360px,calc(100vw-2rem))] -translate-x-1/2 flex-col items-center gap-2">
       <AnimatePresence initial={false}>
         {list.map((item) => (
           <motion.div
