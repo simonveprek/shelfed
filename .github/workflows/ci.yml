@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: ${{ matrix.os }}
@@ -13,12 +16,14 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: lts/*
           cache: npm
       - run: npm ci
+      # Known holes in anything the app ships with.
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
@@ -27,14 +32,34 @@ jobs:
       - name: App tests
         run: ${{ runner.os == 'Linux' && 'xvfb-run --auto-servernum ' || '' }}npx playwright test
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: app-tests-${{ matrix.os }}
           path: |
             playwright-report
             test-results
+      # What reaches newer Kindles: the USB library for both kinds of Mac, the helper on Windows.
+      - if: runner.os == 'Windows'
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: tools/kindle-wpd/go.mod
+          cache: false
+      - if: runner.os == 'Windows'
+        run: go test ./...
+        working-directory: tools/kindle-wpd
+      - if: runner.os == 'Windows'
+        run: npm run build:wpd
+      - if: runner.os == 'Windows'
+        run: node scripts/wpd-check.mjs
+      - if: runner.os == 'macOS'
+        run: node scripts/usb-binaries.mjs
       # Packs the app without an installer, to catch packaging problems on each system.
       - if: runner.os != 'Linux'
         run: npx electron-builder --dir --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+      # The packed app has to hold what it should, and with its lockdown on, actually start.
+      - if: runner.os != 'Linux'
+        run: node scripts/package-check.mjs
+      - if: runner.os != 'Linux'
+        run: node scripts/launch-check.mjs

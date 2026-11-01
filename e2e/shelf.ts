@@ -63,14 +63,18 @@ export type Shelf = {
   downloads: string;
   /** A folder of "Title - Author.epub" files standing in for Standard Ebooks. */
   free: string;
+  /** The demo Kindle's storage. */
+  kindle: string;
 };
 
 /** Each test gets its own Shelfed, on its own empty library, never yours. */
 type Options = {
-  /** A demo Kindle plugged in from the start: a drive, or one that connects like a phone. */
-  kindle: "drive" | "phone" | undefined;
+  /** A demo Kindle plugged in from the start: a drive, a pretend one speaking real MTP, or one that won't open by cable. */
+  kindle: "drive" | "mtp" | "phone" | undefined;
   /** Book files already in that drive Kindle's documents folder. */
   onKindle: string[];
+  /** How the pretend MTP Kindle should misbehave. */
+  kindleQuirks: Record<string, unknown>;
   /** Fills the library folder before Shelfed starts, for a library that's been around a while. */
   library: { fill: (folder: string) => void } | undefined;
   /** A Calibre library on this pretend computer, filled by the test, for Shelfed to find. */
@@ -82,10 +86,11 @@ type Options = {
 export const test = base.extend<{ shelf: Shelf } & Options>({
   kindle: [undefined, { option: true }],
   onKindle: [[], { option: true }],
+  kindleQuirks: [{}, { option: true }],
   library: [undefined, { option: true }],
   calibre: [undefined, { option: true }],
   language: ["en", { option: true }],
-  shelf: async ({ kindle, onKindle, library, calibre, language }, use) => {
+  shelf: async ({ kindle, onKindle, kindleQuirks, library, calibre, language }, use) => {
     const dir = mkdtempSync(join(tmpdir(), "shelf-e2e-"));
     const data = join(dir, "data");
     mkdirSync(data);
@@ -112,8 +117,8 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
     // out of view and the tests meet what a small screen does, wherever they run.
     writeFileSync(join(data, "window.json"), JSON.stringify({ x: 0, y: 0, width: 1024, height: 677 }));
     // The demo Kindle's drive, with whatever books are already on it.
-    const demo = kindle === "phone" ? "phone" : kindle === "drive" ? join(dir, "Kindle") : undefined;
-    if (kindle === "drive") {
+    const demo = kindle === "phone" ? "phone" : kindle === "drive" ? join(dir, "Kindle") : kindle === "mtp" ? `mtp:${join(dir, "Kindle")}` : undefined;
+    if (kindle === "drive" || kindle === "mtp") {
       mkdirSync(join(dir, "Kindle", "documents"), { recursive: true });
       for (const file of onKindle) writeFileSync(join(dir, "Kindle", "documents", file), "a book");
     }
@@ -135,13 +140,14 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
         SHELF_DOWNLOADS: join(dir, "Downloads"),
         SHELF_CALIBRE_CONFIG: join(dir, "calibre-config"),
         SHELF_FREE_DIR: join(dir, "free"),
-        ...(demo ? { SHELF_DEMO_KINDLE: demo } : {}),
+        ...(demo ? { SHELF_DEMO_KINDLE: demo, SHELF_DEMO_QUIRKS: JSON.stringify(kindleQuirks) } : {}),
         // On someone's own computer the test books are deleted, not put in their Trash.
         ...(process.env.CI ? {} : { SHELF_NO_TRASH: "1" }),
         // Nor does its window get in their way. SHELF_SHOW=1 shows it, to watch a test.
         ...(process.env.CI || process.env.SHELF_SHOW ? {} : { SHELF_QUIET: "1" }),
       };
-      // SHELF_APP=<the packaged app's executable> tests an installer's app instead of the build.
+      // SHELF_APP=<a packed app's executable> tests it instead of the build. Packed for release it refuses
+      // this, since its lockdown turns off what drives it: add -c.electronFuses.enableNodeCliInspectArguments=true.
       app = process.env.SHELF_APP
         ? await electron.launch({ executablePath: process.env.SHELF_APP, args: args.slice(1), env })
         : await electron.launch({ args, cwd: root, env });
@@ -162,6 +168,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       errors,
       downloads: join(dir, "Downloads"),
       free: join(dir, "free"),
+      kindle: join(dir, "Kindle"),
       async add(books = BOOKS) {
         const paths = books.map((book) => {
           const path = join(dir, `in-${made++}.epub`);

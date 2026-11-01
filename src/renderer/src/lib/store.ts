@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { KindleCable } from "./onkindle";
 import type { Book, BootState, Collection, KindleDevice, KindleFile, KindleOnUsb, Settings, UpdateState } from "../../../shared/types";
 import type { PointMood } from "@/components/fragms/points-data";
 import { toast } from "@/components/ui";
@@ -61,11 +62,11 @@ type State = {
   /** Kindles on USB and the ones that open as a drive, once first looked for. */
   kindlePort: KindlePort | null;
   /**
-   * How the Kindle plugged in takes books: as a drive, or not at all by
-   * cable because it connects like a phone. Waiting while one on USB might
-   * still be about to open as a drive.
+   * How the Kindle plugged in takes books: by cable (as a drive, or over MTP),
+   * or not by cable for now, because it wouldn't open or another app has it.
+   * Waiting while one on USB is still being opened.
    */
-  kindleCable: "drive" | "phone" | "waiting" | null;
+  kindleCable: KindleCable;
   /** The book files on a Kindle plugged in as a drive, or null with none. */
   kindleFiles: KindleFile[] | null;
   /** Asking whether to take finished books off the Kindle. */

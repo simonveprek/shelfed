@@ -16,6 +16,24 @@ extraFiles:
   - LICENSE-FRAGMS-PERSONAL.md
   - THIRD_PARTY_NOTICES.md
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+# Switches built into Electron itself. Off: every way of running code through
+# the installed app instead of as it. On: loading only the app's own archive,
+# and checking that archive hasn't been changed. .github/workflows run
+# scripts/launch-check.mjs to see that the result really starts.
+electronFuses:
+  runAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  onlyLoadAppFromAsar: true
+  enableEmbeddedAsarIntegrityValidation: true
+  # Changing these switches changes the program, so a Mac's signature on it has to be redone.
+  resetAdHocDarwinSignature: true
+# The USB library comes built, so nothing should try to build it again, and its
+# native files can't be loaded from inside the archive.
+npmRebuild: false
+asarUnpack:
+  - node_modules/usb/*.node
+  - node_modules/@node-usb/**
 fileAssociations:
   - ext: [epub, mobi, azw3, azw, prc, fb2, fbz, cbz, pdf]
     name: E-book
@@ -31,6 +49,13 @@ mac:
 win:
   # x64 only: Windows on ARM runs it as it is.
   target: nsis
+  # Windows reaches newer Kindles through this helper, not the USB library.
+  extraResources:
+    - from: resources/kindle-wpd.exe
+      to: kindle-wpd.exe
+  files:
+    - "!node_modules/usb/**"
+    - "!node_modules/@node-usb/**"
   icon: build/icon.png
 # One click: a small window with Shelfed's icon and a progress bar, then Shelfed
 # opens. Installed for this user only, so Windows doesn't ask for an admin.

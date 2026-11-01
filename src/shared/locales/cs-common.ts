@@ -61,10 +61,6 @@ const words: Record<string, string> = {
   "Copied {n} book to your Kindle|Copied {n} books to your Kindle": "Do Kindlu zkopírována {n} kniha|Do Kindlu zkopírovány {n} knihy|Do Kindlu zkopírováno {n} knih",
   "Took {n} finished book off your Kindle|Took {n} finished books off your Kindle": "Z Kindlu odebrána {n} dočtená kniha|Z Kindlu odebrány {n} dočtené knihy|Z Kindlu odebráno {n} dočtených knih",
   "{size} free again. They're still in your library.": "Uvolněno {size}. V knihovně vám zůstávají.",
-  "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead.":
-    "Tenhle Kindle se připojuje jako telefon a Mac ho neumí otevřít jako disk, takže do něj Shelfed nemůže kopírovat knihy kabelem. Pošlete je místo toho e-mailem.",
-  "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.":
-    "Tenhle Kindle se připojuje jako telefon, ne jako disk, takže do něj Shelfed zatím nemůže kopírovat knihy kabelem. Pošlete je místo toho e-mailem.",
 
   // Removing, collections
   "Book": "Kniha",

@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "react";
 import type { KindleDevice, KindleOnUsb } from "../../../shared/types";
-import { connectsLikeAPhone, kindleById } from "../../../shared/kindles";
-import { api, isMac, isWin } from "./api";
-import { booksOnKindle, finishedOnKindle, notInLibrary } from "./onkindle";
+import { kindleById } from "../../../shared/kindles";
+import { api, isWin } from "./api";
+import { booksOnKindle, cableState, finishedOnKindle, notInLibrary } from "./onkindle";
 import { toast } from "@/components/ui";
 import { bytes } from "./util";
 import { t, tn } from "../../../shared/i18n";
@@ -50,11 +50,9 @@ export function useKindleWatch() {
       });
       const known = kindleById(usb.find((k) => k.model)?.model ?? drives.find((d) => d.model)?.model);
 
-      // A drive takes books by cable. One only on USB connects like a phone,
-      // known from its model, or from not opening as a drive in good time.
       if (usb.length && !drives.length) onUsbSince ||= Date.now();
       else onUsbSince = 0;
-      const cable = drives.length ? "drive" : !usb.length ? null : connectsLikeAPhone(known) || Date.now() - onUsbSince > MOUNTING ? "phone" : "waiting";
+      const cable = cableState(usb, drives, Date.now() - onUsbSince > MOUNTING);
       if (useStore.getState().kindleCable !== cable) useStore.setState({ kindleCable: cable });
 
       // What's on it, when it arrives and every little while after.
@@ -119,11 +117,8 @@ export async function tidyKindle() {
   });
 }
 
-const PHONE_LIKE_MAC = "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead.";
-const PHONE_LIKE_OTHER = "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.";
+/** Why a Kindle on the cable can't take books that way right now. Always English, since it is set when the file loads; shown as t(PHONE_LIKE). */
+export const PHONE_LIKE = "Shelfed couldn't open this Kindle by cable. Unplug it and plug it in again, and if that doesn't help, send books by email.";
 
-/**
- * Why a Kindle on the cable can't take books that way, said plainly for this
- * system. Always English, since it is set when the file loads; shown as t(PHONE_LIKE).
- */
-export const PHONE_LIKE = isMac ? PHONE_LIKE_MAC : PHONE_LIKE_OTHER;
+/** Another program has the Kindle. Shelfed keeps trying, so quitting it is all it takes. */
+export const BUSY_KINDLE = "Another app has your Kindle open, and only one can at a time. Quit Calibre, OpenMTP or Amazon's USB File Manager, and it'll connect here.";

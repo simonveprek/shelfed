@@ -15,7 +15,7 @@ import { useCalibre } from "@/lib/findcalibre";
 import { fromLocale, LANGUAGES, t, tn, type Language, tc } from "../../../shared/i18n";
 import { findCopies } from "../../../shared/copies";
 import { chooseIcon, iconSrc } from "@/lib/icon";
-import { PHONE_LIKE, useFinishedOnKindle, useKindlePort, useNotInLibrary, useOnKindle } from "@/lib/kindle";
+import { BUSY_KINDLE, PHONE_LIKE, useFinishedOnKindle, useKindlePort, useNotInLibrary, useOnKindle } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
 import { bytes } from "@/lib/util";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
@@ -461,7 +461,22 @@ function KindleSection() {
               {stranger && <Badge>{t("A Kindle Shelfed doesn't know is plugged in")}</Badge>}
               {copied > 0 && <span>{tn(copied, "{n} of your books is on it.", "{n} of your books are on it.")}</span>}
             </p>
-            {cable === "phone" && <p className="mt-2 max-w-[44ch] text-caption text-muted">{t(PHONE_LIKE)}</p>}
+            {(cable === "phone" || cable === "busy") && (
+              <div className="mt-2 max-w-[44ch]">
+                <p className="text-caption text-muted">{t(cable === "busy" ? BUSY_KINDLE : PHONE_LIKE)}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={async () => {
+                    await api.copyKindleReport();
+                    toast.success(t("Copied"), { description: t("It says what your Kindle is and how it answered, and nothing about your books.") });
+                  }}
+                >
+                  {t("Copy a report for support")}
+                </Button>
+              </div>
+            )}
             {finished && finished.books.length > 0 && (
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <p className="text-caption text-muted">

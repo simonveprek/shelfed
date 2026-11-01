@@ -209,8 +209,11 @@ export type KindleDevice = { name: string; path: string; free: number; model?: s
 /** A book file on a Kindle, by its path inside the documents folder. Locked ones are Amazon's, readable only on Kindles. */
 export type KindleFile = { name: string; path: string; size: number; locked?: boolean };
 
+/** How opening a Kindle over MTP is going: under way, done, another app has it, it wouldn't, or it has no MTP. */
+export type KindleLink = "opening" | "ready" | "busy" | "failed" | "none";
+
 /** A Kindle on the USB bus, mounted as a drive or not. */
-export type KindleOnUsb = { serial: string; model?: string };
+export type KindleOnUsb = { serial: string; model?: string; link?: KindleLink };
 
 export type MetadataCandidate = {
   source: "openlibrary" | "google";

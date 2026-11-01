@@ -2,7 +2,6 @@ import { useRef, useState, type DragEvent } from "react";
 import { motion } from "framer-motion";
 import { kindleById } from "../../../shared/kindles";
 import { bringFromKindle, sendByCable } from "@/lib/actions";
-import { isMac } from "@/lib/api";
 import { useFinishedOnKindle, useKindlePort, useNotInLibrary, useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
 import { useStore } from "@/lib/store";
@@ -116,11 +115,11 @@ export function KindleDock() {
             : drive
               ? `${t("Plugged in, {free} free.", { free: bytes(drive.free) })} ${copied ? `${tn(copied, "{n} of your books is on it.", "{n} of your books are on it.")} ` : ""}${t("Drop a book on it to copy it.")}`
               : cable === "phone"
-                ? isMac
-                  ? t("It connects like a phone, so a Mac can't copy books to it by cable. Drop a book on it to email it.")
-                  : t("It connects like a phone, so Shelfed can't copy books to it by cable. Drop a book on it to email it.")
+                ? t("Shelfed couldn't open it by cable. Drop a book on it to email it.")
+                : cable === "busy"
+                  ? t("Another app has it open. Quit that app to copy by cable, or drop a book on it to email it.")
                 : onBus
-                  ? t("Plugged in. Waiting for it to open as a drive.")
+                  ? t("Plugged in. Getting it ready.")
                   : carrying
                   ? t("Drop it here to send it by email")
                   : t("Not plugged in. Drop a book on it to email it.")}

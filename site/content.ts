@@ -97,7 +97,7 @@ export const QUESTIONS: Array<[string, string]> = [
   ["Is it really free?", "Yes. Shelfed is open source under the MIT licence, with no paid version, no account and nothing to subscribe to."],
   [
     "Which Kindles does it work with?",
-    "Every Kindle, by email. By cable, the ones that show up as a drive when plugged in, which is most made before 2024. Newer ones, like the 2024 Paperwhite and the Colorsoft, connect the way phones do, so Shelfed sends to them by email for now.",
+    "Every Kindle, by email. By cable too, on Mac and Windows, with nothing else to install: the ones that show up as a drive, and newer ones like the 2024 Paperwhite and the Colorsoft, which connect the way phones do.",
   ],
   ["Can it open books I bought on Amazon?", "Not if they have DRM, as most do, and Shelfed doesn't remove it. Books without DRM, from anywhere, open fine."],
   ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelfed. Each book comes in once, with all its formats, its cover, and the title, authors, series, tags and rating you gave it in Calibre. Only Calibre's custom columns stay behind."],

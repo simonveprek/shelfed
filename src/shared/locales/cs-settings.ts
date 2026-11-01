@@ -103,10 +103,6 @@ const words: Record<string, string> = {
   "A Kindle Shelfed doesn't know is plugged in": "Je připojený Kindle, který Shelfed nezná",
   "{n} of your books is on it.|{n} of your books are on it.":
     "Je na něm {n} vaše kniha.|Jsou na něm {n} vaše knihy.|Je na něm {n} vašich knih.",
-  "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead.":
-    "Tento Kindle se připojuje jako telefon a Mac ho neumí otevřít jako disk, takže do něj Shelfed nemůže kopírovat knihy kabelem. Posílejte je raději e-mailem.",
-  "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.":
-    "Tento Kindle se připojuje jako telefon, ne jako disk, takže do něj Shelfed zatím nemůže kopírovat knihy kabelem. Posílejte je raději e-mailem.",
   "{n} book you've finished is still on it, using {size}.|{n} books you've finished are still on it, using {size}.":
     "Pořád je na něm {n} dočtená kniha a zabírá {size}.|Pořád jsou na něm {n} dočtené knihy a zabírají {size}.|Pořád je na něm {n} dočtených knih a zabírají {size}.",
   "Take them off": "Odebrat je",

@@ -1,6 +1,7 @@
-import { copyFileSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Page } from "@playwright/test";
 import { BOOKS, card, epub, expect, openSettings, test } from "./shelf";
 
 const broken = (page: import("@playwright/test").Page) => expect(page.getByText("Something went wrong")).toHaveCount(0);
@@ -220,17 +221,192 @@ test.describe("a Kindle plugged in as a drive", () => {
 
 test.describe("a Kindle that connects like a phone", () => {
   test.skip(Boolean(process.env.SHELF_APP), "An installed app never pretends a Kindle is plugged in");
-  test.use({ kindle: "phone" });
+  test.use({ kindle: "mtp", onKindle: ["Salt and Ink - Ada Marsh.azw3", "Notes.txt", "Bought_B000ABC_EBOK.kfx"] });
 
-  test("says plainly it can't take books by cable", async ({ shelf }) => {
+  /** Waits for it to open, which happens by itself a moment after it's plugged in. */
+  const opened = async (page: Page) => {
+    // With no book selected, the side panel shows the Kindle.
+    await page.keyboard.press("Escape");
+    await expect(page.locator("aside").getByText("Plugged in,", { exact: false })).toBeVisible({ timeout: 15_000 });
+  };
+
+  test("opens by itself and shows what's on it", async ({ shelf }) => {
     const { page } = shelf;
     await shelf.add();
-    await expect(page.locator("aside").getByText("It connects like a phone", { exact: false })).toBeVisible();
+    await opened(page);
+    await expect(page.locator("aside").getByText("1 of your books is on it", { exact: false })).toBeVisible();
+    await expect(card(page, "Salt and Ink").getByText("Kindle", { exact: true })).toBeVisible();
+  });
+
+  test("copies a book onto it over MTP", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await opened(page);
+    await card(page, "A Winter Orchard").click({ button: "right" });
+    await page.getByRole("menuitem", { name: "Send to Kindle" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByText("By cable").click();
+    await dialog.getByRole("button", { name: /Copy/ }).click();
+    await expect(page.getByText("On your Kindle", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+    await expect.poll(() => readdirSync(join(shelf.kindle, "documents")).some((name) => name.includes("A Winter Orchard")), { timeout: 30_000 }).toBe(true);
+    await expect(card(page, "A Winter Orchard").getByText("Kindle", { exact: true })).toBeVisible();
+  });
+
+  test("tells the page how a copy is going", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await opened(page);
+    await page.evaluate(() => {
+      const seen: number[] = [];
+      (window as unknown as { seen: number[] }).seen = seen;
+      window.shelf.on("kindle-copy", (_id: string, fraction: number) => seen.push(fraction));
+    });
+    await card(page, "A Winter Orchard").click({ button: "right" });
+    await page.getByRole("menuitem", { name: "Send to Kindle" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByText("By cable").click();
+    await dialog.getByRole("button", { name: /Copy/ }).click();
+    await expect.poll(() => page.evaluate(() => (window as unknown as { seen: number[] }).seen.at(-1)), { timeout: 30_000 }).toBe(1);
+  });
+
+  test("brings over what isn't in the library, leaving what Amazon locked", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await opened(page);
+    await page.keyboard.press("Escape");
+    await page.locator("aside").getByRole("button", { name: "1 book on it isn't in Shelfed. Bring it over" }).click();
+    await expect(page.getByText("Added 1 book from your Kindle")).toBeVisible({ timeout: 30_000 });
+    await expect(card(page, "Notes")).toBeVisible();
+    await expect(page.getByText("1 book bought from Amazon stays on your Kindle")).toBeVisible();
+  });
+
+  test("takes finished books off it, and keeps them in the library", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await opened(page);
+    await card(page, "Salt and Ink").click({ button: "right" });
+    await page.getByRole("menuitemradio", { name: "Read it" }).click();
+    await openSettings(page);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Kindle", exact: true }).click();
+    await dialog.getByRole("button", { name: "Take them off" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Take them off" }).click();
+    await expect(page.getByText("Took 1 finished book off your Kindle")).toBeVisible({ timeout: 30_000 });
+    expect(readdirSync(join(shelf.kindle, "documents"))).not.toContain("Salt and Ink - Ada Marsh.azw3");
+    await page.keyboard.press("Escape");
+    await expect(card(page, "Salt and Ink")).toBeVisible();
+  });
+});
+
+test.describe("a Kindle that goes wrong", () => {
+  test.skip(Boolean(process.env.SHELF_APP), "An installed app never pretends a Kindle is plugged in");
+
+  /** Tries to copy a book, by way of the Kindle's own menu. */
+  async function copy(page: Page, title: string) {
+    await card(page, title).click({ button: "right" });
+    await page.getByRole("menuitem", { name: "Send to Kindle" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByText("By cable").click();
+    await dialog.getByRole("button", { name: /Copy/ }).click();
+  }
+
+  /** The app is still all there and working. The fixture also fails the test on any page error. */
+  async function stillWorks(page: Page) {
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Finished", exact: true }).click();
+    await page.getByRole("button", { name: "All books", exact: true }).click();
+    await expect(card(page, "A Winter Orchard")).toBeVisible();
+  }
+
+  test.describe("that's full", () => {
+    test.use({ kindle: "mtp", onKindle: ["Notes.txt"], kindleQuirks: { capacity: 100 } });
+    test("says so in plain words, and keeps the book in the library", async ({ shelf }) => {
+      const { page } = shelf;
+      await shelf.add();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("aside").getByText("Plugged in,", { exact: false })).toBeVisible({ timeout: 15_000 });
+      await copy(page, "A Winter Orchard");
+      await expect(page.getByText("There isn't room on your Kindle", { exact: false }).first()).toBeVisible({ timeout: 30_000 });
+      await stillWorks(page);
+    });
+  });
+
+  test.describe("whose cable comes out during a copy", () => {
+    test.use({ kindle: "mtp", kindleQuirks: { dropsAfter: 100 } });
+    test("says what to do, and the app carries on", async ({ shelf }) => {
+      const { page } = shelf;
+      await shelf.add();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("aside").getByText("Plugged in,", { exact: false })).toBeVisible({ timeout: 15_000 });
+      await copy(page, "A Winter Orchard");
+      await expect(page.getByText("Your Kindle stopped answering", { exact: false }).first()).toBeVisible({ timeout: 30_000 });
+      await stillWorks(page);
+    });
+  });
+
+  test.describe("that another app has", () => {
+    test.use({ kindle: "mtp", kindleQuirks: { held: true } });
+    test("says who to ask, and email still works from it", async ({ shelf }) => {
+      const { page } = shelf;
+      await shelf.add();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("aside").getByText("Another app has it open", { exact: false })).toBeVisible({ timeout: 15_000 });
+      await card(page, "A Winter Orchard").click({ button: "right" });
+      await page.getByRole("menuitem", { name: "Send to Kindle" }).click();
+      await page.getByRole("dialog").getByText("By cable").click();
+      await expect(page.getByText("Another app has your Kindle", { exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Send by email" }).click();
+    });
+  });
+});
+
+test.describe("a Kindle over MTP, in Czech", () => {
+  test.skip(Boolean(process.env.SHELF_APP), "An installed app never pretends a Kindle is plugged in");
+
+  test.describe("open", () => {
+    test.use({ kindle: "mtp", language: "cs", onKindle: ["Salt and Ink - Ada Marsh.azw3"] });
+    test("shows it plugged in and what's on it", async ({ shelf }) => {
+      const { page } = shelf;
+      await shelf.add();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("aside").getByText("Připojený", { exact: false })).toBeVisible({ timeout: 15_000 });
+      await expect(card(page, "Salt and Ink").getByText("Kindle", { exact: true })).toBeVisible();
+    });
+  });
+
+  test.describe("that another app has", () => {
+    test.use({ kindle: "mtp", language: "cs", kindleQuirks: { held: true } });
+    test("says so in Czech", async ({ shelf }) => {
+      const { page } = shelf;
+      await shelf.add();
+      await page.keyboard.press("Escape");
+      await expect(page.locator("aside").getByText("Má ho otevřený jiná aplikace", { exact: false })).toBeVisible({ timeout: 15_000 });
+    });
+  });
+});
+
+test.describe("a Kindle that won't open by cable", () => {
+  test.skip(Boolean(process.env.SHELF_APP), "An installed app never pretends a Kindle is plugged in");
+  test.use({ kindle: "phone" });
+
+  test("says so plainly and offers email", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await expect(page.locator("aside").getByText("Shelfed couldn't open it by cable", { exact: false })).toBeVisible();
     await card(page, "Salt and Ink").click({ button: "right" });
     await page.getByRole("menuitem", { name: "Send to Kindle" }).click();
     await page.getByRole("dialog").getByText("By cable").click();
-    await expect(page.getByText("This Kindle can't take books by cable")).toBeVisible();
-    await expect(page.getByText("connects like a phone", { exact: false }).last()).toBeVisible();
+    await expect(page.getByText("Shelfed couldn't open your Kindle")).toBeVisible();
+    await page.getByRole("button", { name: "Send by email" }).click();
+  });
+
+  test("offers a report to send for help", async ({ shelf }) => {
+    const { page } = shelf;
+    await shelf.add();
+    await openSettings(page);
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Kindle", exact: true }).click();
+    await expect(dialog.getByRole("button", { name: "Copy a report for support" })).toBeVisible();
   });
 });
 

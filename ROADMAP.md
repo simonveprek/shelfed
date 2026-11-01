@@ -6,19 +6,19 @@ Where Shelfed is going, roughly in order. These are plans, not promises: the ord
 
 The first release. A library kept as plain files; a reader for every common format; converting with nothing else to install; Kindles recognised over USB and sent books by cable or email; free classics; suggestions worked out on your computer. Mac and Windows, x64 and ARM.
 
+Since 0.2.0, Kindles from 2024 on take books by cable too, on Mac and Windows, with nothing else to install.
+
 Since 0.1.2, a Kindle plugged in as a drive also shows what's on it that isn't in your library and brings it over, and the books you've finished can come off it.
 
 ## Next
 
 The gaps people will hit first.
 
-- **Cable copying to Kindles from 2024 on, on Windows.** These connect over MTP rather than as a drive. Windows has MTP built in (Windows Portable Devices), so Shelfed can copy to them there, and tell which books they already hold, as it does for older Kindles.
 - **The rest of Calibre's data.** A Calibre library already comes in with each book's formats, cover, authors, series, tags and rating. Next are its custom columns and read state, from `metadata.db`.
 - **Linux installers.** Shelfed runs on Linux from source, and CI tests it there. An AppImage and a `.deb` are mostly packaging.
 
 ## Later
 
-- **MTP on macOS.** macOS has no MTP support of its own, so newer Kindles need a USB implementation inside Shelfed. Until then they get books by email.
 - **Kobo, PocketBook and other e-readers.** Most open as a drive, so copying is close to what Shelfed already does for Kindles. What's left is recognising them and showing what's on them.
 - **Your library on your home network.** Turned on in Settings, Shelfed shares the library while it's open: a simple page a Kindle's browser can download books from, and an OPDS catalogue for reading apps such as KOReader. Like Calibre's content server, without a server of its own to keep running.
 - **Your own catalogues.** Adding any OPDS catalogue, such as a Calibre content server or a library's, next to Standard Ebooks and Project Gutenberg.
