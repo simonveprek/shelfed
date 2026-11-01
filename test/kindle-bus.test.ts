@@ -152,7 +152,8 @@ describe("a whole look at the port", () => {
     expect(system.asked).toBe(1);
   });
 
-  describe("with a drive", () => {
+  // These reach a folder through /Volumes by a relative path, which can't cross to another drive on Windows.
+  describe.skipIf(realPlatform === "win32")("with a drive", () => {
     let drive: string;
     beforeEach(() => {
       drive = mkdtempSync(join(tmpdir(), "shelf-bus-"));

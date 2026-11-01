@@ -172,6 +172,6 @@ describe("how the app is packed and built", () => {
   });
 
   it.each(["ci", "screens"])("gives %s no more than read access", (name) => {
-    expect(read(`.github/workflows/${name}.yml`)).toMatch(/^permissions:\n  contents: read$/m);
+    expect(read(`.github/workflows/${name}.yml`)).toMatch(/^permissions:\r?\n  contents: read\r?$/m);
   });
 });

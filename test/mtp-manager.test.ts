@@ -123,7 +123,11 @@ afterEach(async () => {
   look([]);
   await vi.runAllTimersAsync();
   vi.useRealTimers();
-  Object.assign(process.env, realTemp);
+  // Not Object.assign: setting one that was never there to undefined stores the word "undefined".
+  for (const [name, value] of Object.entries(realTemp)) {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+  }
   rmSync(dir, { recursive: true, force: true });
 });
 
