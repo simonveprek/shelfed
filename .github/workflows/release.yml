@@ -48,6 +48,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # What reaches newer Kindles: the USB library for both kinds of Mac, the helper on Windows.
+      - if: runner.os == 'macOS'
+        run: node scripts/usb-binaries.mjs
+      - if: runner.os == 'Windows'
+        run: npm run build:wpd
+      - if: runner.os == 'Windows'
+        run: node scripts/wpd-check.mjs
       - run: npx electron-builder ${{ matrix.args }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

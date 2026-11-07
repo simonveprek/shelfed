@@ -44,6 +44,7 @@ export const GROUPS: Array<[string, string[]]> = [
       "Highlights, notes and bookmarks, copied out as Markdown",
       "A commonplace book of every line you've marked",
       "Search inside the book",
+      "Look up a word, or who a name is",
       "Light, sepia, dark or black pages",
       "The book's own type, a serif or a sans, at any size",
       "Pages to turn, or one long scroll",
@@ -100,12 +101,12 @@ export const QUESTIONS: Array<[string, string]> = [
   ["Is it really free?", "Yes. Shelfed is open source under the MIT licence, with no paid version, no account and nothing to subscribe to."],
   [
     "Which Kindles does it work with?",
-    "Every Kindle, by email. By cable, the ones that show up as a drive when plugged in, which is most made before 2024. Newer ones, like the 2024 Paperwhite and the Colorsoft, connect the way phones do, so Shelfed sends to them by email for now.",
+    "Every Kindle, by email. By cable too, on Mac and Windows, with nothing else to install: the ones that show up as a drive, and newer ones like the 2024 Paperwhite and the Colorsoft, which connect the way phones do.",
   ],
   ["Can it open books I bought on Amazon?", "Not if they have DRM, as most do, and Shelfed doesn't remove it. Books without DRM, from anywhere, open fine."],
   ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelfed. Each book comes in once, with all its formats, its cover, and the title, authors, series, tags and rating you gave it in Calibre. Only Calibre's custom columns stay behind."],
   ["Where are my books kept?", "In a Shelf Library folder in your Documents, a folder for each author, as ordinary files. Move it anywhere from Settings."],
-  ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
+  ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, a word you look up while reading, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
   ["Why does my computer warn me the first time?", "Shelfed isn't signed with a paid certificate yet. On a Mac, open it once, then go to System Settings, Privacy & Security, and click Open Anyway; on macOS 14 or earlier, right-click it and choose Open instead. On Windows, choose More info, then Run anyway."],
   ["What does it run on?", "macOS on Apple silicon or Intel, and Windows 10 or 11 on x64 or ARM. On Linux it runs built from the source."],
 ];

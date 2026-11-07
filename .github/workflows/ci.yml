@@ -38,6 +38,21 @@ jobs:
           path: |
             playwright-report
             test-results
+      # What reaches newer Kindles: the USB library for both kinds of Mac, the helper on Windows.
+      - if: runner.os == 'Windows'
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: tools/kindle-wpd/go.mod
+          cache: false
+      - if: runner.os == 'Windows'
+        run: go test ./...
+        working-directory: tools/kindle-wpd
+      - if: runner.os == 'Windows'
+        run: npm run build:wpd
+      - if: runner.os == 'Windows'
+        run: node scripts/wpd-check.mjs
+      - if: runner.os == 'macOS'
+        run: node scripts/usb-binaries.mjs
       # Packs the app without an installer, to catch packaging problems on each system.
       - if: runner.os != 'Linux'
         run: npx electron-builder --dir --publish never

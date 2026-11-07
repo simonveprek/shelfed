@@ -1,7 +1,7 @@
 {
   "name": "shelfed",
   "productName": "Shelfed",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A fast, quiet home for your books. Read, organise, convert and send them to your Kindle, on macOS and Windows.",
   "author": "Šimon Vepřek",
   "license": "SEE LICENSE IN LICENSE",
@@ -32,9 +32,11 @@
     "dist:win": "electron-vite build && electron-builder --win",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:app": "electron-vite build && playwright test",
     "check": "npm run typecheck && npm test",
     "build:azw3": "cd tools/azw3 && GOOS=wasip1 GOARCH=wasm go build -trimpath -ldflags=\"-s -w\" -o ../../resources/azw3.wasm .",
+    "build:wpd": "node scripts/build-wpd.mjs",
     "postinstall": "node scripts/dev-name.mjs",
     "site": "npm --prefix site run dev",
     "site:build": "npm --prefix site run build",
@@ -44,7 +46,8 @@
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.11",
     "mammoth": "^1.13.0",
-    "nodemailer": "^10.2.1"
+    "nodemailer": "^10.2.1",
+    "usb": "^3.2.1"
   },
   "devDependencies": {
     "@hugeicons/core-free-icons": "^4.3.5",
@@ -57,6 +60,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "^5.0.5",
     "electron": "^45.1.0",
     "electron-builder": "^26.18.0",
     "electron-vite": "^6.0.0",

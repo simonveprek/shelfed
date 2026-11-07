@@ -2,16 +2,11 @@
 
 Where Shelfed is going, roughly in order. These are plans, not promises: the order changes with what people ask for. A 👍 on an [issue](https://github.com/simonveprek/shelfed/issues) counts, and so does opening one.
 
-## Now: 0.2
+## Now: 0.3
 
 A library kept as plain files; a reader for every common format; converting with nothing else to install; Kindles recognised over USB and sent books by cable or email; free classics; suggestions worked out on your computer. Mac and Windows.
 
-0.2 adds a commonplace book of every line you've marked, a moment for finishing a book, and a bookcase that knows what you're reading: a reading pile on top, box sets for series, and rainbow order.
-
-## 0.3: newer Kindles, and words
-
-- **Cable copying to Kindles from 2024 on.** These connect over MTP, the way phones do, rather than as a drive. Shelfed talks MTP itself: over USB on macOS, and through Windows Portable Devices on Windows.
-- **Looking up a word** while reading: its meaning, and what Wikipedia says about a name or a place.
+0.2 added a commonplace book of every line you've marked, a moment for finishing a book, and a bookcase that knows what you're reading. 0.3 copies books by cable to Kindles from 2024 on, which connect over MTP the way phones do, and looks up a word while you read.
 
 ## 0.4: other e-readers, other catalogues
 

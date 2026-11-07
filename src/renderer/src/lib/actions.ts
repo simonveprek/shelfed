@@ -1,7 +1,7 @@
 import type { Book, Collection } from "../../../shared/types";
 import { KINDLE_EMAIL, KINDLE_LIMIT, KINDLE_USB } from "../../../shared/types";
 import { toast } from "@/components/ui";
-import { api, isMac } from "./api";
+import { api, isMac, on } from "./api";
 import { relistKindle } from "./kindle";
 import { notInLibrary } from "./onkindle";
 import { extractContent, parseBook, saveCover } from "./books";
@@ -456,7 +456,13 @@ export async function sendByCable(ids: string[], device: string) {
         const inner = { ...job, update: (p: { detail?: string }) => p.detail && job.update({ detail: p.detail }) } as JobHandle;
         book = await convert(book.id, plan.ext, inner);
       }
-      await api.copyToDevice(book.id, plan.ext, device);
+      const copying = book;
+      const off = on("kindle-copy", (id: string, fraction: number) => {
+        if (id !== copying.id) return;
+        job.update({ progress: (i + fraction) / books.length });
+        kindle.progress((i + fraction) / books.length);
+      });
+      await api.copyToDevice(book.id, plan.ext, device).finally(off);
     } catch (error) {
       failures++;
       lastError = error;
@@ -480,9 +486,20 @@ export async function bringFromKindle() {
   const files = get().kindleFiles;
   if (!drive || !files) return;
   const { files: theirs, locked } = notInLibrary(get().books, files);
-  const root = drive.path.replace(/[\\/]+$/, "");
-  const paths = theirs.map((file) => `${root}/documents/${file.path}`);
-  const result = paths.length ? await importPaths(paths, false, "your Kindle") : null;
+  // A drive's files are there to read. Over MTP they have to come off first, which takes a while.
+  const job = theirs.length && drive.path.startsWith("mtp:") ? startJob(tn(theirs.length, "Bringing over {n} book", "Bringing over {n} books")) : null;
+  const here = theirs.length ? await api.filesFromDevice(drive.path, theirs.map((file) => file.path)).catch((error) => {
+    job?.fail(error);
+    return null;
+  }) : { paths: [], temporary: false };
+  if (!here) return;
+  job?.done(t("Copied off your Kindle"));
+  const paths = here.paths;
+  const result = paths.length
+    ? await importPaths(paths, false, "your Kindle").finally(() => {
+        if (here.temporary) for (const path of paths) api.forgetDownload(path);
+      })
+    : null;
   const names = new Map<string, string[]>();
   theirs.forEach((file, i) => {
     const id = result?.books[paths[i]];

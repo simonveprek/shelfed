@@ -43,6 +43,7 @@
 - **Speaks English and Czech,** following your system or your choice.
 - **Finds details.** Descriptions, publishers and better covers from Open Library and Google Books.
 - **Brings back your Kindle highlights** from `My Clippings.txt`.
+- **Looks up a word** while you read: its meaning from Wiktionary, or a name from Wikipedia.
 - **Keeps a commonplace book.** Every line you've marked, in every book, in one place to search and copy out.
 - **Classics, free.** Thousands of books from Standard Ebooks and Project Gutenberg, one click to add.
 - **Suggests what's next.** Worked out on your computer, never sent anywhere.
@@ -126,7 +127,9 @@ The tests import hundreds of books at once against it.
 
 **Converting has no native dependencies.** Every input format is read into one in-memory model of the book (`lib/epub.ts`). A writer for each output format produces EPUB, Word, FB2, text or HTML from that model. PDF goes through Chromium's own `printToPDF`. Word files come in through `mammoth`. AZW3 is the one format with no good JavaScript writer, so it is Go ([`tools/azw3`](tools/azw3), from seapy/kindle-cli and leotaku/mobi, both MIT), compiled to a WASI module and run with `node:wasi` in a worker thread. The same file runs on every OS and architecture, with nothing to install and no binaries to sign.
 
-**Kindles are found without drivers.** Shelfed looks for Amazon's USB vendor ID (`0x1949`): via `ioreg` on macOS, one PowerShell call on Windows, and sysfs on Linux. The serial number gives the model. A drive counts as a Kindle by its `documents` and `system` folders, and its book files are matched against the library to show what's already on it. Kindles from 2024 on connect over MTP instead of as a drive. Shelfed recognises them, says so plainly, and sends to them by email through your own SMTP account (`nodemailer`, with presets for Gmail, Outlook and iCloud).
+**Kindles from 2024 on speak MTP, and Shelfed speaks it back.** `src/main/mtp` has its own MTP client, with no libmtp. On a Mac it runs over USB through the `usb` package. Windows keeps MTP devices for its own driver, so there `tools/kindle-wpd`, a small Go helper with no dependencies, goes through the Windows Portable Devices service instead. Both sit behind one `Backend`, and tests run the client against `PretendKindle`, a folder that answers in real MTP.
+
+**Kindles are found without drivers.** Shelfed looks for Amazon's USB vendor ID (`0x1949`): via `ioreg` on macOS, one PowerShell call on Windows, and sysfs on Linux. The serial number gives the model. A drive counts as a Kindle by its `documents` and `system` folders, and its book files are matched against the library to show what's already on it. Kindles from 2024 on open no drive, so those are reached over MTP.
 
 ## Security model
 
@@ -147,6 +150,7 @@ No account, no analytics, no telemetry. Shelfed goes online only:
 
 - for book details, from Open Library and Google Books;
 - for free classics, from Standard Ebooks and Project Gutenberg;
+- to look up a word you've selected, at Wiktionary and Wikipedia;
 - to send to your Kindle, through your mail server;
 - to check GitHub for a new version (which you can turn off).
 
@@ -160,7 +164,7 @@ No account, no analytics, no telemetry. Shelfed goes online only:
 - **App tests** ([Playwright](e2e)) build Shelfed and drive the real Electron app on an empty library of made-up books:
   - adding books, every view and place, search, the right-click menu;
   - reading and turning pages, removing and undoing, settings, restarting;
-  - converting to AZW3, Word and FB2, and pretend Kindles plugged in as a drive or as a phone.
+  - converting to AZW3, Word and FB2, and pretend Kindles plugged in as a drive or speaking real MTP.
   
   Any error the page throws fails the run.
 - **CI** runs both on macOS, Windows and Linux on every push, then packs the app on macOS and Windows to catch packaging problems.
@@ -207,7 +211,7 @@ Pushing a tag like `v0.2.0` builds every installer into a draft release. If some
 ## Known limits
 
 - **Unsigned builds.** You'll see the warnings above until there is a paid certificate.
-- **Kindles from 2024 on** (2024 Paperwhite, Colorsoft, Kindle) take books by email only for now, since they connect over MTP rather than as a drive.
+- **Kindles from 2024 on** (2024 Paperwhite, Colorsoft, Kindle) connect over MTP. On a Mac only one app can have one open at a time, so quit Calibre, OpenMTP or Amazon's USB File Manager first.
 - **No DRM removal.** Books with DRM, as most bought from Amazon are, won't open.
 - **From Calibre,** each book comes in with its formats, cover, title, authors, series, tags and rating, but not Calibre's custom columns or its read and unread state.
 - **Linux** runs from source, but there's no installer yet.

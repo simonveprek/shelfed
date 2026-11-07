@@ -13,6 +13,15 @@ export type Release = {
 
 export const RELEASES_MADE: Release[] = [
   {
+    version: "0.3.0",
+    date: "2026-11-05",
+    summary: "Newer Kindles by cable, and words looked up while reading.",
+    changes: [
+      "Kindles from 2024 on, like the Paperwhite and the Colorsoft, take books by cable too, on Mac and Windows, with nothing else to install. They connect the way phones do, and Shelfed talks to them itself.",
+      "Select a word while reading to look it up: what it means, from Wiktionary, and who or what a name is, from Wikipedia in the book's language.",
+    ],
+  },
+  {
     version: "0.2.0",
     date: "2026-11-05",
     summary: "A commonplace book, PDFs made into real EPUBs, and a bookcase that knows what you're reading.",

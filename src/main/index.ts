@@ -1,7 +1,6 @@
 import {
   app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, nativeTheme, net, protocol, screen, session, shell,
-  type MenuItemConstructorOptions,
-} from "electron";
+  type MenuItemConstructorOptions, clipboard } from "electron";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
@@ -11,11 +10,13 @@ import type { Book, BootState, Collection, KindleDevice, KindleOnUsb, MetadataCa
 import { KINDLE_EMAIL, READABLE } from "../shared/types";
 import { epubToAzw3 } from "./azw3";
 import { docxToHtml, htmlToPdf } from "./convert";
-import { copyToDevice, deviceFiles, findDevices, isPluggedIn, kindlePort, kindlesOnUsb, readClippings, removeFromDevice, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
+import { closeAll as closeKindles, kindleReport, look as lookAtKindles, readyDevices, setConnector } from "./mtp";
+import { copyToDevice, deviceFiles, filesFromDevice, findDevices, isPluggedIn, kindlePort, kindlesOnUsb, readClippings, removeFromDevice, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks, freeSummary } from "./catalogues";
-import { fromLocale, setLanguage, t, tc } from "../shared/i18n";
+import { lookUp } from "./lookup";
+import { fromLocale, language, setLanguage, t, tc } from "../shared/i18n";
 import "../shared/locales";
 import { findCalibre } from "./calibre";
 import { watchDownloads } from "./downloads";
@@ -215,6 +216,21 @@ async function aKindle(device: string) {
   return device;
 }
 
+let demoMtp = false;
+
+/** The pretend Kindle, a folder that speaks real MTP, for the tests and demos. */
+function startDemoMtp(folder: string) {
+  if (demoMtp) return;
+  demoMtp = true;
+  // SHELF_DEMO_QUIRKS makes it one of the awkward ones, for the tests.
+  const { held, ...quirks } = JSON.parse(process.env.SHELF_DEMO_QUIRKS ?? "{}") as Record<string, unknown>;
+  setConnector(async () => {
+    const [{ PretendKindle }, { SessionBackend }, { KindleBusy }] = await Promise.all([import("./mtp/pretend"), import("./mtp/session-backend"), import("./mtp/kindle")]);
+    if (held) throw new KindleBusy("Another app has it");
+    return SessionBackend.start(new PretendKindle(folder, quirks), async () => {});
+  });
+}
+
 /**
  * For recording demos and tests: SHELF_DEMO_KINDLE=<folder> pretends a Kindle
  * Paperwhite is plugged in, with that folder as its drive, and
@@ -222,10 +238,14 @@ async function aKindle(device: string) {
  * as no drive. Either one stands in for the system's look at the USB bus, and
  * neither works in an installed app.
  */
-function demoKindle(): { usb: KindleOnUsb; drive?: KindleDevice } | null {
+function demoKindle(): { usb: KindleOnUsb; drive?: KindleDevice; mtp?: boolean } | null {
   const folder = !app.isPackaged && process.env.SHELF_DEMO_KINDLE;
   if (!folder) return null;
-  if (folder === "phone") return { usb: { serial: "G000DEMO", model: "colorsoft" } };
+  if (folder === "phone") return { usb: { serial: "G000DEMO", model: "colorsoft", link: "failed" } };
+  if (folder.startsWith("mtp:")) {
+    startDemoMtp(folder.slice(4));
+    return { usb: { serial: "G000DEMO", model: "colorsoft" }, mtp: true };
+  }
   return {
     usb: { serial: "G000DEMO", model: "pw5" },
     drive: { name: "Kindle", path: folder, free: 6_200_000_000, model: "pw5" },
@@ -396,15 +416,20 @@ const api = {
   // takes PowerShell seconds a test can't wait for.
   devices: async () => {
     const demo = demoKindle();
+    if (demo?.mtp) return readyDevices();
     return demo ? (demo.drive ? [demo.drive] : []) : findDevices();
   },
   async kindlePort() {
     const demo = demoKindle();
+    if (demo?.mtp) {
+      const { usb, devices } = lookAtKindles([demo.usb]);
+      return { usb, drives: devices };
+    }
     return demo ? { usb: [demo.usb], drives: demo.drive ? [demo.drive] : [] } : kindlePort();
   },
   kindles: () => kindlesOnUsb(),
 
-  /** The book files already on a Kindle plugged in as a drive. */
+  /** The book files already on a Kindle plugged in. */
   deviceFiles: async (device: string) => deviceFiles(await aKindle(device)),
   /** The Calibre libraries on this computer, to offer bringing one over. */
   findCalibre: () => findCalibre(),
@@ -414,7 +439,15 @@ const api = {
   async copyToDevice(id: string, ext: string, device: string) {
     const book = library.get(id);
     const format = book.formats.find((f) => f.ext === ext)!;
-    return copyToDevice(await aKindle(device), library.filePath(book, ext), format.file);
+    return copyToDevice(await aKindle(device), library.filePath(book, ext), format.file, (fraction) => send("kindle-copy", id, fraction));
+  },
+
+  /** Book files on a Kindle as files on this computer, ready to add to the library. */
+  filesFromDevice: async (device: string, files: string[]) => filesFromDevice(await aKindle(device), files),
+
+  /** What Shelfed knows about the Kindle plugged in, copied for sending to someone who can help. */
+  copyKindleReport() {
+    clipboard.writeText(`Shelfed ${app.getVersion()}, ${process.platform} ${process.arch}\n\n${kindleReport()}`);
   },
 
   searchMetadata(source: "openlibrary" | "google", q: { title: string; author?: string; isbn?: string }): Promise<MetadataCandidate[]> {
@@ -444,6 +477,10 @@ const api = {
 
   freeBooks: (source: "standard" | "gutenberg", query: string) => freeBooks(source, query),
   freeSummary: (id: string) => freeSummary(id),
+
+  /** What a word in a book means, from Wiktionary, or who or what a name is, from Wikipedia. */
+  lookUp: (text: string, bookLanguage?: string) => lookUp(String(text), typeof bookLanguage === "string" ? bookLanguage : undefined, language()),
+
   downloadBook: (url: string, name: string) => downloadBook(url, name),
   forgetDownload: (path: string) => forgetDownload(path),
 
@@ -688,7 +725,7 @@ app.on("before-quit", async (event) => {
   event.preventDefault();
   quitting = true;
   // Whatever is still going gets a few seconds; Shelfed never stays running unseen.
-  await Promise.race([library?.settle().catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
+  await Promise.race([Promise.all([library?.settle().catch(() => {}), closeKindles()]), new Promise((r) => setTimeout(r, 5000))]);
   app.quit();
 });
 

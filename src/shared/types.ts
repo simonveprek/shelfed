@@ -34,6 +34,28 @@ export type FreeBook = {
   summary?: string;
 };
 
+/** One kind of word Wiktionary knows, like a Czech noun, with what it means. */
+export type Sense = {
+  /** As Wiktionary names it, like "Noun". */
+  part: string;
+  /** The language, by name and by code. */
+  language: string;
+  code: string;
+  meanings: string[];
+};
+
+/** What looking up a word while reading found. */
+export type Lookup = {
+  word: string;
+  /** The word as the book wrote it, when what's shown is the word it comes from. */
+  form?: string;
+  senses: Sense[];
+  /** Who or what it is, from Wikipedia, for names and anything Wiktionary doesn't have. */
+  wiki?: { title: string; extract: string; url: string };
+  /** Where to read more. */
+  more: string;
+};
+
 export type Format = {
   /** Lower case extension without the dot, like epub or pdf. */
   ext: string;
@@ -218,8 +240,11 @@ export type KindleDevice = { name: string; path: string; free: number; model?: s
 /** A book file on a Kindle, by its path inside the documents folder. Locked ones are Amazon's, readable only on Kindles. */
 export type KindleFile = { name: string; path: string; size: number; locked?: boolean };
 
+/** How opening a Kindle over MTP is going: under way, done, another app has it, it wouldn't, or it has no MTP. */
+export type KindleLink = "opening" | "ready" | "busy" | "failed" | "none";
+
 /** A Kindle on the USB bus, mounted as a drive or not. */
-export type KindleOnUsb = { serial: string; model?: string };
+export type KindleOnUsb = { serial: string; model?: string; link?: KindleLink };
 
 export type MetadataCandidate = {
   source: "openlibrary" | "google";

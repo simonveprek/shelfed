@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Bookmark01Icon, Cancel01Icon, Copy01Icon, Delete02Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { BookOpen01Icon, Bookmark01Icon, Cancel01Icon, Copy01Icon, Delete02Icon, Search01Icon } from "@hugeicons/core-free-icons";
 import type { Annotation, Book } from "../../../shared/types";
 import { Button, cx, EASE, Empty, Icon, IconButton, Input, Panel, Spinner, Textarea, toast } from "@/components/ui";
 import { t, tn } from "../../../shared/i18n";
@@ -80,13 +80,15 @@ function Swatches({ value, onPick }: { value?: Annotation["color"]; onPick: (c: 
 
 /** The bar over selected words. */
 export function SelectionBar({
-  x, y, onHighlight, onNote, onCopy,
+  x, y, onHighlight, onNote, onCopy, onLookUp,
 }: {
   x: number;
   y: number;
   onHighlight: (c: NonNullable<Annotation["color"]>) => void;
   onNote: () => void;
   onCopy: () => void;
+  /** Only for a word or a few. */
+  onLookUp?: () => void;
 }) {
   return (
     <motion.div
@@ -100,6 +102,7 @@ export function SelectionBar({
         <Swatches onPick={onHighlight} />
         <span className="mx-1 h-4 w-px bg-border" />
         <Button size="sm" variant="ghost" className="text-foreground" onClick={onNote}>{t("Note")}</Button>
+        {onLookUp && <IconButton label={t("Look up")} icon={BookOpen01Icon} onClick={onLookUp} />}
         <IconButton label={t("Copy")} icon={Copy01Icon} onClick={onCopy} />
       </div>
     </motion.div>

@@ -80,11 +80,6 @@ const words: Record<string, string> = {
   "Plugged in, {free} free.": "Připojený, volné místo {free}.",
   "{n} of your books is on it.|{n} of your books are on it.": "Je v něm {n} vaše kniha.|Jsou v něm {n} vaše knihy.|Je v něm {n} vašich knih.",
   "Drop a book on it to copy it.": "Přetáhněte na něj knihu a zkopíruje se.",
-  "It connects like a phone, so a Mac can't copy books to it by cable. Drop a book on it to email it.":
-    "Připojuje se jako telefon, takže do něj Mac nemůže kopírovat knihy kabelem. Přetáhněte na něj knihu a pošle se e-mailem.",
-  "It connects like a phone, so Shelfed can't copy books to it by cable. Drop a book on it to email it.":
-    "Připojuje se jako telefon, takže do něj Shelfed nemůže kopírovat knihy kabelem. Přetáhněte na něj knihu a pošle se e-mailem.",
-  "Plugged in. Waiting for it to open as a drive.": "Připojený. Čekáme, až se otevře jako disk.",
   "Drop it here to send it by email": "Pusťte ji sem a pošle se e-mailem",
   "Not plugged in. Drop a book on it to email it.": "Nepřipojený. Přetáhněte na něj knihu a pošle se e-mailem.",
   "{n} finished book on it, {size}. Take off|{n} finished books on it, {size}. Take off":
@@ -95,10 +90,6 @@ const words: Record<string, string> = {
   "Plugged in, {free} free": "Připojený, volné místo {free}",
   "Plugged in, {free} free, {n} of your books on it|Plugged in, {free} free, {n} of your books on it":
     "Připojený, volné místo {free}, je v něm {n} vaše kniha|Připojený, volné místo {free}, jsou v něm {n} vaše knihy|Připojený, volné místo {free}, je v něm {n} vašich knih",
-  "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead.":
-    "Tento Kindle se připojuje jako telefon a Mac ho neumí otevřít jako disk, takže do něj Shelfed nemůže kopírovat knihy kabelem. Pošlete je raději e-mailem.",
-  "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.":
-    "Tento Kindle se připojuje jako telefon, ne jako disk, takže do něj Shelfed zatím nemůže kopírovat knihy kabelem. Pošlete je raději e-mailem.",
   "Drop books on it in the side panel": "Přetahujte na něj knihy v postranním panelu",
   "Drag books onto it to copy them": "Přetáhněte na něj knihy a zkopírují se",
 
@@ -187,6 +178,23 @@ const words: Record<string, string> = {
   "Rainbow order": "Podle barev",
   "Each shelf runs through the colours.": "Každá police jde přes všechny barvy.",
   "What's new": "Co je nového",
+  "Shelfed couldn't open this Kindle by cable. Unplug it and plug it in again, and if that doesn't help, send books by email.": "Shelfed nedokázal tento Kindle otevřít přes kabel. Odpojte ho a znovu připojte, a pokud to nepomůže, posílejte knihy e-mailem.",
+  "Another app has your Kindle open, and only one can at a time. Quit Calibre, OpenMTP or Amazon's USB File Manager, and it'll connect here.": "Váš Kindle má otevřený jiná aplikace a naráz může jen jedna. Ukončete Calibre, OpenMTP nebo USB File Manager od Amazonu a připojí se sem.",
+  "Shelfed couldn't open it by cable. Drop a book on it to email it.": "Shelfed ho nedokázal otevřít přes kabel. Přetáhněte na něj knihu a pošle se e-mailem.",
+  "Another app has it open. Quit that app to copy by cable, or drop a book on it to email it.": "Má ho otevřený jiná aplikace. Ukončete ji, abyste mohli kopírovat kabelem, nebo na něj přetáhněte knihu a pošle se e-mailem.",
+  "Plugged in. Getting it ready.": "Připojený. Připravujeme ho.",
+  "Another app has your Kindle": "Váš Kindle má jiná aplikace",
+  "Shelfed couldn't open your Kindle": "Shelfed nedokázal otevřít váš Kindle",
+  "There isn't room on your Kindle for this. It needs {need}, and {free} is free.": "Na vašem Kindlu na to není místo. Je potřeba {need} a volné je {free}.",
+  "Another app has your Kindle open. Quit it, then try again.": "Váš Kindle má otevřený jiná aplikace. Ukončete ji a zkuste to znovu.",
+  "That book didn't arrive whole on your Kindle, so Shelfed took it off again. Try once more.": "Kniha do Kindlu nedorazila celá, takže ji Shelfed zase odstranil. Zkuste to ještě jednou.",
+  "Your Kindle stopped answering. Unplug it, plug it in again, and try once more.": "Váš Kindle přestal odpovídat. Odpojte ho, znovu připojte a zkuste to ještě jednou.",
+  "That book is too big for Shelfed to copy off your Kindle.": "Tato kniha je příliš velká, aby ji Shelfed zkopíroval z Kindlu.",
+  "That file isn't on your Kindle.": "Tento soubor na Kindlu není.",
+  "Copy a report for support": "Zkopírovat zprávu pro podporu",
+  "It says what your Kindle is and how it answered, and nothing about your books.": "Uvádí, o jaký Kindle jde a jak odpovídal, a nic o vašich knihách.",
+  "Copied off your Kindle": "Zkopírováno z Kindlu",
+  "Bringing over {n} book|Bringing over {n} books": "Přenáší se {n} kniha|Přenášejí se {n} knihy|Přenáší se {n} knih",
 };
 
 export default words;

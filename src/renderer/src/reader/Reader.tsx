@@ -18,6 +18,7 @@ import type { PdfDoc } from "@/lib/pdf";
 import { flashMood, setSetting, upsert, useStore } from "@/lib/store";
 import { addAnnotation, bookmarksOf, newAnnotationId, removeAnnotation } from "@/lib/annotations";
 import { AnnotationCard, MARKS, NotesList, SearchPanel, SelectionBar, Tab, useReadingTime, type SearchHit } from "./Notes";
+import { canLookUp, LookupCard } from "./Lookup";
 import { authorsOf, debounce, fetchFile, FOLIATE } from "@/lib/util";
 import { t, tc } from "../../../shared/i18n";
 import { useReadAloud, type Speaking } from "./aloud";
@@ -471,6 +472,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
     rate: prefs.rate ?? 1,
   });
   const [open, setOpen] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [lookup, setLookup] = useState<{ text: string; x: number; y: number } | null>(null);
   const touch = useReadingTime(book.id);
 
   const onKey = useCallback((e: KeyboardEvent) => {
@@ -743,13 +745,14 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
       search={<SearchPanel key={find} query={find} run={runSearch} />}
       overlay={
         <AnimatePresence>
-          {picked && !open && (
+          {picked && !open && !lookup && (
             <SelectionBar
               key="bar"
               x={picked.x}
               y={picked.y}
               onHighlight={(c) => highlight(c)}
               onNote={() => highlight("yellow", true)}
+              onLookUp={canLookUp(picked.text) ? () => setLookup({ text: picked.text, x: picked.x, y: picked.y }) : undefined}
               onCopy={() => {
                 navigator.clipboard.writeText(picked.text);
                 toast.success(t("Copied"));
@@ -757,6 +760,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
               }}
             />
           )}
+          {lookup && <LookupCard key="lookup" text={lookup.text} bookLanguage={book.language} x={lookup.x} y={lookup.y} onClose={() => setLookup(null)} />}
           {opened && open && <AnnotationCard key={open.id} annotation={opened} bookId={book.id} x={open.x} y={open.y} onClose={() => setOpen(null)} />}
           {aloud.active && <AloudBar key="aloud" aloud={aloud} prefs={prefs} setPrefs={setPrefs} />}
         </AnimatePresence>

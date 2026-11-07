@@ -7,6 +7,8 @@ import nodemailer from "nodemailer";
 import { kindleFromSerial } from "../shared/kindles";
 import type { KindleDevice, KindleFile, KindleOnUsb, KindleSettings } from "../shared/types";
 import { getSmtpPassword } from "./settings";
+import { isBookFile, lockedBy } from "./kindle-files";
+import { isMtpPath, look, mtpClippings, mtpCopy, mtpFetch, mtpFiles, mtpRemove, readyDevices } from "./mtp";
 import { t } from "../shared/i18n";
 
 /** Common mail services, so most people only type their address. */
@@ -169,10 +171,11 @@ const safeBus = () => readBus().catch((): Bus => ({ serials: [] }));
 /** The drives last seen, so checking one doesn't mean asking the system all over again. */
 let lastDrives: KindleDevice[] = [];
 
-/** Kindles that open as a drive, so books can be copied straight on. */
+/** Kindles that take books by cable: ones that open as a drive, and ones open over MTP. */
 export async function findDevices(): Promise<KindleDevice[]> {
-  lastDrives = await drivesOn(await safeBus());
-  return lastDrives;
+  const drives = await drivesOn(await safeBus());
+  lastDrives = drives;
+  return drives.length ? drives : readyDevices();
 }
 
 /**
@@ -192,8 +195,12 @@ let looking: Promise<{ usb: KindleOnUsb[]; drives: KindleDevice[] }> | null = nu
 export function kindlePort() {
   looking ??= (async () => {
     const bus = await safeBus();
-    lastDrives = await drivesOn(bus);
-    return { usb: toKindles(bus.serials), drives: lastDrives };
+    const usb = toKindles(bus.serials);
+    const drives = await drivesOn(bus);
+    lastDrives = drives;
+    // A Kindle open as a drive needs nothing more. Any other gets its MTP looked at.
+    const linked = look(drives.length ? [] : usb);
+    return drives.length ? { usb, drives } : { usb: linked.usb, drives: linked.devices };
   })().finally(() => (looking = null));
   return looking;
 }
@@ -203,44 +210,27 @@ export async function readClippings(): Promise<Array<{ device: string; text: str
   const out: Array<{ device: string; text: string }> = [];
   for (const device of await findDevices()) {
     const file = join(device.path, "documents", "My Clippings.txt");
+    if (isMtpPath(device.path)) continue;
     if (existsSync(file)) out.push({ device: device.name, text: await readFile(file, "utf8") });
   }
+  out.push(...(await mtpClippings()));
   return out;
 }
 
-/** What a Kindle can read, the files worth matching against a library. */
-const ON_DEVICE = /\.(azw3?|kfx|mobi|prc|pdf|txt|epub|docx)$/i;
-
-/** The Kindle's own file of every highlight and note: never a book, never removed. */
-const CLIPPINGS = /^my clippings\.txt$/i;
-const isBookFile = (path: string) => ON_DEVICE.test(path) && !CLIPPINGS.test(basename(path));
-
-/** The Kindle formats Shelfed reads when no DRM locks them. */
-const MOBI = /\.(azw3?|mobi|prc|kf8)$/i;
-
-/**
- * Whether a book on a Kindle is locked to it. Books bought from Amazon come
- * as KFX, which only a Kindle reads, as Topaz, or as MOBI with DRM, which the
- * header of its first record says. Books put on it by cable or email aren't.
- */
+/** Whether a book on a Kindle plugged in as a drive is locked to it. */
 export async function isLocked(path: string): Promise<boolean> {
-  if (/\.kfx$/i.test(path)) return true;
-  if (!MOBI.test(path)) return false;
   const file = await open(path, "r").catch(() => null);
-  if (!file) return false;
   try {
-    const head = Buffer.alloc(82);
-    if ((await file.read(head, 0, 82, 0)).bytesRead < 82) return false;
-    if (head.toString("latin1", 0, 3) === "TPZ") return true;
-    if (head.toString("latin1", 60, 68) !== "BOOKMOBI") return false;
-    // The first record starts with the PalmDOC header; its seventh field is the encryption.
-    const doc = Buffer.alloc(14);
-    if ((await file.read(doc, 0, 14, head.readUInt32BE(78))).bytesRead < 14) return false;
-    return doc.readUInt16BE(12) !== 0;
+    return await lockedBy(path, async (offset, length) => {
+      if (!file) return null;
+      const bytes = Buffer.alloc(length);
+      const { bytesRead } = await file.read(bytes, 0, length, offset);
+      return bytes.subarray(0, bytesRead);
+    });
   } catch {
     return false;
   } finally {
-    await file.close();
+    await file?.close();
   }
 }
 
@@ -253,6 +243,7 @@ const lockedCache = new Map<string, boolean>();
  * notes in a .sdr folder beside it; those are skipped.
  */
 export async function deviceFiles(device: string): Promise<KindleFile[]> {
+  if (isMtpPath(device)) return mtpFiles(device);
   const found: KindleFile[] = [];
   const docs = join(device, "documents");
   const walk = async (dir: string, depth: number) => {
@@ -281,6 +272,7 @@ export async function deviceFiles(device: string): Promise<KindleFile[]> {
  * from it, but stay in the library. Returns how many bytes were freed.
  */
 export async function removeFromDevice(device: string, files: string[]): Promise<number> {
+  if (isMtpPath(device)) return mtpRemove(device, files);
   const docs = resolve(device, "documents");
   let freed = 0;
   for (const file of files) {
@@ -295,7 +287,8 @@ export async function removeFromDevice(device: string, files: string[]): Promise
   return freed;
 }
 
-export async function copyToDevice(device: string, file: string, name: string) {
+export async function copyToDevice(device: string, file: string, name: string, progress?: (fraction: number) => void) {
+  if (isMtpPath(device)) return mtpCopy(device, file, name, (await stat(file)).size, progress);
   const docs = join(device, "documents");
   await mkdir(docs, { recursive: true });
   const target = join(docs, name);
@@ -304,11 +297,29 @@ export async function copyToDevice(device: string, file: string, name: string) {
 }
 
 /**
+ * Files on a Kindle as paths on this computer, to bring them into the library.
+ * A drive's are there already; one over MTP has them copied off first, each to
+ * a temporary folder to be forgotten once they're in. Gives back whether to.
+ */
+export async function filesFromDevice(device: string, files: string[], progress?: (fraction: number) => void) {
+  if (isMtpPath(device)) return { paths: await mtpFetch(device, files, progress), temporary: true };
+  const docs = resolve(device, "documents");
+  const paths = files.map((file) => {
+    const path = resolve(docs, file);
+    const inside = relative(docs, path);
+    if (!inside || inside.startsWith("..") || isAbsolute(inside) || !isBookFile(path)) throw new Error(t("That file isn't on your Kindle."));
+    return path;
+  });
+  return { paths, temporary: false };
+}
+
+/**
  * Whether a path is a Kindle plugged in right now. What the page asks to read
  * or change on a Kindle goes through this first, so that it can only ever be
  * a Kindle, never somewhere else on this computer.
  */
 export async function isPluggedIn(device: string) {
+  if (isMtpPath(device)) return readyDevices().some((d) => d.path === device);
   const known = (list: KindleDevice[]) => list.some((d) => d.path === device);
   return known(lastDrives) || known(await findDevices());
 }
