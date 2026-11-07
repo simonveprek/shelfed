@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 
-const channels = new Set(["command", "progress", "open-files", "downloaded", "save-failed", "update"]);
+const channels = new Set(["command", "progress", "open-files", "downloaded", "save-failed", "update", "kindle-copy"]);
 
 contextBridge.exposeInMainWorld("shelf", {
   call: async (method: string, ...args: unknown[]) => {

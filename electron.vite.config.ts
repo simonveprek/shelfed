@@ -38,7 +38,7 @@ const foliateGuard = {
 
 export default defineConfig({
   main: {
-    build: { rollupOptions: { external: ["nodemailer", "mammoth"] } },
+    build: { rollupOptions: { external: ["nodemailer", "mammoth", "usb"] } },
   },
   preload: {
     build: { rollupOptions: { output: { format: "cjs", entryFileNames: "[name].cjs" } } },

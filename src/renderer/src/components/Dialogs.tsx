@@ -13,7 +13,7 @@ import { api } from "@/lib/api";
 import { bookById, patchBooks, saveCollections, setSetting, useStore, type CalibreSummary } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { Cover } from "./Cover";
-import { PHONE_LIKE, tidyKindle, useFinishedOnKindle, useOnKindle } from "@/lib/kindle";
+import { BUSY_KINDLE, PHONE_LIKE, tidyKindle, useFinishedOnKindle, useOnKindle } from "@/lib/kindle";
 import { t, tn } from "../../../shared/i18n";
 
 const close = () => useStore.setState({ dialog: null });
@@ -144,11 +144,11 @@ export function SendDialog({ ids }: { ids: string[] }) {
         {mode === "cable" &&
           (devices === null ? (
             <div className="flex justify-center py-10"><Spinner /></div>
-          ) : devices.length === 0 && cable === "phone" ? (
+          ) : devices.length === 0 && (cable === "phone" || cable === "busy") ? (
             <Empty
               icon={TabletConnectedUsbIcon}
-              title={t("This Kindle can't take books by cable")}
-              description={t(PHONE_LIKE)}
+              title={cable === "busy" ? t("Another app has your Kindle") : t("Shelfed couldn't open your Kindle")}
+              description={t(cable === "busy" ? BUSY_KINDLE : PHONE_LIKE)}
               action={<Button size="sm" onClick={() => setMode("email")}>{t("Send by email")}</Button>}
             />
           ) : devices.length === 0 ? (

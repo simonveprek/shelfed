@@ -1,4 +1,5 @@
-import type { Book, KindleFile } from "../../../shared/types";
+import { connectsLikeAPhone, kindleById } from "../../../shared/kindles";
+import type { Book, KindleDevice, KindleFile, KindleOnUsb } from "../../../shared/types";
 import { norm } from "./util";
 
 /** A file's name as words, without its extension or the tags Amazon and Calibre add. */
@@ -69,4 +70,22 @@ export function notInLibrary(books: Book[], files: KindleFile[]) {
     return name && !books.some((book) => isTheBook(book, name));
   });
   return { files: theirs.filter((f) => !f.locked), locked: theirs.filter((f) => f.locked).length };
+}
+
+export type KindleCable = "drive" | "phone" | "busy" | "waiting" | null;
+
+/**
+ * How the Kindle plugged in takes books right now. A drive or a Kindle open
+ * over MTP takes them by cable. Otherwise it's being opened, another app has
+ * it, or it won't open. One Shelfed knows nothing about yet gets a while to
+ * show up as a drive, if it's going to.
+ */
+export function cableState(usb: KindleOnUsb[], drives: KindleDevice[], waitedLong: boolean): KindleCable {
+  if (drives.length) return "drive";
+  if (!usb.length) return null;
+  const link = usb.find((k) => k.link)?.link;
+  if (link === "busy") return "busy";
+  if (link === "opening") return "waiting";
+  if (link === "failed" || link === "none") return "phone";
+  return connectsLikeAPhone(kindleById(usb.find((k) => k.model)?.model)) || waitedLong ? "phone" : "waiting";
 }

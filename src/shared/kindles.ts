@@ -88,7 +88,7 @@ export const kindleById = (id?: string) => KINDLES.find((k) => k.id === id);
 
 /**
  * Kindles from 2024 on connect the way phones do (MTP), not as a drive, so
- * nothing can copy files to them like a USB stick.
+ * files don't copy to them like a USB stick. See src/main/mtp.
  */
 export const connectsLikeAPhone = (model?: KindleModel) => Boolean(model && model.year >= 2024);
 

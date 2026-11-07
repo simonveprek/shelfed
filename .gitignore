@@ -7,3 +7,5 @@ playwright-report
 screens
 tools/installer/payload/setup.exe
 tools/installer/*.syso
+resources/kindle-wpd.exe
+coverage

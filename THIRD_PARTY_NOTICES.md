@@ -18,6 +18,7 @@ texts ship inside the app with each package.
 | golang.org/x/sys | BSD 3-Clause | The Windows installer |
 | [electron-updater](https://github.com/electron-userland/electron-builder) | MIT | Updates |
 | [electron-log](https://github.com/megahertz/electron-log) | MIT | The log file |
+| [node-usb](https://github.com/node-usb/node-usb-rs) and [nusb](https://github.com/kevinmehall/nusb) | MIT | Reaching newer Kindles over USB on a Mac |
 | [Mammoth](https://github.com/mwilliamson/mammoth.js) | BSD 2-Clause | Reading Word files |
 | [Nodemailer](https://github.com/nodemailer/nodemailer) | MIT-0 | Sending to Kindle by email |
 | [Motion](https://github.com/motiondivision/motion) | MIT | Animation |

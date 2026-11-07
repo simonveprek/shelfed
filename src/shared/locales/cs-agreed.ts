@@ -19,10 +19,6 @@ const words: Record<string, string> = {
   "Joined {n} copy to its book|Joined {n} copies to their books": "{n} kopie připojena ke své knize|{n} kopie připojeny ke svým knihám|{n} kopií připojeno ke svým knihám",
   "Reads everywhere. Best for Kindle by email": "Otevře se všude. Nejlepší pro Kindle e-mailem",
   "On your Kindle": "V Kindlu",
-  "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead.":
-    "Tento Kindle se připojuje jako telefon a Mac ho neumí otevřít jako disk, takže do něj Shelfed nemůže kopírovat knihy kabelem. Posílejte je raději e-mailem.",
-  "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.":
-    "Tento Kindle se připojuje jako telefon, ne jako disk, takže do něj Shelfed zatím nemůže kopírovat knihy kabelem. Posílejte je raději e-mailem.",
   Publisher: "Nakladatel",
   "Last opened": "Naposledy otevřeno",
   Favorite: "Oblíbená",

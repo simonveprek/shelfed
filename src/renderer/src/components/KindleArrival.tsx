@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useMotionValue, useVelocity } from "framer-mot
 import { FINISHES, kindleById } from "../../../shared/kindles";
 import { Aura, AURA_PALETTES, type AuraColors } from "@/components/fragms/aura";
 import { EASE } from "@/components/ui";
-import { PHONE_LIKE, useOnKindle } from "@/lib/kindle";
+import { BUSY_KINDLE, PHONE_LIKE, useOnKindle } from "@/lib/kindle";
 import { useStore } from "@/lib/store";
 import { isMac } from "@/lib/api";
 import { bytes } from "@/lib/util";
@@ -141,8 +141,8 @@ export function KindleArrival() {
                   : t("Plugged in, {free} free", { free: bytes(drive.free) })
                 : t("Plugged in")}
             </p>
-            {cable === "phone" ? (
-              <p className="mt-4 max-w-[34rem] text-caption text-muted" style={{ textWrap: "balance" }}>{t(PHONE_LIKE)}</p>
+            {cable === "phone" || cable === "busy" ? (
+              <p className="mt-4 max-w-[34rem] text-caption text-muted" style={{ textWrap: "balance" }}>{t(cable === "busy" ? BUSY_KINDLE : PHONE_LIKE)}</p>
             ) : (
               <p className="mt-4 text-caption text-foreground/75">{panel ? t("Drop books on it in the side panel") : t("Drag books onto it to copy them")}</p>
             )}

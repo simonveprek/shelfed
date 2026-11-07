@@ -6,5 +6,6 @@ export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
     environment: "node",
+    coverage: { provider: "v8", include: ["src/main/mtp/**", "src/main/kindle-files.ts", "src/renderer/src/lib/onkindle.ts"], reporter: ["text"] },
   },
 });

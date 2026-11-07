@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { connectsLikeAPhone, kindleById } from "../src/shared/kindles";
-import { booksOnKindle, finishedOnKindle, notInLibrary } from "../src/renderer/src/lib/onkindle";
+import type { KindleLink, KindleOnUsb } from "../src/shared/types";
+import { booksOnKindle, cableState, finishedOnKindle, notInLibrary } from "../src/renderer/src/lib/onkindle";
 import { book } from "./helpers";
 
 describe("books already on a Kindle", () => {
@@ -93,5 +94,43 @@ describe("books on a Kindle that aren't in the library", () => {
     const dorian = book({ title: "The Picture of Dorian Gray", authors: ["Oscar Wilde"], kindleNames: ["Dorian Gray_B00ABCDEFG.azw3"] });
     expect(notInLibrary([dorian], [file("Dorian Gray_B00ABCDEFG.azw3")]).files).toEqual([]);
     expect(booksOnKindle([dorian], ["Dorian Gray_B00ABCDEFG.azw3"])).toEqual(new Set([dorian.id]));
+  });
+});
+
+describe("how a Kindle plugged in takes books", () => {
+  const usb = (link?: KindleLink, model?: string): KindleOnUsb[] => [{ serial: "G0", model, link }];
+  const drive = [{ name: "Kindle", path: "/Volumes/Kindle", free: 1 }];
+
+  it("is nothing with nothing plugged in", () => {
+    expect(cableState([], [], false)).toBeNull();
+  });
+
+  it("is by cable for a drive, or one open over MTP, whatever else is going on", () => {
+    expect(cableState(usb(), drive, false)).toBe("drive");
+    expect(cableState(usb("busy"), drive, true)).toBe("drive");
+    expect(cableState(usb("ready", "colorsoft"), [{ name: "Kindle", path: "mtp:G0", free: 1 }], false)).toBe("drive");
+  });
+
+  it("waits while one is being opened, even a model that needs MTP", () => {
+    expect(cableState(usb("opening", "colorsoft"), [], true)).toBe("waiting");
+  });
+
+  it("says so when another app has it", () => {
+    expect(cableState(usb("busy", "colorsoft"), [], false)).toBe("busy");
+  });
+
+  it("gives up for now on one that wouldn't open, or has no MTP", () => {
+    expect(cableState(usb("failed"), [], false)).toBe("phone");
+    expect(cableState(usb("none"), [], false)).toBe("phone");
+  });
+
+  it("gives one it doesn't know a while to show up as a drive", () => {
+    expect(cableState(usb(), [], false)).toBe("waiting");
+    expect(cableState(usb(), [], true)).toBe("phone");
+  });
+
+  it("doesn't wait for a model it knows connects like a phone", () => {
+    expect(cableState(usb(undefined, "colorsoft"), [], false)).toBe("phone");
+    expect(cableState(usb(undefined, "pw5"), [], false)).toBe("waiting");
   });
 });

@@ -32,11 +32,6 @@ const words: Record<string, string> = {
     "Amazon přijme nejvýš 50 MB. Převeďte knihu do EPUB, aby byla menší, nebo ji pošlete kabelem.",
   "To {address}. Amazon syncs it to every Kindle and Kindle app in a few minutes.":
     "Na {address}. Amazon ji během pár minut synchronizuje do všech Kindlů a aplikací Kindle.",
-  "This Kindle can't take books by cable": "Do tohoto Kindlu nejde nahrávat knihy kabelem",
-  "This Kindle connects like a phone, and a Mac can't open it as a drive, so Shelfed can't copy books to it by cable. Send them by email instead.":
-    "Tento Kindle se připojuje jako telefon a Mac ho neumí otevřít jako disk, takže do něj Shelfed nemůže kopírovat knihy kabelem. Pošlete je raději e-mailem.",
-  "This Kindle connects like a phone, not as a drive, so Shelfed can't copy books to it by cable yet. Send them by email instead.":
-    "Tento Kindle se připojuje jako telefon, ne jako disk, takže do něj Shelfed zatím nemůže kopírovat knihy kabelem. Pošlete je raději e-mailem.",
   "Send by email": "Poslat e-mailem",
   "Plug in your Kindle": "Připojte svůj Kindle",
   "Connect it with a USB cable and unlock it. Shelfed finds it on its own.": "Připojte ho kabelem USB a odemkněte. Shelfed ho najde sám.",
