@@ -1,14 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
-  Add01Icon, Book02Icon, BookOpen01Icon, Bookmark01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
+  Add01Icon, Book02Icon, BookOpen01Icon, Bookmark01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon, LibraryIcon,
   File01Icon, FileAddIcon, Folder01Icon, FolderAddIcon, FilterHorizontalIcon, GridViewIcon, Layers01Icon,
   LeftToRightListBulletIcon, Bookshelf01Icon, PencilEdit02Icon, Settings01Icon, SidebarRightIcon, SparklesIcon,
   Tag01Icon, ThreeDViewIcon, UserIcon, ArrowLeft01Icon, Globe02Icon, Tablet01Icon,
   ArrowUp01Icon,
   QuoteDownIcon,
 } from "@hugeicons/core-free-icons";
-import type { SortKey } from "../../../shared/types";
+import type { Catalogue, SortKey } from "../../../shared/types";
 import {
   Badge, ContextMenu, cx, EASE, IconButton, Menu, MenuItem, MenuLabel, MenuSeparator, Popover, SearchField, Segmented,
   Select, Sidebar, SidebarGroup, SidebarItem, Slider, SwitchRow, ThemeToggle,
@@ -16,7 +16,7 @@ import {
 import { addToCollection, deleteCollection, pickAndImport } from "@/lib/actions";
 import { api, isMac, isWin, mod, shift } from "@/lib/api";
 import { newCollection } from "@/lib/commands";
-import { useOnKindle } from "@/lib/kindle";
+import { onYourDevice, useOnKindle, useReader } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
 import { patchBooks, setSetting, useStore, type Browse, type Section } from "@/lib/store";
 import { sectionTitle, useVisibleBooks } from "@/lib/view";
@@ -24,6 +24,9 @@ import { Logo } from "./Logo";
 import { MATERIALS } from "./Bookcase";
 import { t } from "../../../shared/i18n";
 import { ColourPicker, RIBBONS } from "./Colours";
+
+/** No catalogues, as one list that stays the same, so the sidebar isn't drawn again for nothing. */
+const NONE: Catalogue[] = [];
 
 const same = (a: Section, b: Section) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -82,6 +85,8 @@ function UpdateMarker() {
 export function AppSidebar() {
   const section = useStore((s) => s.section);
   const onKindle = useOnKindle();
+  const reader = useReader();
+  const catalogues = useStore((s) => s.settings.catalogues) ?? NONE;
   // Unplugged while looking at what's on it: back to every book.
   useEffect(() => {
     if (section.kind === "kindle" && !onKindle) useStore.setState({ section: { kind: "all" } });
@@ -119,7 +124,7 @@ export function AppSidebar() {
         </SidebarItem>
         {onKindle && (
           <SidebarItem icon={Tablet01Icon} active={section.kind === "kindle"} onClick={() => go({ kind: "kindle" })}>
-            {t("On your Kindle")}
+            {onYourDevice(reader)}
           </SidebarItem>
         )}
       </SidebarGroup>
@@ -127,6 +132,14 @@ export function AppSidebar() {
       <SidebarGroup label={t("Discover")}>
         <SidebarItem icon={Globe02Icon} active={section.kind === "discover"} onClick={() => go({ kind: "discover" })}>
           {t("Classics")}
+        </SidebarItem>
+        {catalogues.map((c) => (
+          <SidebarItem key={c.id} icon={LibraryIcon} active={section.kind === "catalogue" && section.id === c.id} onClick={() => go({ kind: "catalogue", id: c.id })}>
+            {c.name}
+          </SidebarItem>
+        ))}
+        <SidebarItem icon={Add01Icon} onClick={() => useStore.setState({ dialog: { kind: "add-catalogue" } })}>
+          {t("Add a catalogue")}
         </SidebarItem>
       </SidebarGroup>
 
@@ -326,7 +339,7 @@ export function Header() {
   const settings = useStore((s) => s.settings);
   const total = useStore((s) => s.books.length);
   const visible = useVisibleBooks();
-  const own = section.kind === "discover" || section.kind === "commonplace";
+  const own = section.kind === "discover" || section.kind === "commonplace" || section.kind === "catalogue";
   const browsing = section.kind === "browse" || own;
 
   return (

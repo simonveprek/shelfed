@@ -58,7 +58,7 @@ describe("everything the newer work says", () => {
     return [...one, ...plural, ...constants];
   }
 
-  it.each(["src/main/mtp/index.ts", "src/renderer/src/lib/kindle.ts", "src/renderer/src/components/KindleDock.tsx", "src/renderer/src/lib/actions.ts", "src/main/lookup.ts", "src/renderer/src/reader/Lookup.tsx", "src/renderer/src/components/PdfToEpub.tsx", "src/renderer/src/lib/pdf-epub.ts"])("is in Czech in %s", async (path) => {
+  it.each(["src/main/mtp/index.ts", "src/renderer/src/lib/kindle.ts", "src/renderer/src/components/KindleDock.tsx", "src/renderer/src/lib/actions.ts", "src/main/lookup.ts", "src/renderer/src/reader/Lookup.tsx", "src/renderer/src/components/Dialogs.tsx", "src/renderer/src/lib/kindle.ts", "src/main/kindle.ts", "src/main/index.ts", "src/main/opds.ts", "src/renderer/src/components/Catalogue.tsx", "src/renderer/src/components/Shell.tsx", "src/renderer/src/components/KindleDock.tsx", "src/renderer/src/components/PdfToEpub.tsx", "src/renderer/src/lib/pdf-epub.ts", "src/renderer/src/components/Library.tsx"])("is in Czech in %s", async (path) => {
     setLanguage("cs");
     try {
       const strings = said(path);

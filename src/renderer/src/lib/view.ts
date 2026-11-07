@@ -2,7 +2,7 @@ import { useDeferredValue, useMemo } from "react";
 import type { Book, SortKey } from "../../../shared/types";
 import { useStore, type Browse, type Section } from "./store";
 import { norm, sortAuthor, sortTitle } from "./util";
-import { useOnKindle } from "./kindle";
+import { onYourDevice, readerAt, useOnKindle } from "./kindle";
 import { t } from "../../../shared/i18n";
 
 const FORTNIGHT = 1000 * 60 * 60 * 24 * 14;
@@ -28,6 +28,7 @@ export function inSection(book: Book, section: Section, onKindle?: Set<string> |
     case "browse":
     case "discover":
     case "commonplace":
+    case "catalogue":
       return true;
     case "reading":
     case "unread":
@@ -105,7 +106,8 @@ export function sectionTitle(section: Section, collections: { id: string; name: 
     case "browse": return t({ author: "Authors", series: "Series", tag: "Tags", format: "Formats" }[section.by]);
     case "discover": return t("Classics");
     case "commonplace": return t("Commonplace book");
-    case "kindle": return t("On your Kindle");
+    case "catalogue": return useStore.getState().settings.catalogues?.find((c) => c.id === section.id)?.name ?? t("Catalogue");
+    case "kindle": return onYourDevice(readerAt());
     case "group": return section.value;
   }
 }

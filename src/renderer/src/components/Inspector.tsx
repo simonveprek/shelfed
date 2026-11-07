@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Add01Icon, ArrowDataTransferHorizontalIcon, BookOpen01Icon, Cancel01Icon, CheckmarkCircle02Icon, Delete02Icon,
   FavouriteIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, Image01Icon, MagicWand01Icon, MailSend01Icon,
-  MoreHorizontalIcon, PencilEdit02Icon, StarIcon, BarCode02Icon, Building03Icon, Calendar03Icon, CalendarAdd01Icon, Clock01Icon,
+  MoreHorizontalIcon, PencilEdit02Icon, StarIcon, Tablet01Icon, BarCode02Icon, Building03Icon, Calendar03Icon, CalendarAdd01Icon, Clock01Icon,
   Copy01Icon, Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import type { Book, ReadStatus } from "../../../shared/types";
@@ -16,7 +16,7 @@ import { addToCollection, canRead, openReader, removeFromCollection, toggleFavor
 import { api, revealLabel } from "@/lib/api";
 import { saveCover } from "@/lib/books";
 import { newCollection, runAction } from "@/lib/commands";
-import { useOnKindle } from "@/lib/kindle";
+import { onYourDevice, useOnKindle, useReader } from "@/lib/kindle";
 import { useVisibleBooks } from "@/lib/view";
 import { patchBooks, upsert, useStore } from "@/lib/store";
 import { ago, authorsOf, bytes, coverUrl, date, duration, plural, published } from "@/lib/util";
@@ -258,6 +258,7 @@ const STATUS: Array<{ id: ReadStatus; label: string }> = [
 function One({ book }: { book: Book }) {
   const [dropping, setDropping] = useState(false);
   const onKindle = useOnKindle()?.has(book.id);
+  const reader = useReader();
   const progress = book.progress ?? 0;
   const library = useStore((s) => s.books);
   const kindred = useMemo(() => hasKindred(book, library), [book, library]);
@@ -322,7 +323,7 @@ function One({ book }: { book: Book }) {
           )}
           {onKindle && (
             <div className="mt-2.5 flex justify-center">
-              <Badge tone="success">{t("On your Kindle")}</Badge>
+              <Badge tone="success">{onYourDevice(reader)}</Badge>
             </div>
           )}
           <div className="mt-2 flex items-center justify-center gap-1">
@@ -343,7 +344,7 @@ function One({ book }: { book: Book }) {
               {book.status === "reading" && progress >= 0.01 ? t("Continue at {n}%", { n: Math.round(progress * 100) }) : book.status === "finished" ? t("Read again") : t("Read")}
             </Button>
             <div className="flex gap-2">
-              <Button size="sm" icon={MailSend01Icon} className="flex-1" onClick={() => runAction("send", [book.id])}>{t("Kindle")}</Button>
+              <Button size="sm" icon={reader ? Tablet01Icon : MailSend01Icon} className="flex-1" onClick={() => runAction("send", [book.id])}>{reader?.name ?? t("Kindle")}</Button>
               <Button size="sm" icon={ArrowDataTransferHorizontalIcon} className="flex-1" onClick={() => runAction("convert", [book.id])}>{t("Convert")}</Button>
               <Menu label={t("More")} align="end" width={230} trigger={({ props }) => <IconButton {...props} variant="secondary" label={t("More")} icon={MoreHorizontalIcon} />}>
                 <MenuItem icon={MagicWand01Icon} onSelect={() => runAction("metadata", [book.id])}>{t("Find details online")}</MenuItem>

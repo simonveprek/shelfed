@@ -34,6 +34,37 @@ export type FreeBook = {
   summary?: string;
 };
 
+/** A catalogue you added: an OPDS feed, such as a Calibre content server's. */
+export type Catalogue = { id: string; name: string; url: string };
+
+/** A book a catalogue offers. */
+export type CatalogueBook = {
+  id: string;
+  title: string;
+  authors: string[];
+  summary?: string;
+  /** A small cover and a big one: addresses the catalogue gave, or pictures written into it. */
+  cover?: string;
+  bigCover?: string;
+  /** The file Shelfed would download: the one it reads best. */
+  file?: { url: string; ext: string; size?: number };
+  /** Every file it offers is for sale, to borrow, or locked. */
+  locked?: boolean;
+  language?: string;
+  published?: string;
+};
+
+/** A page of a catalogue: where to go from it, the books on it, and what comes next. */
+export type CataloguePage = {
+  title: string;
+  url: string;
+  places: Array<{ title: string; url: string; summary?: string }>;
+  books: CatalogueBook[];
+  next?: string;
+  /** How to search it, when it can be. */
+  search?: string;
+};
+
 /** One kind of word Wiktionary knows, like a Czech noun, with what it means. */
 export type Sense = {
   /** As Wiktionary names it, like "Noun". */
@@ -212,6 +243,8 @@ export type Settings = {
   calibreOffered?: boolean;
   /** The language Shelfed speaks; automatic follows the system. */
   language?: "auto" | "en" | "cs";
+  /** Catalogues you added, next to the free ones. */
+  catalogues?: Catalogue[];
 };
 
 /** Where finding and getting a new version of Shelfed has got to. */
@@ -234,7 +267,8 @@ export type BootState = {
   version: string;
 };
 
-export type KindleDevice = { name: string; path: string; free: number; model?: string };
+/** An e-reader that takes books by cable: a Kindle, or another e-reader when it has a kind. */
+export type KindleDevice = { name: string; path: string; free: number; model?: string; kind?: import("./ereaders").ReaderKind };
 
 /** A book file on a Kindle plugged in as a drive: its name, where it is inside documents, and its size. */
 /** A book file on a Kindle, by its path inside the documents folder. Locked ones are Amazon's, readable only on Kindles. */

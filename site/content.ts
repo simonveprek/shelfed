@@ -51,14 +51,15 @@ export const GROUPS: Array<[string, string[]]> = [
     ],
   ],
   [
-    "Kindle",
+    "E-readers",
     [
-      "Recognises every model from the Kindle 2 on",
+      "Recognises every Kindle from the Kindle 2 on",
       "Copies by cable, making the Kindle file it needs",
       "Sends by email from your own mail account",
       "Ready settings for Gmail, Outlook and iCloud",
       "Brings your Kindle highlights back from My Clippings",
       "PDFs laid out to fit a Kindle's screen",
+      "Kobo and PocketBook too, by cable",
     ],
   ],
   [
@@ -77,6 +78,7 @@ export const GROUPS: Array<[string, string[]]> = [
     [
       "Thousands of free classics from Standard Ebooks",
       "And from Project Gutenberg, a click each",
+      "Any OPDS catalogue you add, like your Calibre server",
       "Suggestions from what you own, worked out on your computer",
       "Drop files or whole folders anywhere on the window",
       "Opens books straight from Finder or Explorer",
@@ -103,10 +105,11 @@ export const QUESTIONS: Array<[string, string]> = [
     "Which Kindles does it work with?",
     "Every Kindle, by email. By cable too, on Mac and Windows, with nothing else to install: the ones that show up as a drive, and newer ones like the 2024 Paperwhite and the Colorsoft, which connect the way phones do.",
   ],
+  ["Does it work with Kobo or PocketBook?", "Yes. Plugged in by cable, they show up next to your library: Shelfed copies books to them as EPUBs, shows which of yours are on them, and brings theirs over."],
   ["Can it open books I bought on Amazon?", "Not if they have DRM, as most do, and Shelfed doesn't remove it. Books without DRM, from anywhere, open fine."],
   ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelfed. Each book comes in once, with all its formats, its cover, and the title, authors, series, tags and rating you gave it in Calibre. Only Calibre's custom columns stay behind."],
   ["Where are my books kept?", "In a Shelf Library folder in your Documents, a folder for each author, as ordinary files. Move it anywhere from Settings."],
-  ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, a word you look up while reading, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
+  ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, a word you look up while reading, catalogues you add, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
   ["Why does my computer warn me the first time?", "Shelfed isn't signed with a paid certificate yet. On a Mac, open it once, then go to System Settings, Privacy & Security, and click Open Anyway; on macOS 14 or earlier, right-click it and choose Open instead. On Windows, choose More info, then Run anyway."],
   ["What does it run on?", "macOS on Apple silicon or Intel, and Windows 10 or 11 on x64 or ARM. On Linux it runs built from the source."],
 ];

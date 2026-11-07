@@ -38,6 +38,7 @@
 - **Keeps your library as plain files.** One folder per author in `Documents/Shelf Library`, readable without the app.
 - **Converts.** To EPUB, AZW3 for Kindle, PDF, Word, FB2, text or a web page, all built in. A PDF comes out as a book that reflows, with its chapters, headings and pictures, and without the running heads and page numbers, and you can look it over before it's made.
 - **Sends to your Kindle.** By cable, or by email from your own mail account. It shows which of your books are already on a Kindle, and takes the finished ones off.
+- **Knows Kobo and PocketBook too.** Plugged in, they get books by dragging, as EPUBs, and show what's on them.
 - **Brings your Calibre library over.** It finds it by itself; each book comes once, with its formats, cover, series and tags.
 - **Picks up what you download.** New ebooks in your Downloads folder come in by themselves.
 - **Speaks English and Czech,** following your system or your choice.
@@ -46,6 +47,7 @@
 - **Looks up a word** while you read: its meaning from Wiktionary, or a name from Wikipedia.
 - **Keeps a commonplace book.** Every line you've marked, in every book, in one place to search and copy out.
 - **Classics, free.** Thousands of books from Standard Ebooks and Project Gutenberg, one click to add.
+- **Your own catalogues.** Any OPDS catalogue, such as a Calibre content server or a library's, to browse and add from.
 - **Suggests what's next.** Worked out on your computer, never sent anywhere.
 
 <details>
@@ -129,7 +131,7 @@ The tests import hundreds of books at once against it.
 
 **Kindles from 2024 on speak MTP, and Shelfed speaks it back.** `src/main/mtp` has its own MTP client, with no libmtp. On a Mac it runs over USB through the `usb` package. Windows keeps MTP devices for its own driver, so there `tools/kindle-wpd`, a small Go helper with no dependencies, goes through the Windows Portable Devices service instead. Both sit behind one `Backend`, and tests run the client against `PretendKindle`, a folder that answers in real MTP.
 
-**Kindles are found without drivers.** Shelfed looks for Amazon's USB vendor ID (`0x1949`): via `ioreg` on macOS, one PowerShell call on Windows, and sysfs on Linux. The serial number gives the model. A drive counts as a Kindle by its `documents` and `system` folders, and its book files are matched against the library to show what's already on it. Kindles from 2024 on open no drive, so those are reached over MTP.
+**Kindles are found without drivers.** Shelfed looks for Amazon's USB vendor ID (`0x1949`): via `ioreg` on macOS, one PowerShell call on Windows, and sysfs on Linux. The serial number gives the model. A drive counts as a Kindle by its `documents` and `system` folders, a Kobo by its hidden `.kobo` folder and a PocketBook by its `system/config`, and its book files are matched against the library to show what's already on it. Kobos and PocketBooks take EPUBs as they are, at the top of the drive, and Shelfed stays out of their own folders. Kindles from 2024 on open no drive, so those are reached over MTP.
 
 ## Security model
 
@@ -140,7 +142,7 @@ A book is untrusted input, often from somewhere unknown, so the window treats it
 - **Strict CSP.** `script-src 'self'`, `object-src 'none'`, `base-uri 'none'` and `form-action 'none'`.
 - **Book pages are defanged.** Before a book's HTML is shown, scripts, inline handlers, `javascript:` links, frames, objects and `<base>` are stripped ([`defang.ts`](src/renderer/src/lib/defang.ts), with its own tests). This is a second lock behind the CSP.
 - **Locked-down navigation.** No new windows and no webviews. Sub-frames can only navigate to `blob:`, `data:` or `about:blank`. Every permission request (camera, notifications and so on) is denied. Links open in your browser, and only `https:` ones.
-- **Narrow downloads.** The main process refuses to download anything but `https:` URLs.
+- **Narrow downloads.** The main process refuses to download anything but `https:` URLs. A catalogue you add is the one exception: Shelfed fetches only its own address and the pages, covers and books it links to, reads its feed with a small XML reader that never touches a DOCTYPE, and stops at sizes no real feed, cover or book reaches.
 
 Found a hole? Please report it privately, as [SECURITY.md](SECURITY.md) explains.
 
@@ -151,6 +153,7 @@ No account, no analytics, no telemetry. Shelfed goes online only:
 - for book details, from Open Library and Google Books;
 - for free classics, from Standard Ebooks and Project Gutenberg;
 - to look up a word you've selected, at Wiktionary and Wikipedia;
+- for the catalogues you add, at the addresses you give them;
 - to send to your Kindle, through your mail server;
 - to check GitHub for a new version (which you can turn off).
 
@@ -160,11 +163,14 @@ No account, no analytics, no telemetry. Shelfed goes online only:
   - the library under hundreds of concurrent imports;
   - the sanitiser, EPUB writing and format detection;
   - Kindle model recognition from serials, and matching books already on a Kindle;
+  - telling Kindles, Kobos and PocketBooks apart, and keeping out of their own folders;
+  - reading OPDS catalogues, from real Project Gutenberg and OPDS 2 feeds, and going only where they link;
   - parsing `My Clippings.txt`, recommendations, and author name handling.
 - **App tests** ([Playwright](e2e)) build Shelfed and drive the real Electron app on an empty library of made-up books:
   - adding books, every view and place, search, the right-click menu;
   - reading and turning pages, removing and undoing, settings, restarting;
-  - converting to AZW3, Word and FB2, and pretend Kindles plugged in as a drive or speaking real MTP.
+  - converting to AZW3, Word and FB2, pretend Kindles plugged in as a drive or speaking real MTP, and a pretend Kobo;
+  - looking up a word, and a pretend OPDS catalogue to browse, search and add from.
   
   Any error the page throws fails the run.
 - **CI** runs both on macOS, Windows and Linux on every push, then packs the app on macOS and Windows to catch packaging problems.

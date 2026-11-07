@@ -1,6 +1,7 @@
 import { useRef, useState, type DragEvent } from "react";
 import { motion } from "framer-motion";
 import { kindleById } from "../../../shared/kindles";
+import { READERS } from "../../../shared/ereaders";
 import { bringFromKindle, sendByCable } from "@/lib/actions";
 import { useFinishedOnKindle, useKindlePort, useNotInLibrary, useOnKindle } from "@/lib/kindle";
 import { BOOK_MIME } from "@/lib/select";
@@ -12,9 +13,9 @@ import { Portal } from "@/components/ui/portal";
 import { Cover } from "./Cover";
 import { Kindle3D } from "./Kindle3D";
 
-/** True when there's a Kindle to show: one you've picked, or one plugged in. */
+/** True when there's an e-reader to show: a Kindle you've picked, or a Kobo or PocketBook plugged in. */
 export function useHasKindle() {
-  return useStore((s) => Boolean(s.settings.kindle.model));
+  return useStore((s) => Boolean(s.settings.kindle.model || s.kindlePort?.drives.some((d) => d.kind)));
 }
 
 /**
@@ -42,7 +43,9 @@ export function KindleDock() {
   const finished = useFinishedOnKindle();
   const missing = useNotInLibrary();
   const [bringing, setBringing] = useState(false);
-  const model = kindleById(kindle.model ?? drive?.model ?? usb?.find((k) => k.model)?.model) ?? (onBus ? kindleById("pw5") : undefined);
+  // A Kobo or PocketBook plugged in takes the place of your Kindle while it is.
+  const reader = drive?.kind ? READERS[drive.kind] : null;
+  const model = reader?.model ?? kindleById(kindle.model ?? drive?.model ?? usb?.find((k) => k.model)?.model) ?? (onBus ? kindleById("pw5") : undefined);
   if (!model) return null;
 
   const reading = books.filter((b) => b.status === "reading").sort((a, b) => (b.opened ?? 0) - (a.opened ?? 0))[0];
@@ -81,11 +84,11 @@ export function KindleDock() {
           }, 480);
         }}
       >
-        <h3 className="self-start text-label font-medium text-muted">{t("Your Kindle")}</h3>
+        <h3 className="self-start text-label font-medium text-muted">{reader ? t("Your e-reader") : t("Your Kindle")}</h3>
         <div ref={device}>
           <Kindle3D
             model={model}
-            finish={kindle.finish}
+            finish={reader ? undefined : kindle.finish}
             book={shown}
             activity={activity}
             height={model.size[1] > 200 ? 200 : 186}

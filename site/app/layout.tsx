@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   applicationName: "Shelfed",
   authors: [{ name: "Šimon Vepřek", url: "https://simonveprek.cz" }],
   creator: "Šimon Vepřek",
-  keywords: ["ebook library", "ebook manager", "Calibre alternative", "Send to Kindle", "EPUB reader", "Kindle", "macOS", "Windows", "open source"],
+  keywords: ["ebook library", "ebook manager", "Calibre alternative", "Send to Kindle", "EPUB reader", "Kindle", "Kobo", "PocketBook", "OPDS", "macOS", "Windows", "open source"],
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   icons: { icon: asset("icon.svg") },

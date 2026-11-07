@@ -1,10 +1,11 @@
-import { access, copyFile, mkdir, open, readdir, readFile, rm, stat, statfs } from "node:fs/promises";
+import { access, copyFile, lstat, mkdir, open, readdir, readFile, rm, stat, statfs } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import nodemailer from "nodemailer";
 import { kindleFromSerial } from "../shared/kindles";
+import { isReaderBook, READERS, type ReaderKind } from "../shared/ereaders";
 import type { KindleDevice, KindleFile, KindleOnUsb, KindleSettings } from "../shared/types";
 import { getSmtpPassword } from "./settings";
 import { isBookFile, lockedBy } from "./kindle-files";
@@ -143,27 +144,45 @@ async function mountPoints(bus: Bus): Promise<string[]> {
 }
 
 /**
- * A Kindle shows up as a drive with a documents folder and a system folder.
- * On macOS it mounts under /Volumes, on Windows as a removable drive.
+ * Which e-reader a drive is, by the folders it keeps. A Kindle has documents
+ * and system folders, a Kobo its hidden .kobo folder, and a PocketBook its
+ * settings in system/config.
+ */
+export async function readerOn(root: string): Promise<ReaderKind | "kindle" | null> {
+  // A Kobo is a Kobo whatever folders someone made on it.
+  if (await exists(join(root, ".kobo"))) return "kobo";
+  if ((await exists(join(root, "documents"))) && ((await exists(join(root, "system"))) || /kindle/i.test(basename(root)))) return "kindle";
+  if (await exists(join(root, "system", "config"))) return "pocketbook";
+  return null;
+}
+
+/**
+ * E-readers plugged in as a drive, Kindles first. On macOS they mount under
+ * /Volumes, on Windows as removable drives.
  */
 async function drivesOn(bus: Bus): Promise<KindleDevice[]> {
   const usb = toKindles(bus.serials);
   const roots = await mountPoints(bus);
   const found = await Promise.all(
     roots.map(async (root): Promise<KindleDevice | null> => {
-      if (!(await exists(join(root, "documents")))) return null;
-      if (!(await exists(join(root, "system"))) && !/kindle/i.test(basename(root))) return null;
+      // The Mac's own disk is in /Volumes too, as a link to /.
+      if (process.platform === "darwin" && (await lstat(root).catch(() => null))?.isSymbolicLink()) return null;
+      const kind = await readerOn(root);
+      if (!kind) return null;
       const fs = await statfs(root).catch(() => null);
+      const free = fs ? fs.bavail * fs.bsize : 0;
+      const letter = root.replace(/\\$/, "");
+      if (kind !== "kindle") return { name: process.platform === "win32" ? `${READERS[kind].name} (${letter})` : basename(root), path: root, free, kind };
       return {
-        name: process.platform === "win32" ? `Kindle (${root.replace(/\\$/, "")})` : basename(root),
+        name: process.platform === "win32" ? `Kindle (${letter})` : basename(root),
         path: root,
-        free: fs ? fs.bavail * fs.bsize : 0,
+        free,
         // Which drive is which Kindle can't be told apart, so a model is only named when there is one.
         model: usb.length === 1 ? usb[0].model : undefined,
       };
     }),
   );
-  return found.filter((d): d is KindleDevice => d !== null);
+  return found.filter((d): d is KindleDevice => d !== null).sort((a, b) => Number(Boolean(a.kind)) - Number(Boolean(b.kind)));
 }
 
 const safeBus = () => readBus().catch((): Bus => ({ serials: [] }));
@@ -175,7 +194,7 @@ let lastDrives: KindleDevice[] = [];
 export async function findDevices(): Promise<KindleDevice[]> {
   const drives = await drivesOn(await safeBus());
   lastDrives = drives;
-  return drives.length ? drives : readyDevices();
+  return drives.some((d) => !d.kind) ? drives : [...readyDevices(), ...drives];
 }
 
 /**
@@ -199,8 +218,9 @@ export function kindlePort() {
     const drives = await drivesOn(bus);
     lastDrives = drives;
     // A Kindle open as a drive needs nothing more. Any other gets its MTP looked at.
-    const linked = look(drives.length ? [] : usb);
-    return drives.length ? { usb, drives } : { usb: linked.usb, drives: linked.devices };
+    const asDrive = drives.some((d) => !d.kind);
+    const linked = look(asDrive ? [] : usb);
+    return asDrive ? { usb, drives } : { usb: linked.usb, drives: [...linked.devices, ...drives] };
   })().finally(() => (looking = null));
   return looking;
 }
@@ -210,7 +230,7 @@ export async function readClippings(): Promise<Array<{ device: string; text: str
   const out: Array<{ device: string; text: string }> = [];
   for (const device of await findDevices()) {
     const file = join(device.path, "documents", "My Clippings.txt");
-    if (isMtpPath(device.path)) continue;
+    if (isMtpPath(device.path) || device.kind) continue;
     if (existsSync(file)) out.push({ device: device.name, text: await readFile(file, "utf8") });
   }
   out.push(...(await mtpClippings()));
@@ -234,54 +254,80 @@ export async function isLocked(path: string): Promise<boolean> {
   }
 }
 
+/** For the demos and tests: drives to take as plugged in, without asking the system. */
+export function asIfPlugged(drives: KindleDevice[]) {
+  lastDrives = drives;
+}
+
+/** Which e-reader a drive seen plugged in is, when it isn't a Kindle. */
+const kindOf = (device: string) => lastDrives.find((d) => d.path === device)?.kind;
+
+/** Where a drive keeps its books: a Kindle's documents folder, or the top of any other e-reader. */
+const booksIn = (device: string) => (kindOf(device) ? resolve(device) : resolve(device, "documents"));
+
+/** A path a page gave, as a book file inside a drive's books, or null when it isn't one. */
+function bookPath(device: string, file: string) {
+  const books = booksIn(device);
+  const path = resolve(books, file);
+  const inside = relative(books, path);
+  if (!inside || inside.startsWith("..") || isAbsolute(inside)) return null;
+  const kind = kindOf(device);
+  if (!kind) return isBookFile(path) ? path : null;
+  // Another e-reader's own folders aren't for Shelfed to touch, nor anything hidden.
+  const parts = inside.split(sep);
+  return isReaderBook(path) && !READERS[kind].own.test(parts[0]) && !parts.some((part) => part.startsWith(".")) ? path : null;
+}
+
 /** What was found locked, by path, size and time, so a file is only looked inside once. */
 const lockedCache = new Map<string, boolean>();
 
 /**
- * The book files in a Kindle's documents folder, a few folders deep, with
- * their sizes and whether they're locked to it. Kindles keep each book's
- * notes in a .sdr folder beside it; those are skipped.
+ * The book files on an e-reader, a few folders deep, with their sizes and
+ * whether they're locked to it: in a Kindle's documents folder, or anywhere
+ * on another e-reader outside its own folders. Kindles keep each book's notes
+ * in a .sdr folder beside it; those are skipped.
  */
 export async function deviceFiles(device: string): Promise<KindleFile[]> {
   if (isMtpPath(device)) return mtpFiles(device);
   const found: KindleFile[] = [];
-  const docs = join(device, "documents");
+  const books = booksIn(device);
+  const kind = kindOf(device);
   const walk = async (dir: string, depth: number) => {
     const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
       const path = join(dir, entry.name);
-      if (entry.isDirectory() && depth < 3 && !entry.name.endsWith(".sdr") && !entry.name.startsWith(".")) await walk(path, depth + 1);
-      else if (entry.isFile() && isBookFile(entry.name)) {
+      if (entry.isDirectory()) {
+        const own = entry.name.startsWith(".") || entry.name.endsWith(".sdr") || (kind && depth === 0 && READERS[kind].own.test(entry.name));
+        if (depth < 3 && !own) await walk(path, depth + 1);
+      } else if (entry.isFile() && (kind ? isReaderBook(entry.name) : isBookFile(entry.name)) && !entry.name.startsWith(".")) {
         const info = await stat(path).catch(() => null);
         const size = info?.size ?? 0;
         const key = `${path}\0${size}\0${info?.mtimeMs ?? 0}`;
         let locked = lockedCache.get(key);
         if (locked === undefined) lockedCache.set(key, (locked = await isLocked(path)));
-        found.push({ name: entry.name, path: relative(docs, path).split(sep).join("/"), size, ...(locked ? { locked } : {}) });
+        found.push({ name: entry.name, path: relative(books, path).split(sep).join("/"), size, ...(locked ? { locked } : {}) });
       }
     }
   };
-  await walk(docs, 0);
+  await walk(books, 0);
   return found;
 }
 
 /**
- * Takes books off a Kindle plugged in as a drive, each with the notes folder
- * the Kindle keeps beside it. Only book files inside its documents folder go;
- * anything else asked for is left. A Kindle has no Trash, so they're gone
- * from it, but stay in the library. Returns how many bytes were freed.
+ * Takes books off an e-reader plugged in as a drive, a Kindle's with the notes
+ * folder it keeps beside each. Only its book files go; anything else asked
+ * for is left. An e-reader has no Trash, so they're gone from it, but stay in
+ * the library. Returns how many bytes were freed.
  */
 export async function removeFromDevice(device: string, files: string[]): Promise<number> {
   if (isMtpPath(device)) return mtpRemove(device, files);
-  const docs = resolve(device, "documents");
   let freed = 0;
   for (const file of files) {
-    const path = resolve(docs, file);
-    const inside = relative(docs, path);
-    if (!inside || inside.startsWith("..") || isAbsolute(inside) || !isBookFile(path)) continue;
+    const path = bookPath(device, file);
+    if (!path) continue;
     const size = (await stat(path).catch(() => null))?.size ?? 0;
     await rm(path, { force: true });
-    await rm(path.replace(/\.[^.\\/]+$/, ".sdr"), { recursive: true, force: true });
+    if (!kindOf(device)) await rm(path.replace(/\.[^.\\/]+$/, ".sdr"), { recursive: true, force: true });
     freed += size;
   }
   return freed;
@@ -289,25 +335,23 @@ export async function removeFromDevice(device: string, files: string[]): Promise
 
 export async function copyToDevice(device: string, file: string, name: string, progress?: (fraction: number) => void) {
   if (isMtpPath(device)) return mtpCopy(device, file, name, (await stat(file)).size, progress);
-  const docs = join(device, "documents");
-  await mkdir(docs, { recursive: true });
-  const target = join(docs, name);
+  const books = booksIn(device);
+  await mkdir(books, { recursive: true });
+  const target = join(books, name);
   await copyFile(file, target);
   return (await stat(target)).size;
 }
 
 /**
- * Files on a Kindle as paths on this computer, to bring them into the library.
- * A drive's are there already; one over MTP has them copied off first, each to
+ * Files on an e-reader as paths on this computer, to bring them into the library.
+ * A drive's are there already; a Kindle over MTP has them copied off first, each to
  * a temporary folder to be forgotten once they're in. Gives back whether to.
  */
 export async function filesFromDevice(device: string, files: string[], progress?: (fraction: number) => void) {
   if (isMtpPath(device)) return { paths: await mtpFetch(device, files, progress), temporary: true };
-  const docs = resolve(device, "documents");
   const paths = files.map((file) => {
-    const path = resolve(docs, file);
-    const inside = relative(docs, path);
-    if (!inside || inside.startsWith("..") || isAbsolute(inside) || !isBookFile(path)) throw new Error(t("That file isn't on your Kindle."));
+    const path = bookPath(device, file);
+    if (!path) throw new Error(kindOf(device) ? t("That file isn't on your e-reader.") : t("That file isn't on your Kindle."));
     return path;
   });
   return { paths, temporary: false };

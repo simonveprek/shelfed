@@ -13,7 +13,7 @@ import { api, isMac, revealLabel } from "@/lib/api";
 import { newCollection, runAction } from "@/lib/commands";
 import { useCalibre } from "@/lib/findcalibre";
 import { startWithClassics } from "@/lib/free";
-import { useOnKindle } from "@/lib/kindle";
+import { onYourDevice, useOnKindle, useReader } from "@/lib/kindle";
 import { BOOK_MIME, selectBook, targetIds } from "@/lib/select";
 import { useStore } from "@/lib/store";
 import { authorsOf, bytes, date, plural } from "@/lib/util";
@@ -23,6 +23,7 @@ import { Commonplace } from "./Commonplace";
 import { Discover } from "./Discover";
 import { Cover } from "./Cover";
 import { t, tn } from "../../../shared/i18n";
+import { CatalogueView } from "./Catalogue";
 import { boxStyle, touches, useMarquee } from "@/lib/marquee";
 
 /* ------------------------------------------------------------------------ */
@@ -36,6 +37,7 @@ export function BookMenu({ ids }: { ids: string[] }) {
   const collections = useStore((s) => s.collections);
   const section = useStore((s) => s.section);
   const one = books.length === 1 ? books[0] : null;
+  const reader = useReader();
   if (!books.length)
     return (
       <>
@@ -46,7 +48,7 @@ export function BookMenu({ ids }: { ids: string[] }) {
   return (
     <>
       {one && <MenuItem icon={BookOpen01Icon} onSelect={() => runAction("read", ids)}>{t("Read")}</MenuItem>}
-      <MenuItem icon={MailSend01Icon} onSelect={() => runAction("send", ids)}>{t("Send to Kindle")}</MenuItem>
+      <MenuItem icon={reader ? Tablet01Icon : MailSend01Icon} onSelect={() => runAction("send", ids)}>{reader ? t("Copy to {reader}", { reader: reader.name }) : t("Send to Kindle")}</MenuItem>
       <MenuItem icon={ArrowDataTransferHorizontalIcon} onSelect={() => runAction("convert", ids)}>{t("Convert")}</MenuItem>
       {one && one.formats.some((f) => f.ext === "pdf") && !one.formats.some((f) => f.ext === "epub") && (
         <MenuItem icon={FileEditIcon} onSelect={() => useStore.setState({ dialog: { kind: "pdf-epub", id: one.id } })}>{t("Make an EPUB from this PDF")}</MenuItem>
@@ -162,6 +164,7 @@ export function useKeys(visible: Book[], columns: number, scrollTo: (index: numb
 /* ------------------------------------------------------------------------ */
 
 const BookCard = memo(function BookCard({ book, selected, width, visible, onKindle = false }: { book: Book; selected: boolean; width: number; visible: Book[]; onKindle?: boolean }) {
+  const reader = useReader();
   const progress = book.status === "reading" ? (book.progress ?? 0) : 0;
   return (
     <div
@@ -187,9 +190,9 @@ const BookCard = memo(function BookCard({ book, selected, width, visible, onKind
           </span>
         )}
         {onKindle && (
-          <span title={t("On your Kindle")} className="absolute top-1.5 left-1.5 flex h-6 items-center gap-1 rounded-full bg-black/45 px-2 text-[10.5px] font-medium text-white backdrop-blur-md">
+          <span title={onYourDevice(reader)} className="absolute top-1.5 left-1.5 flex h-6 items-center gap-1 rounded-full bg-black/45 px-2 text-[10.5px] font-medium text-white backdrop-blur-md">
             <Icon icon={Tablet01Icon} size={11} />
-            Kindle
+            {reader?.name ?? "Kindle"}
           </span>
         )}
         {progress > 0 && (
@@ -471,7 +474,7 @@ const EMPTY: Record<string, string> = {
 export function LibraryView() {
   const section = useStore((s) => s.section);
   const view = useStore((s) => s.settings.view);
-  const key = JSON.stringify(section) + (section.kind === "browse" || section.kind === "discover" || section.kind === "commonplace" ? "" : view);
+  const key = JSON.stringify(section) + (section.kind === "browse" || section.kind === "discover" || section.kind === "commonplace" || section.kind === "catalogue" ? "" : view);
   return (
     <motion.div
       key={key}
@@ -496,6 +499,7 @@ function Page() {
 
   if (section.kind === "discover") return <Discover />;
   if (section.kind === "commonplace") return <Commonplace />;
+  if (section.kind === "catalogue") return <CatalogueView key={section.id} id={section.id} />;
   if (!total)
     return (
       <Centered>

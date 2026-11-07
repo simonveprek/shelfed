@@ -2,7 +2,8 @@ import type { Book, Collection } from "../../../shared/types";
 import { KINDLE_EMAIL, KINDLE_LIMIT, KINDLE_USB } from "../../../shared/types";
 import { toast } from "@/components/ui";
 import { api, isMac, on } from "./api";
-import { relistKindle } from "./kindle";
+import { onYourDevice, readerAt, relistKindle } from "./kindle";
+import { readerFile, type Reader } from "../../../shared/ereaders";
 import { notInLibrary } from "./onkindle";
 import { extractContent, parseBook, saveCover } from "./books";
 import { readCalibreOpf } from "./calibre";
@@ -391,6 +392,10 @@ export function usbPlan(book: Book): { ext: string; convert: boolean } | null {
   return null;
 }
 
+/** Which file goes to a Kobo or PocketBook: one it reads as it is, or an EPUB made for it. */
+export const readerPlan = (book: Book, reader: Reader) =>
+  readerFile(book.formats.map((f) => f.ext), reader, Boolean(targetsFor(book).find((t) => t.ext === "epub")?.possible));
+
 /** Tells the 3D Kindle what's happening, and lets it rest a moment after. */
 function kindleBusy(via: "cable" | "email", bookId: string) {
   const mine = { via, bookId, state: "working" as const, progress: 0 };
@@ -441,6 +446,7 @@ export async function sendByEmail(ids: string[]) {
 
 export async function sendByCable(ids: string[], device: string) {
   const books = ids.map(bookById).filter(Boolean) as Book[];
+  const reader = readerAt(device);
   const job = startJob(books.length === 1 ? t("Copying {title}", { title: books[0].title }) : tn(books.length, "Copying {n} book", "Copying {n} books"));
   const kindle = kindleBusy("cable", books[0]?.id ?? "");
   let failures = 0;
@@ -450,8 +456,8 @@ export async function sendByCable(ids: string[], device: string) {
     job.update({ progress: i / books.length, detail: book.title });
     kindle.progress(i / books.length);
     try {
-      const plan = usbPlan(book);
-      if (!plan) throw new Error(t("Shelfed can't read this book's files to make a Kindle file from them"));
+      const plan = reader ? readerPlan(book, reader) : usbPlan(book);
+      if (!plan) throw new Error(reader ? t("Shelfed can't read this book's files to make an EPUB from them") : t("Shelfed can't read this book's files to make a Kindle file from them"));
       if (plan.convert) {
         const inner = { ...job, update: (p: { detail?: string }) => p.detail && job.update({ detail: p.detail }) } as JobHandle;
         book = await convert(book.id, plan.ext, inner);
@@ -472,6 +478,7 @@ export async function sendByCable(ids: string[], device: string) {
   relistKindle();
   if (failures === books.length) job.fail(lastError);
   else if (failures) job.fail(t("{n} of {total} were not copied", { n: String(failures), total: String(books.length) }));
+  else if (reader) job.done(books.length === 1 ? onYourDevice(reader) : tn(books.length, "Copied {n} book to your {reader}", "Copied {n} books to your {reader}", { reader: reader.name }));
   else job.done(books.length === 1 ? t("On your Kindle") : tn(books.length, "Copied {n} book to your Kindle", "Copied {n} books to your Kindle"));
 }
 
@@ -496,7 +503,7 @@ export async function bringFromKindle() {
   job?.done(t("Copied off your Kindle"));
   const paths = here.paths;
   const result = paths.length
-    ? await importPaths(paths, false, "your Kindle").finally(() => {
+    ? await importPaths(paths, false, drive.kind ? "your e-reader" : "your Kindle").finally(() => {
         if (here.temporary) for (const path of paths) api.forgetDownload(path);
       })
     : null;

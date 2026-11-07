@@ -11,11 +11,12 @@ import { KINDLE_EMAIL, READABLE } from "../shared/types";
 import { epubToAzw3 } from "./azw3";
 import { docxToHtml, htmlToPdf } from "./convert";
 import { closeAll as closeKindles, kindleReport, look as lookAtKindles, readyDevices, setConnector } from "./mtp";
-import { copyToDevice, deviceFiles, filesFromDevice, findDevices, isPluggedIn, kindlePort, kindlesOnUsb, readClippings, removeFromDevice, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
+import { asIfPlugged, copyToDevice, deviceFiles, filesFromDevice, findDevices, isPluggedIn, kindlePort, kindlesOnUsb, readClippings, removeFromDevice, SMTP_PRESETS, sendToKindle, verifyMail } from "./kindle";
 import { Library } from "./library";
 import { fetchBytes, searchGoogle, searchOpenLibrary } from "./metadata";
 import { downloadBook, forgetDownload, freeBooks, freeSummary } from "./catalogues";
 import { lookUp } from "./lookup";
+import { addCatalogue, catalogueImage, cataloguePage, downloadFromCatalogue, removeCatalogue, searchCatalogue } from "./opds";
 import { fromLocale, language, setLanguage, t, tc } from "../shared/i18n";
 import "../shared/locales";
 import { findCalibre } from "./calibre";
@@ -209,10 +210,10 @@ const send = (channel: string, ...args: unknown[]) => win?.webContents.send(chan
 
 /** A path the page gave as a Kindle, once it's known to be one. */
 async function aKindle(device: string) {
-  if (typeof device !== "string") throw new Error(t("Your Kindle isn't plugged in any more."));
+  if (typeof device !== "string") throw new Error(t("That e-reader isn't plugged in any more."));
   const demo = demoKindle();
   const plugged = demo?.drive ? demo.drive.path === device : await isPluggedIn(device);
-  if (!plugged) throw new Error(t("Your Kindle isn't plugged in any more."));
+  if (!plugged) throw new Error(t("That e-reader isn't plugged in any more."));
   return device;
 }
 
@@ -238,10 +239,17 @@ function startDemoMtp(folder: string) {
  * as no drive. Either one stands in for the system's look at the USB bus, and
  * neither works in an installed app.
  */
-function demoKindle(): { usb: KindleOnUsb; drive?: KindleDevice; mtp?: boolean } | null {
+function demoKindle(): { usb?: KindleOnUsb; drive?: KindleDevice; mtp?: boolean } | null {
   const folder = !app.isPackaged && process.env.SHELF_DEMO_KINDLE;
   if (!folder) return null;
   if (folder === "phone") return { usb: { serial: "G000DEMO", model: "colorsoft", link: "failed" } };
+  // kobo:<folder> or pocketbook:<folder>: another e-reader, plugged in as that drive.
+  const other = folder.match(/^(kobo|pocketbook):(.+)$/);
+  if (other) {
+    const drive: KindleDevice = { name: other[1] === "kobo" ? "KOBOeReader" : "PocketBook", path: other[2], free: 5_400_000_000, kind: other[1] as "kobo" | "pocketbook" };
+    asIfPlugged([drive]);
+    return { drive };
+  }
   if (folder.startsWith("mtp:")) {
     startDemoMtp(folder.slice(4));
     return { usb: { serial: "G000DEMO", model: "colorsoft" }, mtp: true };
@@ -275,9 +283,10 @@ function showIcon() {
 /* ------------------------------------------------------------------------ */
 
 function serve() {
-  // shelf://thumb/<id>, shelf://cover/<id>, shelf://file/<id>/<ext>
+  // shelf://thumb/<id>, shelf://cover/<id>, shelf://file/<id>/<ext>, and shelf://catalogue/?u=<a catalogue's cover>
   protocol.handle("shelf", async (request) => {
     const url = new URL(request.url);
+    if (url.host === "catalogue") return catalogueImage(url.searchParams.get("u"));
     const [id, ext] = url.pathname.slice(1).split("/");
     const book = library.books.get(id);
     if (!book) return new Response("Not found", { status: 404 });
@@ -368,7 +377,9 @@ const api = {
   },
 
   settings: (patch: Partial<Settings>) => {
-    const settings = setSettings(patch);
+    // Catalogues are added and removed only below, once they've answered as one.
+    const { catalogues: _, ...rest } = patch ?? {};
+    const settings = setSettings(rest);
     if ("downloads" in patch) followDownloads();
     if ("language" in patch) {
       speak();
@@ -422,10 +433,10 @@ const api = {
   async kindlePort() {
     const demo = demoKindle();
     if (demo?.mtp) {
-      const { usb, devices } = lookAtKindles([demo.usb]);
+      const { usb, devices } = lookAtKindles([demo.usb!]);
       return { usb, drives: devices };
     }
-    return demo ? { usb: [demo.usb], drives: demo.drive ? [demo.drive] : [] } : kindlePort();
+    return demo ? { usb: demo.usb ? [demo.usb] : [], drives: demo.drive ? [demo.drive] : [] } : kindlePort();
   },
   kindles: () => kindlesOnUsb(),
 
@@ -477,6 +488,13 @@ const api = {
 
   freeBooks: (source: "standard" | "gutenberg", query: string) => freeBooks(source, query),
   freeSummary: (id: string) => freeSummary(id),
+
+  /** Catalogues you add yourself: a page of one, a search of it, a book from it. */
+  addCatalogue: (url: string) => addCatalogue(url),
+  removeCatalogue: (id: string) => removeCatalogue(String(id)),
+  cataloguePage: (url: string) => cataloguePage(url),
+  searchCatalogue: (link: string, query: string) => searchCatalogue(link, query),
+  downloadFromCatalogue: (url: string, title: string, ext: string) => downloadFromCatalogue(url, String(title), String(ext)),
 
   /** What a word in a book means, from Wiktionary, or who or what a name is, from Wikipedia. */
   lookUp: (text: string, bookLanguage?: string) => lookUp(String(text), typeof bookLanguage === "string" ? bookLanguage : undefined, language()),

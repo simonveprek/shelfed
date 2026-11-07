@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useVelocity } from "framer-motion";
 import { FINISHES, kindleById } from "../../../shared/kindles";
+import { READERS } from "../../../shared/ereaders";
 import { Aura, AURA_PALETTES, type AuraColors } from "@/components/fragms/aura";
 import { EASE } from "@/components/ui";
 import { BUSY_KINDLE, PHONE_LIKE, useOnKindle } from "@/lib/kindle";
@@ -67,7 +68,9 @@ export function KindleArrival() {
   }, [speed]);
 
   const drive = port?.drives[0];
-  const model = kindleById(kindle.model ?? drive?.model ?? port?.usb.find((k) => k.model)?.model) ?? kindleById("pw5")!;
+  const reader = drive?.kind ? READERS[drive.kind] : null;
+  const model = reader?.model ?? kindleById(kindle.model ?? drive?.model ?? port?.usb.find((k) => k.model)?.model) ?? kindleById("pw5")!;
+  const finish = reader ? undefined : kindle.finish;
   const reading = books.filter((b) => b.status === "reading").sort((a, b) => (b.opened ?? 0) - (a.opened ?? 0))[0];
 
   const dismiss = useCallback(() => done(), []);
@@ -104,7 +107,7 @@ export function KindleArrival() {
           exit={{ opacity: 0, transition: { duration: 0.45, delay: 0.25 } }}
         >
           {/* Light along the window's edges, answering the Kindle. */}
-          <Aura fixed level={level} palette={glowFor(kindle.finish)} intensity={1.15} radius={isMac ? 12 : 8} />
+          <Aura fixed level={level} palette={glowFor(finish)} intensity={1.15} radius={isMac ? 12 : 8} />
           {/* A ring going out from it the moment the plug goes in. */}
           {plugged && (
             <motion.span
@@ -124,7 +127,7 @@ export function KindleArrival() {
             // Clicks on the Kindle are its own, a tap that wakes the screen, not a way out.
             onClick={(e) => e.stopPropagation()}
           >
-            <Kindle3D model={model} finish={kindle.finish} book={plugged ? reading : undefined} height={300} cable={plugged ? "plugged" : "unplugged"} onPulse={onPulse} />
+            <Kindle3D model={model} finish={finish} book={plugged ? reading : undefined} height={300} cable={plugged ? "plugged" : "unplugged"} onPulse={onPulse} />
           </motion.div>
           <motion.div
             className="-mt-6 flex flex-col items-center text-center"

@@ -1,17 +1,18 @@
 Shelfed is a quiet home for your books, on Mac and Windows. Free and open source.
 
-## New in 0.3.0
+## New in 0.4.0
 
-- **Cable copying to Kindles from 2024 on.** The 2024 Paperwhite, the Colorsoft and the 2024 Kindle connect the way phones do, not as a drive. Shelfed now talks to them itself, on Mac and Windows, with nothing else to install. Drag a book onto one to copy it, see what's on it, bring its books over, and take the finished ones off.
-- **Look up a word while reading.** Select a word and choose Look up. Shelfed shows what it means, from Wiktionary, and finds the word it comes from, so "knihou" gives "kniha". For a name or a place it shows what Wikipedia says, in the book's language. Only the word goes online, and only when you ask.
+- **Kobo and PocketBook.** Plug one in and Shelfed knows it: it shows in the side panel with what's on it, and the books of yours on it get a badge and a place of their own. Drag a book onto it to copy it across as an EPUB, bring its books into your library, and take the finished ones off.
+- **Your own catalogues.** Add any OPDS catalogue next to the free classics: a Calibre content server at home, a library's, or one a reading app told you about. Browse its shelves, search it, and add a book in one click. Shelfed only ever follows the catalogue's own links.
 
 ## What's in it
 
 - **Your library as plain files.** One folder per author in `Documents/Shelf Library`, readable with or without Shelfed. Covers, a list, shelves, or a 3D bookcase in paper, oak, walnut or slate.
 - **A reader for every format.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens every book where you stopped, reads aloud in your system's voices, and gathers what you mark into a commonplace book.
 - **Your Kindle, by name.** Plug one in and Shelfed recognises the model, from the Kindle 2 to the Colorsoft and Scribe, and shows it in 3D. Drag a book onto it to copy it across by cable, even to the newest ones, or send it by email from your own mail account. Books already on it get a badge, and a list of their own, and the ones you've finished can come off it in one go.
+- **Kobo and PocketBook too.** Recognised when plugged in, sent books by dragging, as EPUBs they read as they are.
 - **Converting, built in.** EPUB, AZW3 for Kindle, PDF, Word, FB2, plain text and web pages, with nothing else to install. A PDF becomes a real EPUB, with its chapters, headings and pictures, and you can look it over first.
-- **Finding books.** An empty library starts with eight classics in one click. Thousands more free classics from Standard Ebooks and Project Gutenberg, suggestions worked out from what you own, and details from Open Library and Google Books.
+- **Finding books.** An empty library starts with eight classics in one click. Thousands more free classics from Standard Ebooks and Project Gutenberg, any OPDS catalogue you add, such as your Calibre server, suggestions worked out from what you own, and details from Open Library and Google Books.
 - **Coming from Calibre.** Shelfed finds your Calibre library by itself and offers to bring it over: every book once, with its formats, cover, series and tags.
 - **Books you download come in by themselves.** A new EPUB, MOBI, AZW3, FB2 or comic in your Downloads folder joins the library while Shelfed is open.
 - **In English and Czech.** Shelfed speaks your system's language, or the one you choose in Settings.
@@ -21,9 +22,9 @@ Shelfed is a quiet home for your books, on Mac and Windows. Free and open source
 
 | | |
 | --- | --- |
-| Mac with Apple silicon (M1 and later) | `Shelfed-0.3.0-mac-arm64.dmg` |
-| Mac with Intel | `Shelfed-0.3.0-mac-x64.dmg` |
-| Windows, ARM PCs too | `Shelfed-0.3.0-win-x64.exe` |
+| Mac with Apple silicon (M1 and later) | `Shelfed-0.4.0-mac-arm64.dmg` |
+| Mac with Intel | `Shelfed-0.4.0-mac-x64.dmg` |
+| Windows, ARM PCs too | `Shelfed-0.4.0-win-x64.exe` |
 
 ## Opening it the first time
 
