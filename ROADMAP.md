@@ -2,16 +2,11 @@
 
 Where Shelfed is going, roughly in order. These are plans, not promises: the order changes with what people ask for. A 👍 on an [issue](https://github.com/simonveprek/shelfed/issues) counts, and so does opening one.
 
-## Now: 0.3
+## Now: 0.4
 
-A library kept as plain files; a reader for every common format; converting with nothing else to install; Kindles recognised over USB and sent books by cable or email; free classics; suggestions worked out on your computer. Mac and Windows.
+A library kept as plain files; a reader for every common format; converting with nothing else to install; Kindles, Kobos and PocketBooks recognised over USB and sent books by cable, and Kindles by email; free classics and catalogues of your own; suggestions worked out on your computer. Mac and Windows.
 
-0.2 added a commonplace book of every line you've marked, a moment for finishing a book, and a bookcase that knows what you're reading. 0.3 copies books by cable to Kindles from 2024 on, which connect over MTP the way phones do, and looks up a word while you read.
-
-## 0.4: other e-readers, other catalogues
-
-- **Kobo and PocketBook.** Recognised when plugged in, shown with what's on them, and sent books by dragging, as Kindles are.
-- **Your own catalogues.** Adding any OPDS catalogue, such as a Calibre content server or a library's, next to Standard Ebooks and Project Gutenberg.
+0.2 added a commonplace book of every line you've marked, a moment for finishing a book, and a bookcase that knows what you're reading. 0.3 copied books by cable to Kindles from 2024 on, which connect over MTP the way phones do, and looked up words while you read. 0.4 knows Kobo and PocketBook, and lets you add any OPDS catalogue, such as a Calibre content server.
 
 ## 0.5: alongside Calibre
 

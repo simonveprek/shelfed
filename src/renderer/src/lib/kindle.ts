@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import type { KindleDevice, KindleOnUsb } from "../../../shared/types";
 import { kindleById } from "../../../shared/kindles";
+import { READERS, type Reader } from "../../../shared/ereaders";
 import { api, isWin } from "./api";
 import { booksOnKindle, cableState, finishedOnKindle, notInLibrary } from "./onkindle";
 import { toast } from "@/components/ui";
@@ -79,6 +80,22 @@ export function useKindleWatch() {
   }, []);
 }
 
+/** The e-reader plugged in at a path, or the first one plugged in, when it isn't a Kindle. */
+export function readerAt(path?: string): Reader | null {
+  const drives = useStore.getState().kindlePort?.drives ?? [];
+  const drive = path ? drives.find((d) => d.path === path) : drives[0];
+  return drive?.kind ? READERS[drive.kind] : null;
+}
+
+/** The e-reader plugged in, when it isn't a Kindle, kept up to date. */
+export function useReader(): Reader | null {
+  const kind = useStore((s) => s.kindlePort?.drives[0]?.kind);
+  return kind ? READERS[kind] : null;
+}
+
+/** "On your Kindle", or the same for the e-reader plugged in. */
+export const onYourDevice = (reader: Reader | null) => (reader ? t("On your {reader}", { reader: reader.name }) : t("On your Kindle"));
+
 /** The Kindles plugged in right now, as last seen. */
 export const useKindlePort = () => useStore((s) => s.kindlePort);
 
@@ -112,7 +129,11 @@ export async function tidyKindle() {
   if (!theirs.length) return;
   const freed = await api.removeFromDevice(drive.path, theirs.map((f) => f.path));
   await relistKindle();
-  toast.success(tn(books.length, "Took {n} finished book off your Kindle", "Took {n} finished books off your Kindle"), {
+  const reader = readerAt(drive.path);
+  const said = reader
+    ? tn(books.length, "Took {n} finished book off your {reader}", "Took {n} finished books off your {reader}", { reader: reader.name })
+    : tn(books.length, "Took {n} finished book off your Kindle", "Took {n} finished books off your Kindle");
+  toast.success(said, {
     description: t("{size} free again. They're still in your library.", { size: bytes(freed) }),
   });
 }

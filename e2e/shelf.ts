@@ -65,15 +65,17 @@ export type Shelf = {
   free: string;
   /** A folder of answers standing in for Wiktionary and Wikipedia: wiktionary/<word>.json, wikipedia/<lang>/<title>.json. */
   lookup: string;
+  /** A folder standing in for the web for catalogues: <host>/<path>, so https://catalogue.test/opds is catalogue.test/opds. */
+  opds: string;
   /** The demo Kindle's storage. */
   kindle: string;
 };
 
 /** Each test gets its own Shelfed, on its own empty library, never yours. */
 type Options = {
-  /** A demo Kindle plugged in from the start: a drive, a pretend one speaking real MTP, or one that won't open by cable. */
-  kindle: "drive" | "mtp" | "phone" | undefined;
-  /** Book files already in that drive Kindle's documents folder. */
+  /** A demo e-reader plugged in from the start: a Kindle as a drive, a pretend one speaking real MTP, one that won't open by cable, a Kobo or a PocketBook. */
+  kindle: "drive" | "mtp" | "phone" | "kobo" | "pocketbook" | undefined;
+  /** Book files already on it: in a Kindle's documents folder, or at the top of a Kobo or PocketBook. */
   onKindle: string[];
   /** How the pretend MTP Kindle should misbehave. */
   kindleQuirks: Record<string, unknown>;
@@ -99,6 +101,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
     mkdirSync(join(dir, "Downloads"));
     mkdirSync(join(dir, "free"));
     mkdirSync(join(dir, "lookup"));
+    mkdirSync(join(dir, "opds"));
     // Calibre's settings, empty unless the test gives it a library, so the real one is never found.
     mkdirSync(join(dir, "calibre-config"));
     if (calibre) {
@@ -120,10 +123,14 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
     // out of view and the tests meet what a small screen does, wherever they run.
     writeFileSync(join(data, "window.json"), JSON.stringify({ x: 0, y: 0, width: 1024, height: 677 }));
     // The demo Kindle's drive, with whatever books are already on it.
-    const demo = kindle === "phone" ? "phone" : kindle === "drive" ? join(dir, "Kindle") : kindle === "mtp" ? `mtp:${join(dir, "Kindle")}` : undefined;
+    const demo = kindle === "phone" ? "phone" : kindle === "drive" ? join(dir, "Kindle") : kindle ? `${kindle}:${join(dir, "Kindle")}` : undefined;
     if (kindle === "drive" || kindle === "mtp") {
       mkdirSync(join(dir, "Kindle", "documents"), { recursive: true });
       for (const file of onKindle) writeFileSync(join(dir, "Kindle", "documents", file), "a book");
+    }
+    if (kindle === "kobo" || kindle === "pocketbook") {
+      mkdirSync(join(dir, "Kindle", kindle === "kobo" ? ".kobo" : join("system", "config")), { recursive: true });
+      for (const file of onKindle) writeFileSync(join(dir, "Kindle", file), "a book");
     }
     const errors: string[] = [];
     let app!: ElectronApplication;
@@ -144,6 +151,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
         SHELF_CALIBRE_CONFIG: join(dir, "calibre-config"),
         SHELF_FREE_DIR: join(dir, "free"),
         SHELF_LOOKUP_DIR: join(dir, "lookup"),
+        SHELF_OPDS_DIR: join(dir, "opds"),
         ...(demo ? { SHELF_DEMO_KINDLE: demo, SHELF_DEMO_QUIRKS: JSON.stringify(kindleQuirks) } : {}),
         // On someone's own computer the test books are deleted, not put in their Trash.
         ...(process.env.CI ? {} : { SHELF_NO_TRASH: "1" }),
@@ -173,6 +181,7 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       downloads: join(dir, "Downloads"),
       free: join(dir, "free"),
       lookup: join(dir, "lookup"),
+      opds: join(dir, "opds"),
       kindle: join(dir, "Kindle"),
       async add(books = BOOKS) {
         const paths = books.map((book) => {

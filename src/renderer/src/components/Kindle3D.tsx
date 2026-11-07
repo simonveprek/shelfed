@@ -11,7 +11,7 @@ const lightness = (hex: string) => {
 };
 
 /** Corner radius in millimetres, for each kind of body. */
-const CORNER = { keyboard: 6, buttons: 9, bezel: 9, flush: 7, grip: 6, scribe: 6 } as const;
+const CORNER = { keyboard: 6, buttons: 9, bezel: 9, flush: 7, grip: 6, scribe: 6, kobo: 9, pocketbook: 7 } as const;
 
 const EINK = "#e7e5de";
 const GLASS = "#131315";
@@ -28,6 +28,10 @@ function screenRect(model: KindleModel) {
       return { x: (W - sw) / 2, y: (H - sh) * 0.32, w: sw, h: sh };
     case "grip":
       return { x: 4.5, y: (H - sh) / 2, w: sw, h: sh };
+    case "kobo":
+      return { x: 5.5, y: (H - sh) / 2, w: sw, h: sh };
+    case "pocketbook":
+      return { x: (W - sw) / 2, y: (H - sh) * 0.3, w: sw, h: sh };
     case "scribe":
       return { x: W - sw - 6, y: (H - sh) / 2, w: sw, h: sh };
     default:
@@ -263,10 +267,12 @@ export function Kindle3D({
   const r = CORNER[model.shape] * s;
   const body = FINISHES[finish ?? ""]?.hex ?? FINISHES[model.finishes[0]].hex;
   // Glass fronts are black whatever colour the back is.
-  const front = model.shape === "flush" || model.shape === "grip" ? GLASS : body;
+  const glass = model.shape === "flush" || model.shape === "grip";
+  const front = glass ? GLASS : body;
   const pale = lightness(front) > 0.55;
   const screen = screenRect(model);
-  const recessed = model.shape !== "flush" && model.shape !== "grip";
+  // A Kobo's screen lies flush under its matte front, the rest sit back in their bezel.
+  const recessed = !glass && model.shape !== "kobo";
 
   // Small reactions on top of the float: a hop when a book arrives, a shake when it doesn't, a nudge when plugged in.
   const react = useAnimationControls();
@@ -396,11 +402,74 @@ export function Kindle3D({
         style={{ left: mm(cx - 1.2), top: mm(H * at), width: mm(2.4), height: mm(14), borderRadius: 99, background: "rgb(255 255 255 / 0.12)" }}
       />
     ));
+  } else if (model.shape === "kobo") {
+    // Two page buttons on the grip, one above the other, standing a little proud.
+    const cx = screen.x + screen.w + (W - screen.x - screen.w) / 2;
+    const edge = pale ? "rgb(0 0 0 / 0.14)" : "rgb(255 255 255 / 0.12)";
+    extras = (
+      <>
+        {[H / 2 - 21, H / 2 + 3].map((top) => (
+          <span
+            key={top}
+            className="absolute"
+            style={{
+              left: mm(cx - 3.2),
+              top: mm(top),
+              width: mm(6.4),
+              height: mm(18),
+              borderRadius: mm(3.2),
+              background: `color-mix(in oklab, ${front} 94%, black)`,
+              boxShadow: `inset 0 0 0 ${Math.max(1, mm(0.35))}px ${edge}, 0 ${mm(0.5)}px ${mm(0.8)}px rgb(0 0 0 / 0.12)`,
+            }}
+          />
+        ))}
+        {/* Where the screen's glass meets the frame. */}
+        <span
+          className="absolute"
+          style={{ left: mm(screen.x - 1.6), top: mm(screen.y - 1.6), width: mm(screen.w + 3.2), height: mm(screen.h + 3.2), borderRadius: mm(1.4), boxShadow: `inset 0 0 0 ${Math.max(1, mm(0.3))}px ${edge}` }}
+        />
+      </>
+    );
+  } else if (model.shape === "pocketbook") {
+    // Home, back, forward and menu, across the chin.
+    const chin = screen.y + screen.h;
+    const y = chin + (H - chin) / 2;
+    const ink = pale ? "rgb(0 0 0 / 0.55)" : "rgb(255 255 255 / 0.62)";
+    const key = { w: 17.5, h: 8 };
+    const gap = 2.6;
+    const start = (W - (key.w * 4 + gap * 3)) / 2;
+    const glyphs = [
+      // A house, an arrow back, an arrow on, three lines.
+      "M4 7.6L8 4.3l4 3.3M5.3 6.7v5h5.4v-5",
+      "M9.5 4.5L6 8l3.5 3.5",
+      "M6.5 4.5L10 8l-3.5 3.5",
+      "M4.5 5.5h7M4.5 8h7M4.5 10.5h7",
+    ];
+    extras = glyphs.map((path, i) => (
+      <span
+        key={i}
+        className="absolute flex items-center justify-center"
+        style={{
+          left: mm(start + i * (key.w + gap)),
+          top: mm(y - key.h / 2),
+          width: mm(key.w),
+          height: mm(key.h),
+          borderRadius: mm(2.2),
+          background: `color-mix(in oklab, ${front} 86%, ${pale ? "black" : "white"})`,
+          boxShadow: `0 ${mm(0.5)}px ${mm(0.9)}px rgb(0 0 0 / 0.22), inset 0 ${mm(0.3)}px 0 rgb(255 255 255 / 0.12)`,
+        }}
+      >
+        <svg viewBox="0 0 16 16" width={mm(5.4)} height={mm(5.4)} fill="none" stroke={ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d={path} />
+        </svg>
+      </span>
+    ));
   }
 
   return (
     <div
       className={className}
+      data-model={model.id}
       style={{ perspective: 1100, transform: glow ? "scale(1.05)" : undefined, transition: "transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1)" }}
       onPointerMove={move}
       onPointerLeave={leave}
@@ -477,7 +546,7 @@ export function Kindle3D({
               className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: r,
-                background: recessed
+                background: !glass
                   ? "linear-gradient(160deg, rgb(255 255 255 / 0.1), transparent 35%)"
                   : "linear-gradient(125deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.03) 38%, transparent 52%, rgb(255 255 255 / 0.05))",
                 boxShadow: `inset 0 0 0 ${Math.max(1, mm(0.4))}px rgb(255 255 255 / ${pale ? 0.5 : 0.07})`,

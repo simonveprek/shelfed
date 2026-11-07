@@ -2,18 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Mail01Icon, MailSend01Icon, Tablet01Icon, TabletConnectedUsbIcon } from "@hugeicons/core-free-icons";
 import type { Book, KindleDevice } from "../../../shared/types";
 import { kindleById } from "../../../shared/kindles";
+import { READERS } from "../../../shared/ereaders";
 import { Kindle3D } from "./Kindle3D";
 import { KINDLE_LIMIT } from "../../../shared/types";
 import {
   AlertDialog, Alert, Badge, Button, Dialog, DialogFooter, DialogHeader, Empty, Field, Input, RadioGroup, Segmented, Spinner, Textarea,
 } from "@/components/ui";
 import { List, Meter, Row } from "@/components/bits";
-import { bringCalibreOver, convertMany, emailPlan, removeBooks, sendByCable, sendByEmail, sourceFor, targetsFor, usbPlan } from "@/lib/actions";
+import { bringCalibreOver, convertMany, emailPlan, readerPlan, removeBooks, sendByCable, sendByEmail, sourceFor, targetsFor, usbPlan } from "@/lib/actions";
 import { api } from "@/lib/api";
 import { bookById, patchBooks, saveCollections, setSetting, useStore, type CalibreSummary } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
 import { Cover } from "./Cover";
-import { BUSY_KINDLE, PHONE_LIKE, tidyKindle, useFinishedOnKindle, useOnKindle } from "@/lib/kindle";
+import { BUSY_KINDLE, PHONE_LIKE, tidyKindle, useFinishedOnKindle, useOnKindle, useReader } from "@/lib/kindle";
 import { t, tn } from "../../../shared/i18n";
 
 const close = () => useStore.setState({ dialog: null });
@@ -48,7 +49,8 @@ function BookRows({ books, side }: { books: Book[]; side: (b: Book) => React.Rea
 export function SendDialog({ ids }: { ids: string[] }) {
   const books = useBooks(ids);
   const kindle = useStore((s) => s.settings.kindle);
-  const [mode, setMode] = useState<"email" | "cable">("email");
+  // With a Kobo or PocketBook plugged in and no Kindle mail set up, the cable is what's wanted.
+  const [mode, setMode] = useState<"email" | "cable">(() => (useStore.getState().kindlePort?.drives.some((d) => d.kind) && !kindle.to ? "cable" : "email"));
   const [devices, setDevices] = useState<KindleDevice[] | null>(null);
   const [device, setDevice] = useState("");
   const [sending, setSending] = useState(false);
@@ -77,18 +79,23 @@ export function SendDialog({ ids }: { ids: string[] }) {
   const plans = books.map((book) => ({ book, plan: emailPlan(book), size: book.formats.find((f) => f.ext === emailPlan(book).ext)?.size ?? 0 }));
   const largest = Math.max(0, ...plans.map((p) => p.size));
   const tooBig = largest > KINDLE_LIMIT;
-  const cablePlans = books.map((b) => usbPlan(b));
+  const chosen = devices?.find((d) => d.path === device);
+  const reader = chosen?.kind ? READERS[chosen.kind] : null;
+  const cablePlans = books.map((b) => (reader ? readerPlan(b, reader) : usbPlan(b)));
+  const showsReader = mode === "cable" && reader;
+  const shownModel = showsReader ? reader.model : model;
+  const title = showsReader ? t("Copy to {reader}", { reader: reader.name }) : t("Send to Kindle");
   const cable = useStore((s) => s.kindleCable);
   const onKindle = useOnKindle();
   const already = books.filter((b) => onKindle?.has(b.id)).length;
 
   return (
-    <Dialog open onClose={close} label={t("Send to Kindle")} className="sm:max-w-[520px]">
-      <DialogHeader title={t("Send to Kindle")} description={name(books)} />
+    <Dialog open onClose={close} label={title} className="sm:max-w-[520px]">
+      <DialogHeader title={title} description={name(books)} />
       <div className="flex flex-col gap-4 px-6 pt-5">
-        {model && (
+        {shownModel && (
           <div className="-mb-1 flex justify-center rounded-[16px] bg-well pt-5 pb-2">
-            <Kindle3D model={model} finish={kindle.finish} book={books[0]} height={150} activity={activity?.via === "email" ? activity : null} />
+            <Kindle3D model={shownModel} finish={showsReader ? undefined : kindle.finish} book={books[0]} height={150} activity={activity?.via === "email" ? activity : null} />
           </div>
         )}
         <Segmented
@@ -160,22 +167,34 @@ export function SendDialog({ ids }: { ids: string[] }) {
                 label="Kindle"
                 value={device}
                 onChange={setDevice}
-                options={devices.map((d) => ({ value: d.path, label: kindleById(d.model)?.name ?? d.name, description: t("{size} free", { size: bytes(d.free) }) }))}
+                options={devices.map((d) => ({ value: d.path, label: kindleById(d.model)?.name ?? (d.kind ? READERS[d.kind].name : d.name), description: t("{size} free", { size: bytes(d.free) }) }))}
               />
               <p className="text-label text-muted">
-                {cablePlans.some((p) => !p)
-                  ? t("Shelfed can't read some of these to make Kindle files from them.")
-                  : cablePlans.some((p) => p?.convert)
-                    ? t("Books without a Kindle file get an AZW3 made first. Eject the Kindle before you unplug it.")
-                    : t("Copies the Kindle files straight to the device. Eject it before you unplug it.")}
+                {reader
+                  ? cablePlans.some((p) => !p)
+                    ? t("Shelfed can't read some of these to make an EPUB from them.")
+                    : cablePlans.some((p) => p?.convert)
+                      ? t("Books it can't read as they are get an EPUB made first. Eject it before you unplug it.")
+                      : t("Copies the books as they are. Eject it before you unplug it.")
+                  : cablePlans.some((p) => !p)
+                    ? t("Shelfed can't read some of these to make Kindle files from them.")
+                    : cablePlans.some((p) => p?.convert)
+                      ? t("Books without a Kindle file get an AZW3 made first. Eject the Kindle before you unplug it.")
+                      : t("Copies the Kindle files straight to the device. Eject it before you unplug it.")}
               </p>
               {already > 0 && (
                 <p className="text-label text-muted">
                   {already === books.length
                     ? books.length === 1
-                      ? t("It's already on this Kindle. Copying it again replaces it.")
-                      : t("These are all already on this Kindle. Copying them again replaces them.")
-                    : tn(already, "{n} of these is already on this Kindle, and copying again replaces it.", "{n} of these are already on this Kindle, and copying again replaces them.")}
+                      ? reader
+                        ? t("It's already on it. Copying it again replaces it.")
+                        : t("It's already on this Kindle. Copying it again replaces it.")
+                      : reader
+                        ? t("These are all already on it. Copying them again replaces them.")
+                        : t("These are all already on this Kindle. Copying them again replaces them.")
+                    : reader
+                      ? tn(already, "{n} of these is already on it, and copying again replaces it.", "{n} of these are already on it, and copying again replaces them.")
+                      : tn(already, "{n} of these is already on this Kindle, and copying again replaces it.", "{n} of these are already on this Kindle, and copying again replaces them.")}
                 </p>
               )}
             </>
@@ -209,7 +228,7 @@ export function SendDialog({ ids }: { ids: string[] }) {
               close();
             }}
           >
-            {t("Copy to Kindle")}
+            {reader ? t("Copy to {reader}", { reader: reader.name }) : t("Copy to Kindle")}
           </Button>
         ) : null}
       </DialogFooter>
@@ -433,14 +452,24 @@ export function RemoveConfirm() {
 export function TidyConfirm() {
   const open = useStore((s) => s.confirmTidy);
   const finished = useFinishedOnKindle();
+  const reader = useReader();
   const count = finished?.books.length ?? 0;
+  const size = bytes(finished?.bytes ?? 0);
   return (
     <AlertDialog
       open={open && count > 0}
       onClose={() => useStore.setState({ confirmTidy: false })}
       tone="danger"
-      title={tn(count, "Take {n} finished book off your Kindle?", "Take {n} finished books off your Kindle?")}
-      description={t("That frees {size} on it. A Kindle has no Trash, so they go from it for good, with their notes there, but they stay in your library and can go back on any time.", { size: bytes(finished?.bytes ?? 0) })}
+      title={
+        reader
+          ? tn(count, "Take {n} finished book off your {reader}?", "Take {n} finished books off your {reader}?", { reader: reader.name })
+          : tn(count, "Take {n} finished book off your Kindle?", "Take {n} finished books off your Kindle?")
+      }
+      description={
+        reader
+          ? t("That frees {size} on it. An e-reader has no Trash, so they go from it for good, but they stay in your library and can go back on any time.", { size })
+          : t("That frees {size} on it. A Kindle has no Trash, so they go from it for good, with their notes there, but they stay in your library and can go back on any time.", { size })
+      }
       confirmLabel={t("Take them off")}
       onConfirm={() => tidyKindle()}
     >

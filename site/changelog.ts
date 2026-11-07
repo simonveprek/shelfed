@@ -13,6 +13,15 @@ export type Release = {
 
 export const RELEASES_MADE: Release[] = [
   {
+    version: "0.4.0",
+    date: "2026-11-05",
+    summary: "Kobo and PocketBook, and catalogues of your own.",
+    changes: [
+      "Kobo and PocketBook e-readers are recognised when plugged in. Shelfed shows what's on them, copies books across as EPUBs, brings theirs into your library, and takes the finished ones off.",
+      "Add any OPDS catalogue next to the free classics, such as a Calibre content server or a library's. Browse it, search it, and add a book in one click.",
+    ],
+  },
+  {
     version: "0.3.0",
     date: "2026-11-05",
     summary: "Newer Kindles by cable, and words looked up while reading.",

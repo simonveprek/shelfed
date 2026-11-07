@@ -20,7 +20,11 @@ export type KindleShape =
   /** A wide grip down one side, with page buttons. */
   | "grip"
   /** A wide grip down the left, for a pen. */
-  | "scribe";
+  | "scribe"
+  /** Not a Kindle: a Kobo, with a matte front, a grip down the right and two page buttons on it. */
+  | "kobo"
+  /** Not a Kindle: a PocketBook, with a deep chin and a row of four buttons on it. */
+  | "pocketbook";
 
 export type KindleModel = {
   id: string;

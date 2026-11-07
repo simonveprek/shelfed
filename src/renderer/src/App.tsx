@@ -23,6 +23,7 @@ import { Onboarding } from "@/components/Onboarding";
 import { ClippingsDialog } from "@/components/Clippings";
 import { KindleArrival } from "@/components/KindleArrival";
 import { useKindleWatch } from "@/lib/kindle";
+import { AddCatalogue } from "./components/Catalogue";
 import { PdfToEpub } from "./components/PdfToEpub";
 
 /** Keeps the window's own colour in step with light and dark. */
@@ -56,6 +57,8 @@ function Dialogs() {
       return <RenameCollection key={dialog.id} id={dialog.id} />;
     case "clippings":
       return <ClippingsDialog text={dialog.text} from={dialog.from} />;
+    case "add-catalogue":
+      return <AddCatalogue />;
     case "pdf-epub":
       return <PdfToEpub key={dialog.id} id={dialog.id} />;
     case "calibre":
@@ -146,7 +149,7 @@ class Mend extends Component<{ children: ReactNode }, { error: Error | null }> {
 function Library() {
   const inspector = useStore((s) => s.settings.inspector);
   // Nothing to say about an empty library, or beside the free books unless one is selected.
-  const showPanel = useStore((s) => s.books.length > 0 && ((s.section.kind !== "discover" && s.section.kind !== "commonplace") || s.selection.length > 0));
+  const showPanel = useStore((s) => s.books.length > 0 && ((s.section.kind !== "discover" && s.section.kind !== "commonplace" && s.section.kind !== "catalogue") || s.selection.length > 0));
   // The library steps back while a Kindle that was just plugged in says hello.
   const welcoming = useStore((s) => Boolean(s.kindleArrived && !s.reading && !s.onboarding && !s.dialog));
   return (

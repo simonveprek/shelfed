@@ -17,6 +17,8 @@ export type Section =
   | { kind: "commonplace" }
   /** The books already on the Kindle plugged in by cable. */
   | { kind: "kindle" }
+  /** A catalogue you added. */
+  | { kind: "catalogue"; id: string }
   | { kind: "group"; by: Browse; value: string };
 
 /** What bringing a Calibre library over came to. */
@@ -27,6 +29,7 @@ export type Dialog =
   | { kind: "settings"; tab?: SettingsSection }
   | { kind: "rename-collection"; id: string }
   | { kind: "clippings"; text: string; from: string }
+  | { kind: "add-catalogue" }
   /** Making an EPUB from a book's PDF, looked over first. */
   | { kind: "pdf-epub"; id: string }
   /** Bringing a Calibre library over: the offer, then what came of it. */
