@@ -13,6 +13,22 @@ export type Release = {
 
 export const RELEASES_MADE: Release[] = [
   {
+    version: "0.2.0",
+    date: "2026-11-05",
+    summary: "A commonplace book, PDFs made into real EPUBs, and a bookcase that knows what you're reading.",
+    changes: [
+      "A PDF can become an EPUB that reads like a book: chapters from its bookmarks or headings, paragraphs joined back up, words broken over lines made whole, two columns read in order, pictures kept, and the running heads and page numbers left out. You look it over first, name the chapters and choose what to keep.",
+      "Drag a box over the covers or down the list to select books, as on the desktop, with Cmd or Ctrl to add to what's selected.",
+      "A commonplace book gathers every line you've marked, in every book. Search it, copy it out as Markdown, or open a book right where the line is.",
+      "Finishing a book is a moment: Shelfed asks how you liked it, shows how long it took, and offers what's next, the next in its series first.",
+      "What you're reading lies in a pile on top of the bookcase, a series stands together as a box set, and a shelf can run through its spines' colours.",
+      "The 3D bookcase draws only what you can see, so a big library stays smooth.",
+      "The reader's page follows the app's light or dark, unless you choose a paper yourself.",
+      "Every screen got a polish: readable titles at any width, covers that keep one size, and books without a cover in their spine's colour.",
+      "Settings links here, to what's new.",
+    ],
+  },
+  {
     version: "0.1.3",
     date: "2026-10-30",
     summary: "See what a free book is before adding it.",

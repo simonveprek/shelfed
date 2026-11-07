@@ -95,10 +95,28 @@ function useChrome() {
   return shown;
 }
 
-export const saveProgress = debounce(async (id: string, progress: number, location: string, ext: string) => {
+/** Books turned since their place was last kept, so a page settling after a turn doesn't hide it. */
+const turnedSince = new Set<string>();
+
+/**
+ * Keeps where a book was left. Reaching its end marks it finished, but only
+ * by turning there: a book that opens on its last page, like one short enough
+ * to fit on one, hasn't been read yet.
+ */
+export const saveProgress = Object.assign(
+  (id: string, progress: number, location: string, ext: string, turned = true) => {
+    if (turned) turnedSince.add(id);
+    keepProgress(id, progress, location, ext);
+  },
+  // Keeps it now, when the book or the app is closing.
+  { flush: () => keepProgress.flush() },
+);
+
+const keepProgress = debounce(async (id: string, progress: number, location: string, ext: string) => {
   const book = useStore.getState().books.find((b) => b.id === id);
   if (!book) return;
-  const finished = progress >= 0.995 && book.status !== "finished";
+  const turned = turnedSince.delete(id);
+  const finished = turned && progress >= 0.995 && book.status !== "finished";
   const patch = { progress, location, readFormat: ext, ...(finished ? { status: "finished" as const } : {}) };
   upsert({ ...book, ...patch });
   await api.update(id, patch);
@@ -367,6 +385,8 @@ type FoliateView = HTMLElement & {
   clearSearch: () => void;
   book: { toc?: TocItem[]; transformTarget?: EventTarget };
   renderer: HTMLElement & { setStyles?: (css: string) => void };
+  /** Where the book is, as the view's last relocate said. */
+  lastLocation?: { fraction?: number; cfi?: string };
 };
 
 function applyLayout(view: FoliateView, prefs: ReaderPrefs) {
@@ -519,7 +539,15 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
           if (d.range) here.current = d.range;
           setPicked(null);
           touch();
-          if (d.cfi) saveProgress(book.id, d.fraction ?? 0, d.cfi, ext);
+        });
+        // The pages say why they moved, which the view's own event leaves out. Opening the book goes
+        // to its place, and laying it out again is an "anchor"; anything else after it's open is the
+        // reader turning, scrolling or going somewhere. This runs after the view has taken in the new place.
+        let open = false;
+        const pages = el.renderer;
+        pages.addEventListener("relocate", (e: Event) => {
+          const where = el?.lastLocation;
+          if (where?.cfi) saveProgress(book.id, where.fraction ?? 0, where.cfi, ext, open && (e as CustomEvent).detail?.reason !== "anchor");
         });
         // Highlights are drawn as each part of the book loads.
         el.addEventListener("create-overlay", (e: Event) => {
@@ -568,6 +596,7 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
           // A place that no longer fits the file opens the book at its start instead.
           await el.init({ showTextStart: true });
         }
+        open = true;
         setLoading(false);
       } catch (err) {
         if (alive) setError(t("This {format} could not be opened. {error}", { format: ext.toUpperCase(), error: (err as Error).message ?? "" }).trim());
@@ -877,10 +906,14 @@ function PdfReader({ book }: { book: Book }) {
     }
   }, [doc, goTo, savedPage]);
 
+  // The first page seen is where the PDF opened; only other pages were turned to.
+  const opened = useRef<number | null>(null);
   const onVisible = useCallback(
     (n: number) => {
       setPage(n);
-      if (doc && restored.current) saveProgress(book.id, n / doc.numPages, String(n), "pdf");
+      if (!doc || !restored.current) return;
+      opened.current ??= n;
+      saveProgress(book.id, n / doc.numPages, String(n), "pdf", n !== opened.current);
     },
     [doc, book.id],
   );

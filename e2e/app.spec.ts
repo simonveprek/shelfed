@@ -847,6 +847,9 @@ test.describe("the book features", () => {
   test("in the bookcase, what's being read lies on a pile, and isn't on the shelf as well", async ({ shelf }) => {
     const { page } = shelf;
     await shelf.add();
+    // The case leaning toward the pointer isn't what this is about, and it would have the book on the move
+    // as Playwright aims at it: each try moves the pointer, the case leans on, and the book is never still.
+    await page.evaluate(() => window.shelf.call("settings", { bookcase: { lean: false } }));
     await change(page, { "Salt and Ink": { status: "reading", opened: 5, progress: 0.4 } });
     await page.getByRole("radio", { name: "Bookcase in 3D" }).click();
     await expect(page.locator("main .group[draggable=true]").first()).toBeVisible();

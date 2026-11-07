@@ -26,6 +26,8 @@ export type Dialog =
   | { kind: "settings"; tab?: SettingsSection }
   | { kind: "rename-collection"; id: string }
   | { kind: "clippings"; text: string; from: string }
+  /** Making an EPUB from a book's PDF, looked over first. */
+  | { kind: "pdf-epub"; id: string }
   /** Bringing a Calibre library over: the offer, then what came of it. */
   | { kind: "calibre"; path: string; books: number; working?: boolean; done?: CalibreSummary };
 

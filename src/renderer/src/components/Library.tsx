@@ -3,7 +3,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { motion } from "framer-motion";
 import {
   ArrowDataTransferHorizontalIcon, ArrowRight01Icon, BookOpen01Icon, CheckmarkCircle02Icon, Delete02Icon, FavouriteIcon,
-  FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, Layers01Icon, LibraryIcon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon, Tablet01Icon,
+  FileAddIcon, Folder01Icon, FolderAddIcon, FolderOpenIcon, Layers01Icon, LibraryIcon, FileEditIcon, MagicWand01Icon, MailSend01Icon, PencilEdit02Icon, Tablet01Icon,
 } from "@hugeicons/core-free-icons";
 import type { Book } from "../../../shared/types";
 import { Badge, Button, ContextMenu, cx, DataTable, EASE, Icon, MenuItem, MenuLabel, MenuSeparator, Progress, type DataTableColumn } from "@/components/ui";
@@ -23,6 +23,7 @@ import { Commonplace } from "./Commonplace";
 import { Discover } from "./Discover";
 import { Cover } from "./Cover";
 import { t, tn } from "../../../shared/i18n";
+import { boxStyle, touches, useMarquee } from "@/lib/marquee";
 
 /* ------------------------------------------------------------------------ */
 /* The menu every book has, on a right click                                 */
@@ -47,6 +48,9 @@ export function BookMenu({ ids }: { ids: string[] }) {
       {one && <MenuItem icon={BookOpen01Icon} onSelect={() => runAction("read", ids)}>{t("Read")}</MenuItem>}
       <MenuItem icon={MailSend01Icon} onSelect={() => runAction("send", ids)}>{t("Send to Kindle")}</MenuItem>
       <MenuItem icon={ArrowDataTransferHorizontalIcon} onSelect={() => runAction("convert", ids)}>{t("Convert")}</MenuItem>
+      {one && one.formats.some((f) => f.ext === "pdf") && !one.formats.some((f) => f.ext === "epub") && (
+        <MenuItem icon={FileEditIcon} onSelect={() => useStore.setState({ dialog: { kind: "pdf-epub", id: one.id } })}>{t("Make an EPUB from this PDF")}</MenuItem>
+      )}
       {one && <MenuItem icon={MagicWand01Icon} onSelect={() => runAction("metadata", ids)}>{t("Find details online")}</MenuItem>}
       {one && <MenuItem icon={PencilEdit02Icon} onSelect={() => runAction("edit", ids)}>{t("Edit details")}</MenuItem>}
       <MenuSeparator />
@@ -229,19 +233,36 @@ export function Grid({ visible }: { visible: Book[] }) {
   useEffect(() => virtual.measure(), [rowHeight, virtual]);
   useKeys(visible, columns, (i) => virtual.scrollToIndex(Math.floor(i / columns), { align: "auto" }));
 
+  // A box drawn over the covers selects every book it touches, worked out from where each cover sits,
+  // so books scrolled out of sight, and so never drawn, are caught as well.
+  const marquee = useMarquee(ref, (box) => {
+    const top = 24;
+    const card = rowHeight - Math.round(gap * 0.7);
+    const ids: string[] = [];
+    const first = Math.max(0, Math.floor((box.y - top) / rowHeight));
+    const last = Math.floor((box.y + box.height - top) / rowHeight);
+    for (let row = first; row <= last; row++)
+      for (let column = 0; column < columns; column++) {
+        const book = visible[row * columns + column];
+        if (book && touches(box, { x: pad + column * (cell + gap), y: top + row * rowHeight, width: cell, height: card })) ids.push(book.id);
+      }
+    return ids;
+  });
+
   return (
     <BooksMenu>
       <div
         ref={ref}
-        className="scroll h-full"
+        className="scroll relative h-full"
         onMouseDown={(e) => {
-          if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.row !== undefined) useStore.setState({ selection: [] });
+          if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.row !== undefined) marquee.begin(e);
         }}
         onContextMenu={(e) => {
           if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.row !== undefined) useStore.setState({ selection: [] });
         }}
       >
-        <div style={{ height: virtual.getTotalSize(), position: "relative" }}>
+        {/* The space around and between the covers is empty space too, to click or start a box from. */}
+        <div data-row="" style={{ height: virtual.getTotalSize(), position: "relative" }}>
           {virtual.getVirtualItems().map((row) => (
             <div
               key={row.key}
@@ -255,6 +276,7 @@ export function Grid({ visible }: { visible: Book[] }) {
             </div>
           ))}
         </div>
+        {marquee.box && <div data-marquee="" style={boxStyle(marquee.box)} />}
       </div>
     </BooksMenu>
   );
@@ -282,6 +304,7 @@ export function List({ visible }: { visible: Book[] }) {
         sortValue: (b) => b.title.toLowerCase(),
         cell: (b) => (
           <button
+            data-book={b.id}
             className="flex min-w-0 items-center gap-3 text-left"
             onClick={(e) => selectBook(e, b.id, visible)}
             onDoubleClick={() => openReader(b.id)}
@@ -318,9 +341,29 @@ export function List({ visible }: { visible: Book[] }) {
     ];
     return all.filter((column) => !width || width >= (LIST_NEEDS[column.id] ?? 0));
   }, [visible, width]);
+  // A box drawn down the list selects every row it touches.
+  const marquee = useMarquee(ref, (box) => {
+    const view = ref.current;
+    if (!view) return [];
+    const at = view.getBoundingClientRect();
+    return [...view.querySelectorAll<HTMLElement>("[data-book]")]
+      .filter((button) => {
+        const r = (button.closest("tr") ?? button).getBoundingClientRect();
+        return touches(box, { x: r.left - at.left + view.scrollLeft, y: r.top - at.top + view.scrollTop, width: r.width, height: r.height });
+      })
+      .map((button) => button.dataset.book!);
+  });
   return (
     <BooksMenu>
-      <div ref={ref} className="scroll h-full px-6 pt-5 pb-24">
+      <div
+        ref={ref}
+        className="scroll relative h-full px-6 pt-5 pb-24"
+        onMouseDown={(e) => {
+          // Anywhere but the books' own titles, the header and the controls.
+          if (!(e.target as HTMLElement).closest("button, a, input, th, [draggable=true], [role=menu]")) marquee.begin(e);
+        }}
+      >
+        {marquee.box && <div data-marquee="" style={boxStyle(marquee.box)} />}
         <DataTable
           rows={visible}
           columns={columns}

@@ -8,7 +8,7 @@ import {
   AlertDialog, Alert, Badge, Button, Dialog, DialogFooter, DialogHeader, Empty, Field, Input, RadioGroup, Segmented, Spinner, Textarea,
 } from "@/components/ui";
 import { List, Meter, Row } from "@/components/bits";
-import { bringCalibreOver, convertMany, emailPlan, removeBooks, sendByCable, sendByEmail, targetsFor, usbPlan } from "@/lib/actions";
+import { bringCalibreOver, convertMany, emailPlan, removeBooks, sendByCable, sendByEmail, sourceFor, targetsFor, usbPlan } from "@/lib/actions";
 import { api } from "@/lib/api";
 import { bookById, patchBooks, saveCollections, setSetting, useStore, type CalibreSummary } from "@/lib/store";
 import { bytes, plural } from "@/lib/util";
@@ -229,6 +229,8 @@ export function ConvertDialog({ ids }: { ids: string[] }) {
   const [to, setTo] = useState(() => targets.find((x) => x.possible && !first?.formats.some((f) => f.ext === x.ext))?.ext ?? "epub");
   if (!first) return null;
   const target = targets.find((x) => x.ext === to);
+  // One book's EPUB made from its PDF is looked over first.
+  const fromPdf = books.length === 1 && to === "epub" && sourceFor(first, "epub") === "pdf";
 
   return (
     <Dialog open onClose={close} label={t("Convert")} className="sm:max-w-[560px]">
@@ -256,6 +258,9 @@ export function ConvertDialog({ ids }: { ids: string[] }) {
             meta: books.every((b) => b.formats.some((f) => f.ext === x.ext)) ? <Badge tone="success">{t("Have it")}</Badge> : undefined,
           }))}
         />
+        {fromPdf && (
+          <p className="text-label text-muted">{t("From a PDF, Shelfed shows you what it found first, so you can name the chapters and choose what to keep.")}</p>
+        )}
         {to === "pdf" && (
           <Field label={t("Page size")} hint={t("Kindle makes pages the size of a Paperwhite screen.")}>
             <Segmented
@@ -274,11 +279,12 @@ export function ConvertDialog({ ids }: { ids: string[] }) {
           variant="primary"
           disabled={!target?.possible}
           onClick={() => {
+            if (fromPdf) return useStore.setState({ dialog: { kind: "pdf-epub", id: first.id } });
             convertMany(ids, to);
             close();
           }}
         >
-          {t("Make {format}", { format: target ? t(target.label) : "" })}
+          {fromPdf ? t("Look it over") : t("Make {format}", { format: target ? t(target.label) : "" })}
         </Button>
       </DialogFooter>
     </Dialog>

@@ -32,6 +32,7 @@ export const GROUPS: Array<[string, string[]]> = [
       "Plain files, one folder per author, movable anywhere",
       "Browse by author, series, tag or format",
       "Collections, favourites, ratings and reading status",
+      "Box sets, a reading pile and rainbow order on the bookcase",
       "Covers, descriptions and publishers found online",
       "Removing a book can be undone",
     ],
@@ -41,6 +42,7 @@ export const GROUPS: Array<[string, string[]]> = [
     [
       "Opens every book where you left it",
       "Highlights, notes and bookmarks, copied out as Markdown",
+      "A commonplace book of every line you've marked",
       "Search inside the book",
       "Light, sepia, dark or black pages",
       "The book's own type, a serif or a sans, at any size",
@@ -63,6 +65,7 @@ export const GROUPS: Array<[string, string[]]> = [
     [
       "EPUB, AZW3, PDF, Word, FB2, text or a web page",
       "From any format Shelfed can open",
+      "PDFs into EPUBs with chapters, headings and pictures",
       "PDF pages in A4, A5, Letter or Kindle size",
       "All built in, with nothing else to install",
       "The new file sits beside the old one",

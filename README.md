@@ -36,13 +36,14 @@
 
 - **Reads everything.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens where you stopped, and reads aloud.
 - **Keeps your library as plain files.** One folder per author in `Documents/Shelf Library`, readable without the app.
-- **Converts.** To EPUB, AZW3 for Kindle, PDF, Word, FB2, text or a web page, all built in.
+- **Converts.** To EPUB, AZW3 for Kindle, PDF, Word, FB2, text or a web page, all built in. A PDF comes out as a book that reflows, with its chapters, headings and pictures, and without the running heads and page numbers, and you can look it over before it's made.
 - **Sends to your Kindle.** By cable, or by email from your own mail account. It shows which of your books are already on a Kindle, and takes the finished ones off.
 - **Brings your Calibre library over.** It finds it by itself; each book comes once, with its formats, cover, series and tags.
 - **Picks up what you download.** New ebooks in your Downloads folder come in by themselves.
 - **Speaks English and Czech,** following your system or your choice.
 - **Finds details.** Descriptions, publishers and better covers from Open Library and Google Books.
 - **Brings back your Kindle highlights** from `My Clippings.txt`.
+- **Keeps a commonplace book.** Every line you've marked, in every book, in one place to search and copy out.
 - **Classics, free.** Thousands of books from Standard Ebooks and Project Gutenberg, one click to add.
 - **Suggests what's next.** Worked out on your computer, never sent anywhere.
 
@@ -51,7 +52,7 @@
 
 ### A bookcase you arrange
 
-Shelves by author, series, collection or reading status, in paper, oak, walnut or slate. Spines take their cover's colour, bookbinder's cloth or ink, with a ribbon in every book you're reading.
+Shelves by author, series, collection or reading status, in paper, oak, walnut or slate. Spines take their cover's colour, bookbinder's cloth or ink, with a ribbon in every book you're reading. What you're reading lies in a pile on top, a series stands together as a box set, and a shelf can run in rainbow order.
 
 <p align="center"><img src="docs/media/bookcase.gif" width="880" alt="The 3D bookcase changing material, spines and shelves" /></p>
 

@@ -2,28 +2,33 @@
 
 Where Shelfed is going, roughly in order. These are plans, not promises: the order changes with what people ask for. A 👍 on an [issue](https://github.com/simonveprek/shelfed/issues) counts, and so does opening one.
 
-## Now: 0.1
+## Now: 0.2
 
-The first release. A library kept as plain files; a reader for every common format; converting with nothing else to install; Kindles recognised over USB and sent books by cable or email; free classics; suggestions worked out on your computer. Mac and Windows, x64 and ARM.
+A library kept as plain files; a reader for every common format; converting with nothing else to install; Kindles recognised over USB and sent books by cable or email; free classics; suggestions worked out on your computer. Mac and Windows.
 
-Since 0.1.2, a Kindle plugged in as a drive also shows what's on it that isn't in your library and brings it over, and the books you've finished can come off it.
+0.2 adds a commonplace book of every line you've marked, a moment for finishing a book, and a bookcase that knows what you're reading: a reading pile on top, box sets for series, and rainbow order.
 
-## Next
+## 0.3: newer Kindles, and words
 
-The gaps people will hit first.
+- **Cable copying to Kindles from 2024 on.** These connect over MTP, the way phones do, rather than as a drive. Shelfed talks MTP itself: over USB on macOS, and through Windows Portable Devices on Windows.
+- **Looking up a word** while reading: its meaning, and what Wikipedia says about a name or a place.
 
-- **Cable copying to Kindles from 2024 on, on Windows.** These connect over MTP rather than as a drive. Windows has MTP built in (Windows Portable Devices), so Shelfed can copy to them there, and tell which books they already hold, as it does for older Kindles.
-- **The rest of Calibre's data.** A Calibre library already comes in with each book's formats, cover, authors, series, tags and rating. Next are its custom columns and read state, from `metadata.db`.
-- **Linux installers.** Shelfed runs on Linux from source, and CI tests it there. An AppImage and a `.deb` are mostly packaging.
+## 0.4: other e-readers, other catalogues
+
+- **Kobo and PocketBook.** Recognised when plugged in, shown with what's on them, and sent books by dragging, as Kindles are.
+- **Your own catalogues.** Adding any OPDS catalogue, such as a Calibre content server or a library's, next to Standard Ebooks and Project Gutenberg.
+
+## 0.5: alongside Calibre
+
+- **A Calibre library, used where it is.** Opening a Calibre library in place, so Shelfed and Calibre can be used side by side on the same books, without importing a copy.
+- **The rest of Calibre's data.** Its custom columns and read state, from `metadata.db`.
+- **Saved searches, editing many books at once, and finding duplicates.**
+- **Your library on your home network.** Turned on in Settings, Shelfed shares the library while it's open: a simple page a Kindle's browser can download books from, and an OPDS catalogue for reading apps such as KOReader.
 
 ## Later
 
-- **MTP on macOS.** macOS has no MTP support of its own, so newer Kindles need a USB implementation inside Shelfed. Until then they get books by email.
-- **Kobo, PocketBook and other e-readers.** Most open as a drive, so copying is close to what Shelfed already does for Kindles. What's left is recognising them and showing what's on them.
-- **Your library on your home network.** Turned on in Settings, Shelfed shares the library while it's open: a simple page a Kindle's browser can download books from, and an OPDS catalogue for reading apps such as KOReader. Like Calibre's content server, without a server of its own to keep running.
-- **Your own catalogues.** Adding any OPDS catalogue, such as a Calibre content server or a library's, next to Standard Ebooks and Project Gutenberg.
+- **Linux installers.** Shelfed runs on Linux from source, and CI tests it there. An AppImage and a `.deb` are mostly packaging.
 - **A library in a synced folder.** Keeping the library in iCloud Drive or Dropbox, used from two computers, without the two overwriting each other's changes.
-- **Looking up a word** while reading.
 
 ## Would like, but needs money
 

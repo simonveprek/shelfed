@@ -327,7 +327,8 @@ async function htmlToChapters(html: string, content: Content, fallback: string) 
  * loader handles e-books, so MOBI, AZW3, FB2 and comics come out the way
  * an EPUB does, pictures and all.
  */
-export async function extractContent(book: Book, ext: string, onProgress?: (share: number) => void): Promise<Content> {
+/** A book's details and cover, ready for its words to go in. */
+export async function baseContent(book: Book): Promise<Content> {
   const content: Content = {
     title: book.title,
     authors: book.authors,
@@ -348,6 +349,11 @@ export async function extractContent(book: Book, ext: string, onProgress?: (shar
       // No cover is fine.
     }
   }
+  return content;
+}
+
+export async function extractContent(book: Book, ext: string, onProgress?: (share: number) => void): Promise<Content> {
+  const content = await baseContent(book);
   const file = await fetchFile(book, ext);
 
   if (FOLIATE.includes(ext)) {
@@ -399,21 +405,9 @@ export async function extractContent(book: Book, ext: string, onProgress?: (shar
   }
 
   if (ext === "pdf") {
-    const { openPdf, pageParagraphs, closePdf } = await pdf();
-    const doc = await openPdf(await file.arrayBuffer());
-    const per = 12;
-    for (let start = 1; start <= doc.numPages; start += per) {
-      const end = Math.min(doc.numPages, start + per - 1);
-      const paragraphs: string[] = [];
-      for (let n = start; n <= end; n++) {
-        onProgress?.(n / doc.numPages);
-        paragraphs.push(...(await pageParagraphs(doc, n)));
-      }
-      const xhtml = paragraphs.map((p) => `<p>${escapeText(p)}</p>`).join("");
-      if (xhtml) content.chapters.push({ title: doc.numPages > per ? t("Pages {start} to {end}", { start: String(start), end: String(end) }) : content.title, xhtml, toc: true });
-    }
-    closePdf(doc);
-    return content;
+    // Laid out as a book: chapters, headings, paragraphs and pictures, without the running heads.
+    const { plainPdfContent } = await import("./pdf-epub");
+    return plainPdfContent(book, await file.arrayBuffer(), content, onProgress);
   }
 
   if (ext === "txt") {

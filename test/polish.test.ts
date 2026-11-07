@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RELEASES_MADE } from "../site/changelog";
 import { VERSION } from "../site/lib";
@@ -71,5 +73,13 @@ describe("the changelog", () => {
       expect(release.summary).not.toBe("");
       expect(release.changes.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("the guard over foliate-js", () => {
+  it("still fits the paginator that's installed, once each", async () => {
+    const { FOLIATE_GUARDS } = await import("../electron.vite.config");
+    const paginator = readFileSync(join(import.meta.dirname, "../node_modules/foliate-js/paginator.js"), "utf8");
+    for (const [unguarded] of FOLIATE_GUARDS) expect(paginator.split(unguarded)).toHaveLength(2);
   });
 });

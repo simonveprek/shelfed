@@ -23,6 +23,7 @@ import { Onboarding } from "@/components/Onboarding";
 import { ClippingsDialog } from "@/components/Clippings";
 import { KindleArrival } from "@/components/KindleArrival";
 import { useKindleWatch } from "@/lib/kindle";
+import { PdfToEpub } from "./components/PdfToEpub";
 
 /** Keeps the window's own colour in step with light and dark. */
 function Appearance() {
@@ -55,6 +56,8 @@ function Dialogs() {
       return <RenameCollection key={dialog.id} id={dialog.id} />;
     case "clippings":
       return <ClippingsDialog text={dialog.text} from={dialog.from} />;
+    case "pdf-epub":
+      return <PdfToEpub key={dialog.id} id={dialog.id} />;
     case "calibre":
       return <CalibreDialog path={dialog.path} books={dialog.books} working={dialog.working} done={dialog.done} />;
   }

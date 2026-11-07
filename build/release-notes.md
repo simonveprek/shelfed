@@ -1,16 +1,25 @@
 Shelfed is a quiet home for your books, on Mac and Windows. Free and open source.
 
-## New in 0.1.3
+## New in 0.2.0
 
-- **See what a free book is before adding it.** Click a book under You may also like, or on the Classics page, and a window shows its whole title, what it's about and where it comes from. You can add it from there.
-- **A suggestion that couldn't be found gets another try.** If a free book shows up without its cover or Free button, opening it looks again.
+- **PDFs made into real EPUBs.** Shelfed reads a PDF the way a book is laid out: chapters from its bookmarks or headings, paragraphs and broken words joined back up, two columns in order, pictures kept, and the running heads and page numbers left out. Look it over first, name the chapters and choose what to keep, from Convert or the book's menu.
+- **Select books by drawing a box.** Drag over the covers or down the list, as on the desktop. Hold Cmd or Ctrl to add to what's selected, and near the edge the view scrolls on.
+- **A commonplace book.** Every line you've marked, in every book, gathered in one place in the sidebar. Search it, copy it out as Markdown, or open a book right where the line is.
+- **Finishing a book is a moment.** On the last page Shelfed asks how you liked it, shows how long it took and how much you marked, and offers what's next: the next book in the series first.
+- **A reading pile.** What you're reading lies in a pile on top of the bookcase, the one you opened last on top.
+- **Box sets.** A series stands together, every spine the same height, with a band across them.
+- **Rainbow order.** A shelf can run through its spines' colours. Turn it on in the bookcase's options.
+- **A lighter bookcase.** The 3D bookcase draws only what you can see, so a big library stays smooth.
+- **The reader follows the app.** In dark mode the page is dark too, unless you choose a paper yourself.
+- **Polish everywhere.** The list keeps titles readable at any width, covers stay one size, books without a cover wear their spine's colour, and free books have fuller descriptions.
+- **What's new, a click away.** Settings links to the changelog on the website.
 
 ## What's in it
 
 - **Your library as plain files.** One folder per author in `Documents/Shelf Library`, readable with or without Shelfed. Covers, a list, shelves, or a 3D bookcase in paper, oak, walnut or slate.
-- **A reader for every format.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens every book where you stopped, and reads aloud in your system's voices.
+- **A reader for every format.** EPUB, MOBI, AZW3, FB2, comics, PDF, Word, Markdown, HTML and text, with highlights, notes, bookmarks and search. It opens every book where you stopped, reads aloud in your system's voices, and gathers what you mark into a commonplace book.
 - **Your Kindle, by name.** Plug one in and Shelfed recognises the model, from the Kindle 2 to the Colorsoft and Scribe, and shows it in 3D. Drag a book onto it to copy it across by cable, or send it by email from your own mail account. Books already on it get a badge, and a list of their own, and the ones you've finished can come off it in one go.
-- **Converting, built in.** EPUB, AZW3 for Kindle, PDF, Word, FB2, plain text and web pages, with nothing else to install.
+- **Converting, built in.** EPUB, AZW3 for Kindle, PDF, Word, FB2, plain text and web pages, with nothing else to install. A PDF becomes a real EPUB, with its chapters, headings and pictures, and you can look it over first.
 - **Finding books.** An empty library starts with eight classics in one click. Thousands more free classics from Standard Ebooks and Project Gutenberg, suggestions worked out from what you own, and details from Open Library and Google Books.
 - **Coming from Calibre.** Shelfed finds your Calibre library by itself and offers to bring it over: every book once, with its formats, cover, series and tags.
 - **Books you download come in by themselves.** A new EPUB, MOBI, AZW3, FB2 or comic in your Downloads folder joins the library while Shelfed is open.
@@ -21,9 +30,9 @@ Shelfed is a quiet home for your books, on Mac and Windows. Free and open source
 
 | | |
 | --- | --- |
-| Mac with Apple silicon (M1 and later) | `Shelfed-0.1.3-mac-arm64.dmg` |
-| Mac with Intel | `Shelfed-0.1.3-mac-x64.dmg` |
-| Windows, ARM PCs too | `Shelfed-0.1.3-win-x64.exe` |
+| Mac with Apple silicon (M1 and later) | `Shelfed-0.2.0-mac-arm64.dmg` |
+| Mac with Intel | `Shelfed-0.2.0-mac-x64.dmg` |
+| Windows, ARM PCs too | `Shelfed-0.2.0-win-x64.exe` |
 
 ## Opening it the first time
 
