@@ -1,12 +1,14 @@
 Shelfed is a quiet home for your books, on Mac and Windows. Free and open source.
 
-## New in 0.2.1
+## New in 0.2.2
 
-Fixes for three things people found in 0.2.0:
+- **Signed and notarized on Mac.** Shelfed now carries a Developer ID and Apple has checked it, so a Mac opens it straight away. No more Open Anyway in Privacy & Security, and no Terminal for a "damaged" app.
 
-- **Menus show in full.** The book panel's More menu, and the Collection and Mark menus for several books, were cut off by the panel. Every menu now opens above the page beside its button.
-- **Kindle books with DRM say they're locked.** Instead of a scrambled EPUB, Shelfed says the book is locked when it's added, when you open it and when you try to convert it, and doesn't offer to convert it.
-- **EPUBs strict readers open.** Files Shelfed makes leave out characters XML doesn't allow, so readers like CrossPoint no longer refuse a chapter.
+## In 0.2.1
+
+- **Menus show in full.** The book panel's More menu, and the Collection and Mark menus for several books, are no longer cut off by the panel.
+- **Kindle books with DRM say they're locked**, instead of being made into a scrambled EPUB.
+- **EPUBs strict readers open.** Files Shelfed makes leave out characters XML doesn't allow.
 
 ## What's in it
 
@@ -24,18 +26,14 @@ Fixes for three things people found in 0.2.0:
 
 | | |
 | --- | --- |
-| Mac with Apple silicon (M1 and later) | `Shelfed-0.2.1-mac-arm64.dmg` |
-| Mac with Intel | `Shelfed-0.2.1-mac-x64.dmg` |
-| Windows, ARM PCs too | `Shelfed-0.2.1-win-x64.exe` |
+| Mac with Apple silicon (M1 and later) | `Shelfed-0.2.2-mac-arm64.dmg` |
+| Mac with Intel | `Shelfed-0.2.2-mac-x64.dmg` |
+| Windows, ARM PCs too | `Shelfed-0.2.2-win-x64.exe` |
 
 ## Opening it the first time
 
-Shelfed isn't signed with a paid certificate yet, so your computer asks before opening it.
-
-- **macOS 15 and later:** open Shelfed once and choose **Done**. Then go to **System Settings → Privacy & Security**, click **Open Anyway** next to Shelfed, and enter your password.
-- **macOS 14 and earlier:** right-click Shelfed in Applications and choose **Open**.
-- **If macOS says the app is damaged:** run `xattr -cr /Applications/Shelfed.app` once in Terminal.
-- **Windows:** if SmartScreen appears, choose **More info**, then **Run anyway**.
+- **Mac:** Shelfed is signed and notarized by Apple, so it opens like any other app from the internet: no trip to Privacy & Security, no Terminal.
+- **Windows:** it isn't signed yet, so if SmartScreen appears, choose **More info**, then **Run anyway**.
 
 ## Good to know
 

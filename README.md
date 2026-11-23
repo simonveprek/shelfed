@@ -82,16 +82,12 @@ Eight app icons, from plain paper to holographic foil.
 
 Download the installer for your system from [the latest release](https://github.com/simonveprek/shelfed/releases/latest): `.dmg` for Apple silicon or Intel Macs, `.exe` for Windows, which runs on ARM PCs too.
 
-The builds aren't code-signed yet, so the system asks before the first launch:
+- **Mac:** signed with a Developer ID and notarized by Apple, so it opens like any other app from the internet.
+- **Windows:** not signed yet, so if SmartScreen appears, choose **More info**, then **Run anyway**.
 
-- **macOS 15 and later:** open Shelfed once and choose **Done** at the warning. Then go to **System Settings → Privacy & Security**, click **Open Anyway** next to Shelfed, and enter your password.
-- **macOS 14 and earlier:** right-click Shelfed in Applications and choose **Open**.
-- **If macOS says the app is damaged,** run `xattr -cr /Applications/Shelfed.app` once in Terminal.
-- **Windows:** if SmartScreen appears, choose **More info**, then **Run anyway**.
+Every installer is built from a tagged commit, so you can read exactly what went into it, or [build it yourself](#build-it). The Windows installer is built by [GitHub Actions](.github/workflows/release.yml). The Mac installers are built from the same commit and then signed and notarized on a Mac that holds the certificate, which GitHub doesn't.
 
-Every installer is built by [GitHub Actions](.github/workflows/release.yml) from a tagged commit, so you can read exactly what went into it, or [build it yourself](#build-it).
-
-Shelfed checks GitHub for new versions every few hours; you can turn this off in Settings → About Shelfed. On Windows, updates download in the background and install on restart, via `electron-updater`. On macOS, an unsigned app can't replace itself, so Shelfed links you to the new release instead.
+Shelfed checks GitHub for new versions every few hours; you can turn this off in Settings → About Shelfed. On Windows, updates download in the background and install on restart, via `electron-updater`. On macOS, Shelfed links you to the new release instead.
 
 ## How it works
 
@@ -206,7 +202,7 @@ Pushing a tag like `v0.2.0` builds every installer into a draft release. If some
 
 ## Known limits
 
-- **Unsigned builds.** You'll see the warnings above until there is a paid certificate.
+- **Unsigned on Windows.** SmartScreen asks the first time until there's a Windows certificate. The Mac app is signed and notarized.
 - **Kindles from 2024 on** (2024 Paperwhite, Colorsoft, Kindle) take books by email only for now, since they connect over MTP rather than as a drive.
 - **No DRM removal.** Books with DRM, as most bought from Amazon are, won't open.
 - **From Calibre,** each book comes in with its formats, cover, title, authors, series, tags and rating, but not Calibre's custom columns or its read and unread state.

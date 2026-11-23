@@ -40,6 +40,13 @@ mac:
       arch: [arm64, x64]
   darkModeSupport: true
   icon: build/icon.png
+  # Signed with a Developer ID and notarized by Apple, so a Mac opens it without asking.
+  # Signing needs the certificate in the keychain; notarizing needs APPLE_KEYCHAIN_PROFILE
+  # naming a notarytool profile. Without them, as on GitHub, both are skipped.
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
 win:
   # x64 only: Windows on ARM runs it as it is.
   target: nsis

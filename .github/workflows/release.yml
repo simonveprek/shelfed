@@ -1,7 +1,9 @@
 name: Release
 
 # Push a tag like v0.2.0 to build installers into a draft release, then publish
-# the release on GitHub when it looks right.
+# the release on GitHub when it looks right. The Mac files built here aren't
+# signed, since the certificate isn't on GitHub: before publishing, Mac builds
+# signed and notarized on a Mac with it take their place, latest-mac.yml too.
 on:
   push:
     tags: ["v*"]

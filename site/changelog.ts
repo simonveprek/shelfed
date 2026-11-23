@@ -13,6 +13,14 @@ export type Release = {
 
 export const RELEASES_MADE: Release[] = [
   {
+    version: "0.2.2",
+    date: "2026-11-23",
+    summary: "Signed and notarized on Mac, so it opens straight away.",
+    changes: [
+      "The Mac app is signed with a Developer ID and notarized by Apple, so a Mac opens it like any other app from the internet: no Open Anyway in Privacy & Security, and no Terminal for a \"damaged\" app.",
+    ],
+  },
+  {
     version: "0.2.1",
     date: "2026-11-23",
     summary: "Fixes for three things people found in 0.2.0.",

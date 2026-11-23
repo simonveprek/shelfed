@@ -16,7 +16,7 @@ const EVERY = 6 * 60 * 60 * 1000;
  * New versions, from the GitHub releases.
  *
  * On Windows they download quietly and go in on the next restart. A Mac app
- * can only replace itself when it's signed, and Shelfed isn't yet, so on macOS
+ * can only replace itself from a ZIP of itself, which the Mac build doesn't make yet, so on macOS
  * and Linux Shelfed only says a new version is out and links to it.
  */
 const installs = app.isPackaged && process.platform === "win32";
