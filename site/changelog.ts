@@ -13,6 +13,16 @@ export type Release = {
 
 export const RELEASES_MADE: Release[] = [
   {
+    version: "0.2.1",
+    date: "2026-11-23",
+    summary: "Fixes for three things people found in 0.2.0.",
+    changes: [
+      "The book panel's More menu, and the Collection and Mark menus for several books, show in full instead of being cut off by the panel. Every menu now opens above the page beside its button.",
+      "A Kindle book with DRM is no longer made into a scrambled EPUB. Shelfed says it's locked when it's added, when you open it and when you try to convert it, and doesn't offer to convert it.",
+      "EPUBs, Word and FB2 files Shelfed makes leave out characters XML doesn't allow, so strict readers like CrossPoint open them. A PDF's bookmark titles are cleaned like its text.",
+    ],
+  },
+  {
     version: "0.2.0",
     date: "2026-11-05",
     summary: "A commonplace book, PDFs made into real EPUBs, and a bookcase that knows what you're reading.",

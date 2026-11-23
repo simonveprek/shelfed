@@ -1,18 +1,12 @@
 Shelfed is a quiet home for your books, on Mac and Windows. Free and open source.
 
-## New in 0.2.0
+## New in 0.2.1
 
-- **PDFs made into real EPUBs.** Shelfed reads a PDF the way a book is laid out: chapters from its bookmarks or headings, paragraphs and broken words joined back up, two columns in order, pictures kept, and the running heads and page numbers left out. Look it over first, name the chapters and choose what to keep, from Convert or the book's menu.
-- **Select books by drawing a box.** Drag over the covers or down the list, as on the desktop. Hold Cmd or Ctrl to add to what's selected, and near the edge the view scrolls on.
-- **A commonplace book.** Every line you've marked, in every book, gathered in one place in the sidebar. Search it, copy it out as Markdown, or open a book right where the line is.
-- **Finishing a book is a moment.** On the last page Shelfed asks how you liked it, shows how long it took and how much you marked, and offers what's next: the next book in the series first.
-- **A reading pile.** What you're reading lies in a pile on top of the bookcase, the one you opened last on top.
-- **Box sets.** A series stands together, every spine the same height, with a band across them.
-- **Rainbow order.** A shelf can run through its spines' colours. Turn it on in the bookcase's options.
-- **A lighter bookcase.** The 3D bookcase draws only what you can see, so a big library stays smooth.
-- **The reader follows the app.** In dark mode the page is dark too, unless you choose a paper yourself.
-- **Polish everywhere.** The list keeps titles readable at any width, covers stay one size, books without a cover wear their spine's colour, and free books have fuller descriptions.
-- **What's new, a click away.** Settings links to the changelog on the website.
+Fixes for three things people found in 0.2.0:
+
+- **Menus show in full.** The book panel's More menu, and the Collection and Mark menus for several books, were cut off by the panel. Every menu now opens above the page beside its button.
+- **Kindle books with DRM say they're locked.** Instead of a scrambled EPUB, Shelfed says the book is locked when it's added, when you open it and when you try to convert it, and doesn't offer to convert it.
+- **EPUBs strict readers open.** Files Shelfed makes leave out characters XML doesn't allow, so readers like CrossPoint no longer refuse a chapter.
 
 ## What's in it
 
@@ -30,9 +24,9 @@ Shelfed is a quiet home for your books, on Mac and Windows. Free and open source
 
 | | |
 | --- | --- |
-| Mac with Apple silicon (M1 and later) | `Shelfed-0.2.0-mac-arm64.dmg` |
-| Mac with Intel | `Shelfed-0.2.0-mac-x64.dmg` |
-| Windows, ARM PCs too | `Shelfed-0.2.0-win-x64.exe` |
+| Mac with Apple silicon (M1 and later) | `Shelfed-0.2.1-mac-arm64.dmg` |
+| Mac with Intel | `Shelfed-0.2.1-mac-x64.dmg` |
+| Windows, ARM PCs too | `Shelfed-0.2.1-win-x64.exe` |
 
 ## Opening it the first time
 
