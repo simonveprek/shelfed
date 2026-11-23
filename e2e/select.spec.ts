@@ -94,15 +94,18 @@ test.describe("drawing a box to select books", () => {
   test("scrolls on near the bottom edge, catching books that weren't on screen", async ({ shelf }) => {
     const { page } = shelf;
     await shelf.add(titles(40));
-    const [first] = await onScreen(page);
+    const covers = await onScreen(page);
+    const [first] = covers;
     const area = (await view(page).boundingBox())!;
+    // However the window lays the grid out, this many covers show at all before it scrolls: the most a box could catch without it.
+    const inSight = covers.filter((c) => c.y < area.y + area.height && c.y + c.height > area.y).length;
     await drag(page, { x: first.x - 10, y: area.y + 8 }, { x: area.x + area.width - 30, y: area.y + area.height - 6 }, async () => {
       await expect.poll(() => view(page).evaluate((el) => el.scrollTop), { timeout: 10_000 }).toBeGreaterThan(600);
     });
-    // More selected than ever fit in the window at once, the ones scrolled past included, as the side panel counts them.
-    const count = Number((await page.locator("aside.w-\\[340px\\]").getByText(/^\d+ books$/).first().textContent())?.split(" ")[0]);
-    expect(count).toBeGreaterThanOrEqual(12);
-    expect(count).toBeLessThanOrEqual(40);
+    // More selected than were in sight at the start, so the ones scrolled to are in too, as the side panel counts them.
+    const count = async () => Number((await page.locator("aside.w-\\[340px\\]").getByText(/^\d+ books$/).first().textContent())?.split(" ")[0]);
+    await expect.poll(count).toBeGreaterThan(inSight);
+    expect(await count()).toBeLessThanOrEqual(40);
   });
 
   test("works down the list too", async ({ shelf }) => {
