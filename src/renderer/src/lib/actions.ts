@@ -4,7 +4,7 @@ import { toast } from "@/components/ui";
 import { api, isMac } from "./api";
 import { relistKindle } from "./kindle";
 import { notInLibrary } from "./onkindle";
-import { extractContent, parseBook, saveCover } from "./books";
+import { extractContent, LockedBook, lockedFormats, parseBook, saveCover } from "./books";
 import { readCalibreOpf } from "./calibre";
 import { findCopies, inherit } from "../../../shared/copies";
 import { seriesFix } from "../../../shared/series";
@@ -93,6 +93,7 @@ export async function importPaths(paths: string[], open = false, from?: string):
   let skipped = 0;
   let joined = 0;
   let done = 0;
+  const lockedBooks = new Set<string>();
   const touched = new Set<string>();
   const fresh = new Set<string>();
   // Which book each file went into.
@@ -132,6 +133,12 @@ export async function importPaths(paths: string[], open = false, from?: string):
           }
           current = grown;
         }
+        // A Kindle book bought from Amazon still comes in, but is known not to open.
+        const locked = await lockedFormats(current);
+        if (locked.length) {
+          if (locked.join() !== (current.locked ?? []).join()) current = await api.update(current.id, { locked });
+          lockedBooks.add(current.id);
+        }
         upsert(current);
         touched.add(current.id);
         for (const path of [first, ...others]) filed.set(path, current.id);
@@ -152,6 +159,7 @@ export async function importPaths(paths: string[], open = false, from?: string):
     const notes = [
       skipped && tn(skipped, "{n} already here", "{n} already here"),
       joined && tn(joined, "{n} copy joined to its book", "{n} copies joined to their books"),
+      lockedBooks.size && tn(lockedBooks.size, "{n} locked with DRM, so it won't open", "{n} locked with DRM, so they won't open"),
     ].filter(Boolean).join(", ");
     // App.tsx says where downloads came from in English ("your Downloads"); the whole sentence is translated here.
     const sentence = from
@@ -294,14 +302,14 @@ export const canRead = (ext: string) => FOLIATE.includes(ext) || TEXTUAL.include
 
 /** The file a conversion should start from. */
 export function sourceFor(book: Book, to: string) {
-  return SOURCE_ORDER.find((ext) => ext !== to && book.formats.some((f) => f.ext === ext)) ?? book.formats[0]?.ext;
+  return SOURCE_ORDER.find((ext) => ext !== to && !book.locked?.includes(ext) && book.formats.some((f) => f.ext === ext)) ?? book.formats[0]?.ext;
 }
 
 /** Every format Shelfed can make, and whether it can make it from this book. Labels are translated here, when asked for, not when the file loads. */
 export function targetsFor(book: Book): Target[] {
   return TARGETS.map((ext) => {
     const from = sourceFor(book, ext);
-    return { ext, label: t(LABELS[ext][0]), note: t(LABELS[ext][1]), possible: Boolean(from && canRead(from)) };
+    return { ext, label: t(LABELS[ext][0]), note: t(LABELS[ext][1]), possible: Boolean(from && canRead(from) && !book.locked?.includes(from)) };
   });
 }
 
@@ -309,6 +317,7 @@ export function targetsFor(book: Book): Target[] {
 export async function convert(id: string, to: string, outer?: JobHandle): Promise<Book> {
   let book = bookById(id)!;
   const from = sourceFor(book, to);
+  if (book.locked?.includes(from)) throw new LockedBook();
   if (!targetsFor(book).find((t) => t.ext === to)?.possible) throw new Error(t("Shelfed can't read this book's files to make {format} from them.", { format: to.toUpperCase() }));
   const job = outer ?? startJob(t("{title} to {format}", { title: book.title, format: to.toUpperCase() }));
   set({ mood: "thinking" });
@@ -336,11 +345,20 @@ export async function convert(id: string, to: string, outer?: JobHandle): Promis
     if (!outer) job.done(t("{title} is now {format} too", { title: book.title, format: to.toUpperCase() }));
     return saved;
   } catch (error) {
+    // Found locked only now, like a book added before Shelfed looked: it isn't offered again.
+    if (error instanceof LockedBook) await markLocked(id, from);
     if (!outer) job.fail(error);
     throw error;
   } finally {
     set({ mood: null });
   }
+}
+
+/** Remembers that a book's file in this format is locked with DRM. */
+async function markLocked(id: string, ext: string) {
+  const book = bookById(id);
+  if (!book || book.locked?.includes(ext)) return;
+  upsert(await api.update(id, { locked: [...(book.locked ?? []), ext] }).catch(() => book));
 }
 
 export async function convertMany(ids: string[], to: string) {

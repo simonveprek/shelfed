@@ -1,4 +1,5 @@
 import { strToU8, zipSync, type Zippable } from "fflate";
+import { xmlSafe } from "../../../shared/xml-safe";
 
 /** One book's words and pictures, whatever file they came from. */
 export type Content = {
@@ -25,6 +26,9 @@ export type Chapter = {
 };
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** A file of XML, as bytes, without the characters XML forbids, wherever in the book they came from. */
+const xml = (text: string) => strToU8(xmlSafe(text));
 
 export const extOf = (type: string) =>
   ({ "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp", "image/svg+xml": "svg", "image/avif": "avif" })[type] ?? "jpg";
@@ -82,7 +86,7 @@ export function buildEpub(content: Content): Uint8Array {
     const name = `images/cover.${extOf(content.cover.type)}`;
     files[`OEBPS/${name}`] = [content.cover.data, { level: 0 }];
     manifest.push(`<item id="cover-image" href="${name}" media-type="${content.cover.type}" properties="cover-image"/>`);
-    files["OEBPS/cover.xhtml"] = strToU8(page(content.title, `<div class="cover"><img src="${name}" alt="${esc(content.title)}"/></div>`, lang));
+    files["OEBPS/cover.xhtml"] = xml(page(content.title, `<div class="cover"><img src="${name}" alt="${esc(content.title)}"/></div>`, lang));
     manifest.push('<item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>');
     spine.push('<itemref idref="cover"/>');
   }
@@ -97,7 +101,7 @@ export function buildEpub(content: Content): Uint8Array {
     const name = `text/ch${String(n + 1).padStart(3, "0")}.xhtml`;
     // Chapters live one folder down, so their links to pictures climb up.
     const body = chapter.xhtml.replace(/(src|href|xlink:href)="images\//g, '$1="../images/');
-    files[`OEBPS/${name}`] = strToU8(page(chapter.title, body, lang, "../style.css"));
+    files[`OEBPS/${name}`] = xml(page(chapter.title, body, lang, "../style.css"));
     manifest.push(`<item id="ch${n + 1}" href="${name}" media-type="application/xhtml+xml"${/<svg/i.test(body) ? ' properties="svg"' : ""}/>`);
     spine.push(`<itemref idref="ch${n + 1}"/>`);
     if (chapter.toc || n === 0) {
@@ -106,9 +110,9 @@ export function buildEpub(content: Content): Uint8Array {
     }
   });
 
-  files["OEBPS/nav.xhtml"] = strToU8(page("Contents", `<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>${nav.join("")}</ol></nav>`, lang));
+  files["OEBPS/nav.xhtml"] = xml(page("Contents", `<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>${nav.join("")}</ol></nav>`, lang));
   manifest.push('<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>');
-  files["OEBPS/toc.ncx"] = strToU8(`<?xml version="1.0" encoding="utf-8"?>
+  files["OEBPS/toc.ncx"] = xml(`<?xml version="1.0" encoding="utf-8"?>
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="${uid}"/></head>
 <docTitle><text>${esc(content.title)}</text></docTitle><navMap>${ncx.join("")}</navMap></ncx>`);
   manifest.push('<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>');
@@ -126,14 +130,14 @@ export function buildEpub(content: Content): Uint8Array {
     content.cover ? '<meta name="cover" content="cover-image"/>' : "",
   ].filter(Boolean);
 
-  files["OEBPS/content.opf"] = strToU8(`<?xml version="1.0" encoding="utf-8"?>
+  files["OEBPS/content.opf"] = xml(`<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid" xml:lang="${esc(lang)}">
 <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">${meta.join("\n")}</metadata>
 <manifest>${manifest.join("\n")}</manifest>
 <spine toc="ncx">${spine.join("\n")}</spine>
 </package>`);
 
-  files["META-INF/container.xml"] = strToU8(`<?xml version="1.0" encoding="utf-8"?>
+  files["META-INF/container.xml"] = xml(`<?xml version="1.0" encoding="utf-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`);
 
   // The mimetype comes first and uncompressed, as the format asks.

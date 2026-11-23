@@ -11,7 +11,7 @@ import {
 import { Point } from "@/components/fragms/points";
 import { api, isMac, isWin } from "@/lib/api";
 import { openReader } from "@/lib/actions";
-import { extractContent } from "@/lib/books";
+import { extractContent, LockedBook, refuseLocked } from "@/lib/books";
 import { defang } from "@/lib/defang";
 import { buildEpub } from "@/lib/epub";
 import type { PdfDoc } from "@/lib/pdf";
@@ -510,8 +510,10 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
         await import("foliate-js/view.js");
         const { Overlayer } = await import("foliate-js/overlayer.js");
         let file: File;
-        if (FOLIATE.includes(ext)) file = await fetchFile(book, ext);
-        else {
+        if (FOLIATE.includes(ext)) {
+          file = await fetchFile(book, ext);
+          await refuseLocked(file);
+        } else {
           // Text, Markdown, web pages and Word open as an EPUB made on the spot.
           const content = await extractContent(book, ext);
           file = new File([buildEpub(content) as BlobPart], "book.epub", { type: "application/epub+zip" });
@@ -599,7 +601,9 @@ function BookReader({ book, ext }: { book: Book; ext: string }) {
         open = true;
         setLoading(false);
       } catch (err) {
-        if (alive) setError(t("This {format} could not be opened. {error}", { format: ext.toUpperCase(), error: (err as Error).message ?? "" }).trim());
+        if (!alive) return;
+        if (err instanceof LockedBook) setError(err.message);
+        else setError(t("This {format} could not be opened. {error}", { format: ext.toUpperCase(), error: (err as Error).message ?? "" }).trim());
       }
     })();
     return () => {

@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import nodemailer from "nodemailer";
 import { kindleFromSerial } from "../shared/kindles";
+import { isLockedFile, MOBI } from "../shared/locked";
 import type { KindleDevice, KindleFile, KindleOnUsb, KindleSettings } from "../shared/types";
 import { getSmtpPassword } from "./settings";
 import { t } from "../shared/i18n";
@@ -215,30 +216,21 @@ const ON_DEVICE = /\.(azw3?|kfx|mobi|prc|pdf|txt|epub|docx)$/i;
 const CLIPPINGS = /^my clippings\.txt$/i;
 const isBookFile = (path: string) => ON_DEVICE.test(path) && !CLIPPINGS.test(basename(path));
 
-/** The Kindle formats Shelfed reads when no DRM locks them. */
-const MOBI = /\.(azw3?|mobi|prc|kf8)$/i;
-
 /**
  * Whether a book on a Kindle is locked to it. Books bought from Amazon come
  * as KFX, which only a Kindle reads, as Topaz, or as MOBI with DRM, which the
  * header of its first record says. Books put on it by cable or email aren't.
  */
 export async function isLocked(path: string): Promise<boolean> {
-  if (/\.kfx$/i.test(path)) return true;
-  if (!MOBI.test(path)) return false;
+  if (!MOBI.test(path) && !/\.kfx$/i.test(path)) return false;
   const file = await open(path, "r").catch(() => null);
-  if (!file) return false;
+  if (!file) return /\.kfx$/i.test(path);
   try {
-    const head = Buffer.alloc(82);
-    if ((await file.read(head, 0, 82, 0)).bytesRead < 82) return false;
-    if (head.toString("latin1", 0, 3) === "TPZ") return true;
-    if (head.toString("latin1", 60, 68) !== "BOOKMOBI") return false;
-    // The first record starts with the PalmDOC header; its seventh field is the encryption.
-    const doc = Buffer.alloc(14);
-    if ((await file.read(doc, 0, 14, head.readUInt32BE(78))).bytesRead < 14) return false;
-    return doc.readUInt16BE(12) !== 0;
-  } catch {
-    return false;
+    return await isLockedFile(path, async (offset, length) => {
+      const bytes = Buffer.alloc(length);
+      const { bytesRead } = await file.read(bytes, 0, length, offset);
+      return bytes.subarray(0, bytesRead);
+    });
   } finally {
     await file.close();
   }

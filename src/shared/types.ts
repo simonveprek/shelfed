@@ -69,6 +69,8 @@ export type Book = {
   modified: number;
   /** The names of the files it was brought over from on a Kindle, so it's known to be on it. */
   kindleNames?: string[];
+  /** Its formats whose files are locked with DRM to the Kindle they were bought for, which Shelfed can't open. */
+  locked?: string[];
   /** When someone last changed its title, authors or series by hand; an import then leaves them be. */
   edited?: number;
   opened?: number;

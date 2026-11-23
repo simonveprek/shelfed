@@ -472,6 +472,9 @@ export class Library {
     const path = join(this.bookDir(book), format.file);
     await toTrash(path).catch(() => rm(path, { force: true, maxRetries: 5 }));
     book.formats = book.formats.filter((f) => f.ext !== ext);
+    // A file made or added in its place later isn't the locked one.
+    if (book.locked?.includes(ext)) book.locked = book.locked.filter((e) => e !== ext);
+    if (book.locked && !book.locked.length) delete book.locked;
     this.save();
     return book;
   }

@@ -1,4 +1,5 @@
 import { blocksOf, type Run } from "./blocks";
+import { xmlSafe } from "../../../shared/xml-safe";
 import type { Content } from "./epub";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -96,5 +97,5 @@ ${sections.join("\n")}
 ${[...binaries.values()].map((b) => `<binary id="${b.id}" content-type="${b.type}">${base64(b.data)}</binary>`).join("\n")}
 </FictionBook>
 `;
-  return new TextEncoder().encode(xml);
+  return new TextEncoder().encode(xmlSafe(xml));
 }

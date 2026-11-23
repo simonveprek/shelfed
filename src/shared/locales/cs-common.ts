@@ -13,6 +13,8 @@ const words: Record<string, string> = {
   "{done} of {total}": "{done} z {total}",
   "{n} already here|{n} already here": "{n} už tu byla|{n} už tu byly|{n} už tu bylo",
   "{n} copy joined to its book|{n} copies joined to their books": "{n} kopie připojena ke své knize|{n} kopie připojeny ke svým knihám|{n} kopií připojeno ke svým knihám",
+  "{n} locked with DRM, so it won't open|{n} locked with DRM, so they won't open": "{n} je zamčená DRM, takže se neotevře|{n} jsou zamčené DRM, takže se neotevřou|{n} je zamčených DRM, takže se neotevřou",
+  "This book is locked with DRM to the Kindle it was bought for, so Shelfed can't open it or make other formats from it.": "Tahle kniha je přes DRM zamčená na Kindle, pro který byla koupená, takže ji Shelfed neotevře ani z ní neudělá jiné formáty.",
   // {place} carries its own preposition in Czech: "your Downloads" is "ze stažených souborů".
   "Added {n} book from {place}|Added {n} books from {place}": "Přidána {n} kniha {place}|Přidány {n} knihy {place}|Přidáno {n} knih {place}",
   "your Downloads": "ze stažených souborů",

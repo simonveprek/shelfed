@@ -1,4 +1,5 @@
 import { strToU8, zipSync, type Zippable } from "fflate";
+import { xmlSafe } from "../../../shared/xml-safe";
 import { blocksOf, type Run } from "./blocks";
 import { extOf, type Content } from "./epub";
 
@@ -87,15 +88,15 @@ export function buildDocx(content: Content): Uint8Array {
   }
 
   const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
-  files["word/document.xml"] = strToU8(
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${NS}><w:body>${body.join("")}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1418" w:right="1418" w:bottom="1418" w:left="1418" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`,
+  files["word/document.xml"] = strToU8(xmlSafe(
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${NS}><w:body>${body.join("")}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1418" w:right="1418" w:bottom="1418" w:left="1418" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`),
   );
   files["word/styles.xml"] = strToU8(STYLES(content.language || "en"));
   files["word/_rels/document.xml.rels"] = strToU8(
     `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${rels.join("")}</Relationships>`,
   );
-  files["docProps/core.xml"] = strToU8(
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${esc(content.title)}</dc:title><dc:creator>${esc(content.authors.join(", "))}</dc:creator><dc:language>${esc(content.language || "en")}</dc:language></cp:coreProperties>`,
+  files["docProps/core.xml"] = strToU8(xmlSafe(
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${esc(content.title)}</dc:title><dc:creator>${esc(content.authors.join(", "))}</dc:creator><dc:language>${esc(content.language || "en")}</dc:language></cp:coreProperties>`),
   );
   files["_rels/.rels"] = strToU8(
     `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rDoc" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rCore" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`,

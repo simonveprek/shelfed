@@ -3,6 +3,7 @@ import { api } from "./api";
 import { type Chapter, type Content, extOf, sniff } from "./epub";
 import { FOLIATE, fetchFile, plainText } from "./util";
 import { t } from "../../../shared/i18n";
+import { isLockedFile, MOBI } from "../../../shared/locked";
 
 // pdf.js is large, so it loads the first time a PDF needs it.
 const pdf = () => import("./pdf");
@@ -22,6 +23,33 @@ export type FoliateBook = {
   destroy?: () => void;
   splitTOCHref?: (href: string) => [string | number, unknown];
 };
+
+/** A book file locked with DRM. Its words are scrambled, so Shelfed says so rather than show them or convert them. */
+export class LockedBook extends Error {
+  constructor() {
+    super(t("This book is locked with DRM to the Kindle it was bought for, so Shelfed can't open it or make other formats from it."));
+    this.name = "LockedBook";
+  }
+}
+
+/** Whether a book's file is locked with DRM, from its first bytes. */
+export const isLockedBook = (file: File) => isLockedFile(file.name, async (offset, length) => new Uint8Array(await file.slice(offset, offset + length).arrayBuffer()));
+
+/** The formats of a book whose files are locked with DRM. Only Kindle files can be, so only those are looked at. */
+export async function lockedFormats(book: Book): Promise<string[]> {
+  const locked: string[] = [];
+  for (const format of book.formats) {
+    if (!MOBI.test(format.file)) continue;
+    const file = await fetchFile(book, format.ext).catch(() => null);
+    if (file && (await isLockedBook(file))) locked.push(format.ext);
+  }
+  return locked;
+}
+
+/** Goes no further with a file locked with DRM. */
+export async function refuseLocked(file: File) {
+  if (await isLockedBook(file)) throw new LockedBook();
+}
 
 export async function openFoliate(file: File): Promise<FoliateBook> {
   const { makeBook } = await import("foliate-js/view.js");
@@ -355,6 +383,7 @@ export async function baseContent(book: Book): Promise<Content> {
 export async function extractContent(book: Book, ext: string, onProgress?: (share: number) => void): Promise<Content> {
   const content = await baseContent(book);
   const file = await fetchFile(book, ext);
+  await refuseLocked(file);
 
   if (FOLIATE.includes(ext)) {
     const fb = await openFoliate(file);

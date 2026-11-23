@@ -357,7 +357,7 @@ function chapters(blocks: Block[], marks: PdfMark[], marked: boolean, options: P
       if (onPage < 0) continue;
       // The heading the bookmark names, if it's on that page; otherwise the page's start.
       const named = blocks.findIndex((b, i) => i >= onPage && b.page === mark.page && b.kind !== "p" && b.kind !== "li" && b.kind !== "picture" && want && (normal(headingText(b)).includes(want) || want.includes(normal(headingText(b)))));
-      starts.push({ at: named >= 0 && normal(headingText(blocks[named])) ? named : onPage, title: mark.title.trim() });
+      starts.push({ at: named >= 0 && normal(headingText(blocks[named])) ? named : onPage, title: clean(mark.title).trim() });
     }
   } else if (mode === "headings") {
     // The biggest headings there are two of, or failing that the one there is.

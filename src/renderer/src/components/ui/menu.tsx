@@ -4,8 +4,10 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
@@ -14,6 +16,7 @@ import { Tick02Icon } from "@hugeicons/core-free-icons";
 import { Kbd } from "./badge";
 import { cx, EASE } from "./cx";
 import { Icon, type IconLike } from "./icon";
+import { Portal } from "./portal";
 
 type Trigger = {
   open: boolean;
@@ -27,9 +30,16 @@ type Trigger = {
   };
 };
 
+/** The gap between a menu and its button, and the least it keeps from the window's edges. */
+const GAP = 8;
+const EDGE = 8;
+
 /**
  * A menu that grows from its button. It opens in 250ms and closes faster, in
  * 150ms. A click away or Escape closes it, and the arrows move through it.
+ * It's drawn at the end of the page and placed against its button, so a
+ * panel that clips what overflows it can't cut the menu off. Without room on
+ * its side, it opens on the other.
  */
 export function Menu({
   trigger,
@@ -50,15 +60,43 @@ export function Menu({
   children: ReactNode | ((close: () => void) => ReactNode);
 }) {
   const [open, setOpen] = useState(false);
+  const [place, setPlace] = useState<{ style: CSSProperties; up: boolean }>({ style: {}, up: side === "top" });
   const box = useRef<HTMLDivElement>(null);
   const surface = useRef<HTMLDivElement>(null);
   const id = useId();
   const close = () => setOpen(false);
 
+  // Where the menu goes, from where its button is now. Measured before it's painted, and again on any scroll or resize.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const button = box.current?.getBoundingClientRect();
+      if (!button) return;
+      const height = surface.current?.offsetHeight ?? 0;
+      const below = window.innerHeight - button.bottom - GAP - EDGE;
+      const above = button.top - GAP - EDGE;
+      const up = side === "top" ? above >= height || above > below : below < height && above > below;
+      const wanted = align === "start" ? button.left : button.right - width;
+      const left = Math.max(EDGE, Math.min(wanted, window.innerWidth - width - EDGE));
+      setPlace({
+        up,
+        style: up ? { left, bottom: window.innerHeight - button.top + GAP } : { left, top: button.bottom + GAP },
+      });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
+  }, [open, side, align, width]);
+
   useEffect(() => {
     if (!open) return;
     const away = (event: PointerEvent) => {
-      if (!box.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!box.current?.contains(target) && !surface.current?.contains(target)) setOpen(false);
     };
     const escape = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
@@ -87,7 +125,7 @@ export function Menu({
     items[next]?.focus();
   };
 
-  const origin = `${side === "bottom" ? "top" : "bottom"} ${align === "start" ? "left" : "right"}`;
+  const origin = `${place.up ? "bottom" : "top"} ${align === "start" ? "left" : "right"}`;
 
   return (
     <div ref={box} className="relative" onKeyDown={move}>
@@ -101,6 +139,7 @@ export function Menu({
           onClick: () => setOpen((now) => !now),
         },
       })}
+      <Portal>
       <AnimatePresence>
         {open && (
           <motion.div
@@ -119,13 +158,9 @@ export function Menu({
               scale: 0.99,
               transition: { duration: 0.15, ease: EASE },
             }}
-            style={{ width, transformOrigin: origin }}
+            style={{ width, transformOrigin: origin, ...place.style }}
             className={cx(
-              "absolute z-50 rounded-[18px] border border-border bg-card p-1.5 shadow-float",
-              side === "bottom"
-                ? "top-[calc(100%+8px)]"
-                : "bottom-[calc(100%+8px)]",
-              align === "start" ? "left-0" : "right-0",
+              "fixed z-50 max-h-[calc(100vh-16px)] overflow-y-auto rounded-[18px] border border-border bg-card p-1.5 shadow-float",
               className,
             )}
           >
@@ -133,6 +168,7 @@ export function Menu({
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
     </div>
   );
 }
