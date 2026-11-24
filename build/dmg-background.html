@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- The picture behind the Mac DMG window. Shown at 660x400, it is saved as
+     background.png, and at twice the scale as background@2x.png. -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Geist;src:url("../src/renderer/src/assets/fonts/Geist-Variable.woff2") format("woff2");font-weight:100 900}
+:root{--bg:#f6f5f1;--fg:#1d1b18;--muted:#77716a}
+*{box-sizing:border-box;margin:0}
+html,body{width:660px;height:400px;overflow:hidden;font-family:Geist,sans-serif;-webkit-font-smoothing:antialiased;color:var(--fg)}
+body{position:relative;background:
+  radial-gradient(420px 220px at 50% 46%,rgb(255 255 255/.85),transparent 70%),
+  var(--bg)}
+.abs{position:absolute}
+h1{top:40px;left:0;right:0;text-align:center;font-size:22px;font-weight:650;letter-spacing:-.4px}
+p.sub{top:72px;left:0;right:0;text-align:center;font-size:13.5px;color:var(--muted);font-weight:450}
+/* The shelf: its top seen a little from above, where the names sit, then its front edge. */
+#top{left:70px;width:520px;top:258px;height:40px;background:linear-gradient(#e9dbc3,#dcc7a6);clip-path:polygon(4.5% 0,95.5% 0,100% 100%,0 100%)}
+#top::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(180deg,rgb(120 80 30/.05) 0 1px,transparent 1px 5px),repeating-linear-gradient(178.6deg,transparent 0 11px,rgb(120 80 30/.04) 11px 12.5px,transparent 12.5px 23px)}
+#front{left:70px;width:520px;top:298px;height:14px;border-radius:0 0 4px 4px;background:linear-gradient(#c09258,#a97a43);box-shadow:0 14px 24px -10px rgb(70 45 15/.45),inset 0 1px 0 rgb(255 240 210/.35)}
+#shade{left:94px;width:472px;top:256px;height:6px;background:linear-gradient(rgb(90 60 25/.18),transparent);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+/* Soft contact shadows where the two icons stand. */
+.foot{top:247px;width:120px;height:16px;border-radius:50%;background:radial-gradient(closest-side,rgb(70 45 15/.28),transparent)}
+#arrow{left:262px;top:150px;width:136px;height:60px}
+footer{bottom:20px;left:0;right:0;text-align:center;font-size:11px;color:#9d968c;letter-spacing:.1px}
+</style></head><body>
+<h1 class="abs">Put Shelfed on your shelf</h1>
+<p class="sub abs">Drag it into Applications, then open it from there.</p>
+<div class="abs" id="top"></div>
+<div class="abs" id="shade"></div>
+<div class="abs" id="front"></div>
+<div class="abs foot" style="left:130px"></div>
+<div class="abs foot" style="left:410px"></div>
+<svg class="abs" id="arrow" viewBox="0 0 136 60" fill="none" stroke="#a69d91" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8 42 C 40 8, 90 8, 122 36" stroke="#8f877c" stroke-dasharray="0.1 9"/>
+  <path d="M118.6 26.2 L123 37.6 L111.2 35.4" stroke="#8f877c"/>
+</svg>
+<footer class="abs">Free and open source · shelfed.simonveprek.cz</footer>
+</body></html>

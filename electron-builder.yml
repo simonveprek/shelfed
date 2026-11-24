@@ -47,6 +47,18 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+# The window that opens with the DMG: Shelfed and Applications on an oak shelf.
+# The picture is build/background.png, with @2x for Retina; its size is the window's.
+dmg:
+  iconSize: 128
+  contents:
+    - x: 190
+      y: 190
+      type: file
+    - x: 470
+      y: 190
+      type: link
+      path: /Applications
 win:
   # x64 only: Windows on ARM runs it as it is.
   target: nsis
