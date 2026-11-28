@@ -167,12 +167,16 @@ export function SendDialog({ ids }: { ids: string[] }) {
                 label="Kindle"
                 value={device}
                 onChange={setDevice}
-                options={devices.map((d) => ({ value: d.path, label: kindleById(d.model)?.name ?? (d.kind ? READERS[d.kind].name : d.name), description: t("{size} free", { size: bytes(d.free) }) }))}
+                options={devices.map((d) => ({ value: d.path, label: d.kind === "crosspoint" ? d.name : (kindleById(d.model)?.name ?? (d.kind ? READERS[d.kind].name : d.name)), description: d.kind && READERS[d.kind].wifi ? t("On Wi-Fi") : t("{size} free", { size: bytes(d.free) }) }))}
               />
               <p className="text-label text-muted">
                 {reader
                   ? cablePlans.some((p) => !p)
                     ? t("Shelfed can't read some of these to make an EPUB from them.")
+                    : reader.wifi
+                      ? cablePlans.some((p) => p?.convert)
+                        ? t("Books it can't read as they are get an EPUB made first, then go over Wi-Fi into its Books folder.")
+                        : t("Sends the books as they are, over Wi-Fi, into its Books folder.")
                     : cablePlans.some((p) => p?.convert)
                       ? t("Books it can't read as they are get an EPUB made first. Eject it before you unplug it.")
                       : t("Copies the books as they are. Eject it before you unplug it.")

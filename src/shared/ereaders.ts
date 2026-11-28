@@ -5,9 +5,12 @@ import type { KindleModel } from "./kindles";
  * in, and read EPUB as it is, so a book goes across without being made into
  * anything first. Both find books anywhere on the drive outside their own
  * folders, so Shelfed puts them at the top, the way Kobo says to.
+ *
+ * CrossPoint, the open firmware on Xteink readers, has no cable for books: it
+ * answers on Wi-Fi while its File Transfer screen is open, and takes them there.
  */
 
-export type ReaderKind = "kobo" | "pocketbook";
+export type ReaderKind = "kobo" | "pocketbook" | "crosspoint";
 
 export type Reader = {
   /** Its maker's name, the same in every language. */
@@ -18,6 +21,8 @@ export type Reader = {
   own: RegExp;
   /** How it looks in 3D. */
   model: KindleModel;
+  /** Reached over Wi-Fi rather than plugged in, so there's no cable and no free space to tell. */
+  wifi?: boolean;
 };
 
 export const READERS: Record<ReaderKind, Reader> = {
@@ -35,6 +40,15 @@ export const READERS: Record<ReaderKind, Reader> = {
     own: /^(\..*|system|digital editions|screenshots)$/i,
     // Something like a Verse, buttons and all.
     model: { id: "pocketbook", name: "PocketBook", year: 2023, size: [108, 156, 8.5], screen: 6, shape: "pocketbook", finishes: ["denim"], codes: [] },
+  },
+  crosspoint: {
+    name: "CrossPoint",
+    // It reads its own XTC too, which only it makes.
+    reads: ["epub", "txt", "md"],
+    own: /^(\..*|system volume information|xtcache)$/i,
+    // An Xteink X4, the pocket one.
+    model: { id: "xteink", name: "Xteink", year: 2025, size: [69, 114, 6], screen: 4.3, shape: "xteink", finishes: ["white"], codes: [] },
+    wifi: true,
   },
 };
 
@@ -55,9 +69,9 @@ export function readerFile(formats: string[], reader: Reader, canMakeEpub: boole
   return null;
 }
 
-export const isReaderKind = (kind: unknown): kind is ReaderKind => kind === "kobo" || kind === "pocketbook";
+export const isReaderKind = (kind: unknown): kind is ReaderKind => kind === "kobo" || kind === "pocketbook" || kind === "crosspoint";
 
 /** The book files an e-reader other than a Kindle holds, as Shelfed can read them. */
-const ON_READER = /\.(epub|fb2|fbz|mobi|azw3?|prc|cbz|pdf|txt|docx|html?)$/i;
+const ON_READER = /\.(epub|fb2|fbz|mobi|azw3?|prc|cbz|pdf|txt|md|docx|html?)$/i;
 
 export const isReaderBook = (path: string) => ON_READER.test(path);

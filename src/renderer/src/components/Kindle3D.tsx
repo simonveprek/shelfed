@@ -11,7 +11,7 @@ const lightness = (hex: string) => {
 };
 
 /** Corner radius in millimetres, for each kind of body. */
-const CORNER = { keyboard: 6, buttons: 9, bezel: 9, flush: 7, grip: 6, scribe: 6, kobo: 9, pocketbook: 7 } as const;
+const CORNER = { keyboard: 6, buttons: 9, bezel: 9, flush: 7, grip: 6, scribe: 6, kobo: 9, pocketbook: 7, xteink: 7 } as const;
 
 const EINK = "#e7e5de";
 const GLASS = "#131315";
@@ -34,6 +34,12 @@ function screenRect(model: KindleModel) {
       return { x: (W - sw) / 2, y: (H - sh) * 0.3, w: sw, h: sh };
     case "scribe":
       return { x: W - sw - 6, y: (H - sh) / 2, w: sw, h: sh };
+    case "xteink": {
+      // Its screen is 5 by 3, longer than a Kindle's, and fills nearly all the front.
+      const w = model.screen * 25.4 * 0.515;
+      const h = model.screen * 25.4 * 0.857;
+      return { x: (W - w) / 2, y: (H - h) * 0.28, w, h };
+    }
     default:
       return { x: (W - sw) / 2, y: (H - sh) * 0.42, w: sw, h: sh };
   }
@@ -430,6 +436,28 @@ export function Kindle3D({
         />
       </>
     );
+  } else if (model.shape === "xteink") {
+    // Four small keys across the chin: back, select, and a page each way.
+    const chin = screen.y + screen.h;
+    const y = chin + (H - chin) / 2;
+    const key = { w: 11, h: 5 };
+    const gap = 3;
+    const start = (W - (key.w * 4 + gap * 3)) / 2;
+    extras = [0, 1, 2, 3].map((i) => (
+      <span
+        key={i}
+        className="absolute"
+        style={{
+          left: mm(start + i * (key.w + gap)),
+          top: mm(y - key.h / 2),
+          width: mm(key.w),
+          height: mm(key.h),
+          borderRadius: mm(2.5),
+          background: `color-mix(in oklab, ${front} 90%, ${pale ? "black" : "white"})`,
+          boxShadow: `0 ${mm(0.4)}px ${mm(0.7)}px rgb(0 0 0 / 0.2), inset 0 ${mm(0.3)}px 0 rgb(255 255 255 / 0.14)`,
+        }}
+      />
+    ));
   } else if (model.shape === "pocketbook") {
     // Home, back, forward and menu, across the chin.
     const chin = screen.y + screen.h;

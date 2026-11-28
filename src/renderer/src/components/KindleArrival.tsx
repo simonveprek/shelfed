@@ -127,7 +127,7 @@ export function KindleArrival() {
             // Clicks on the Kindle are its own, a tap that wakes the screen, not a way out.
             onClick={(e) => e.stopPropagation()}
           >
-            <Kindle3D model={model} finish={finish} book={plugged ? reading : undefined} height={300} cable={plugged ? "plugged" : "unplugged"} onPulse={onPulse} />
+            <Kindle3D model={model} finish={finish} book={plugged ? reading : undefined} height={300} cable={reader?.wifi ? undefined : plugged ? "plugged" : "unplugged"} onPulse={onPulse} />
           </motion.div>
           <motion.div
             className="-mt-6 flex flex-col items-center text-center"
@@ -136,9 +136,13 @@ export function KindleArrival() {
             exit={{ opacity: 0, transition: { duration: 0.2 } }}
             transition={{ duration: 0.6, ease: EASE }}
           >
-            <p className="text-[22px] leading-tight font-medium tracking-[-0.02em]">{model.name}</p>
+            <p className="text-[22px] leading-tight font-medium tracking-[-0.02em]">{reader?.wifi && drive ? drive.name : model.name}</p>
             <p className="mt-1 text-label text-muted">
-              {drive
+              {drive && reader?.wifi
+                ? copied
+                  ? tn(copied, "On Wi-Fi, {n} of your books on it", "On Wi-Fi, {n} of your books on it")
+                  : t("On Wi-Fi")
+                : drive
                 ? copied
                   ? tn(copied, "Plugged in, {free} free, {n} of your books on it", "Plugged in, {free} free, {n} of your books on it", { free: bytes(drive.free) })
                   : t("Plugged in, {free} free", { free: bytes(drive.free) })

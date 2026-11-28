@@ -24,7 +24,9 @@ export type KindleShape =
   /** Not a Kindle: a Kobo, with a matte front, a grip down the right and two page buttons on it. */
   | "kobo"
   /** Not a Kindle: a PocketBook, with a deep chin and a row of four buttons on it. */
-  | "pocketbook";
+  | "pocketbook"
+  /** Not a Kindle: an Xteink, small enough for a pocket, with four buttons under the screen. */
+  | "xteink";
 
 export type KindleModel = {
   id: string;

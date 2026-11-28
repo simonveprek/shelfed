@@ -1,9 +1,9 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import {
   ArrowDataTransferHorizontalIcon, BookOpen01Icon, Cancel01Icon, CheckmarkCircle02Icon, Folder01Icon, GithubIcon, Globe02Icon,
-  InformationCircleIcon, LicenseIcon, MailSend01Icon, PaintBoardIcon, PlayCircleIcon, Tablet01Icon,
+  InformationCircleIcon, LicenseIcon, MailSend01Icon, PaintBoardIcon, PlayCircleIcon, Tablet01Icon, BookBookmark01Icon,
   SparklesIcon,
 } from "@hugeicons/core-free-icons";
 import {
@@ -18,7 +18,7 @@ import { findCopies } from "../../../shared/copies";
 import { chooseIcon, iconSrc } from "@/lib/icon";
 import { BUSY_KINDLE, PHONE_LIKE, useFinishedOnKindle, useKindlePort, useNotInLibrary, useOnKindle } from "@/lib/kindle";
 import { hydrate, setSetting, useStore, type SettingsSection } from "@/lib/store";
-import { bytes } from "@/lib/util";
+import { ago, bytes } from "@/lib/util";
 import { FINISHES, KINDLES, kindleById } from "../../../shared/kindles";
 import { APP_ICONS } from "../../../shared/icons";
 import type { UpdateState } from "../../../shared/types";
@@ -526,11 +526,156 @@ function KindleSection() {
           </div>
         </div>
       </div>
+      <WifiReaders />
       <Group label={t("From your Kindle")}>
         <Row label={t("Highlights and notes")} hint={t("Brings what you marked on a Kindle into the books here, from its My Clippings file.")}>
           <Button size="sm" onClick={() => import("./Clippings").then((m) => m.importClippings())}>{t("Import")}</Button>
         </Row>
       </Group>
+    </>
+  );
+}
+
+/** CrossPoint readers, found on Wi-Fi while their File Transfer screen is open. */
+function WifiReaders() {
+  const wanted = useStore((s) => s.settings.wifiReaders);
+  const found = useKindlePort()?.drives.find((d) => d.kind === "crosspoint");
+  const [address, setAddress] = useState(wanted?.address ?? "");
+  const set = (patch: Partial<NonNullable<typeof wanted>>) => setSetting({ wifiReaders: { look: false, ...useStore.getState().settings.wifiReaders, ...patch } });
+  return (
+    <Group label={t("E-readers on Wi-Fi")}>
+      <div className="px-4 py-1">
+        <SwitchRow
+          label={t("Look for CrossPoint readers")}
+          hint={t("Xteink readers running CrossPoint take books over Wi-Fi while their File Transfer screen is open. Shelfed asks your own network only, and only while this is on.")}
+          checked={Boolean(wanted?.look)}
+          onChange={(look) => set({ look })}
+        />
+      </div>
+      {wanted?.look && (
+        <Row
+          label={found ? <span className="flex items-center gap-2">{found.name} <Badge tone="success">{t("Found")}</Badge></span> : t("Its address")}
+          hint={found ? t("Drop books on it in the side panel, as on a Kindle.") : t("Only if it isn't found by itself: the address on its File Transfer screen, like 192.168.1.40.")}
+        >
+          <Input
+            className="w-[180px]"
+            placeholder="192.168.1.40"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            onBlur={() => set({ address: address.trim() || undefined })}
+            aria-label={t("Its address")}
+          />
+        </Row>
+      )}
+    </Group>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+/* Hardcover                                                                 */
+/* ------------------------------------------------------------------------ */
+
+type HardcoverState = Awaited<ReturnType<typeof api.hardcover>>;
+
+/** Keeping reading in step with your own Hardcover account, once you connect it. */
+function HardcoverSection() {
+  const settings = useStore((s) => s.settings.hardcover);
+  const [state, setState] = useState<HardcoverState | null>(null);
+  const [busy, setBusy] = useState<"connecting" | "syncing" | "leaving" | null>(null);
+  useEffect(() => {
+    api.hardcover().then(setState);
+  }, [settings]);
+
+  const connect = async () => {
+    setBusy("connecting");
+    try {
+      const next = await api.hardcoverConnect();
+      setState(next);
+      setSetting({ hardcover: next.settings });
+      toast.success(t("Connected to Hardcover"), { description: t("Your reading here and there is now kept in step.") });
+    } catch (error) {
+      if ((error as Error).message !== "Cancelled") toast.error(t("Not connected"), { description: (error as Error).message });
+    } finally {
+      setBusy(null);
+    }
+  };
+  const syncNow = async () => {
+    setBusy("syncing");
+    try {
+      const done = await api.hardcoverSync();
+      if (done) {
+        toast.success(t("In step with Hardcover"), {
+          description: done.notFound.length
+            ? `${done.line}. ${tn(done.notFound.length, "{n} book wasn't found there.", "{n} books weren't found there.")}`
+            : done.line,
+        });
+      }
+    } catch (error) {
+      toast.error(t("Not in step"), { description: (error as Error).message });
+    } finally {
+      setBusy(null);
+    }
+  };
+  const leave = async () => {
+    setBusy("leaving");
+    try {
+      setState(await api.hardcoverDisconnect());
+      setSetting({ hardcover: undefined });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <>
+      <Title title="Hardcover">
+        {t("Keep what you're reading, what you've finished and your ratings the same here and on Hardcover, both ways. It stays off until you connect, and only ever talks to your own account.")}
+      </Title>
+      {state && !state.available ? (
+        <Group>
+          <Row label={t("Not in this copy of Shelfed yet")} hint={t("Connecting to Hardcover comes in a later version.")} />
+        </Group>
+      ) : state?.connected && settings?.user ? (
+        <>
+          <Group>
+            <Row label={t("Connected as {name}", { name: `@${settings.user.username}` })} hint={t("Disconnecting tells Hardcover to forget Shelfed. Your books keep their status and ratings.")}>
+              <Button size="sm" variant="outline" disabled={busy !== null} onClick={leave}>{t("Disconnect")}</Button>
+            </Row>
+            <div className="px-4 py-1">
+              <SwitchRow
+                label={t("Keep in step")}
+                hint={t("A book you start, finish or rate here is marked the same there, with how far in you are. One marked there is marked the same here.")}
+                checked={settings.sync !== false}
+                onChange={(sync) => setSetting({ hardcover: { ...settings, sync } })}
+              />
+            </div>
+            <Row
+              label={settings.lastSync ? `${t("In step")} · ${ago(settings.lastSync)}` : t("Not in step yet")}
+              hint={settings.lastError ? <span className="text-danger">{settings.lastError}</span> : t("Shelfed looks every half hour while it's open, and soon after you change a book.")}
+            >
+              <Button size="sm" disabled={busy !== null || settings.sync === false} onClick={syncNow}>
+                {busy === "syncing" ? t("Bringing into step…") : t("Bring into step now")}
+              </Button>
+            </Row>
+          </Group>
+          <p className="px-1 text-caption text-muted">
+            {t("Hardcover keeps pages read, not your place in a book, so a book still opens where you stopped in Shelfed. Books only on Hardcover stay there; ones you mark here are added there.")}
+          </p>
+        </>
+      ) : (
+        <Group>
+          <Row label={t("Connect your account")} hint={t("Your browser opens Hardcover to say yes. Shelfed never sees your password.")}>
+            {busy === "connecting" ? (
+              <div className="flex items-center gap-2">
+                <span className="text-caption text-muted">{t("Waiting for Hardcover…")}</span>
+                <Button size="sm" variant="outline" onClick={() => api.hardcoverCancel()}>{t("Cancel")}</Button>
+              </div>
+            ) : (
+              <Button size="sm" disabled={!state || busy !== null} onClick={connect}>{t("Connect Hardcover")}</Button>
+            )}
+          </Row>
+        </Group>
+      )}
     </>
   );
 }
@@ -801,6 +946,7 @@ const SECTIONS: Array<{ id: SettingsSection; label: string; icon: IconLike; tint
   { id: "kindle", label: "Kindle", icon: Tablet01Icon, tint: "#2b2b2e", render: () => <KindleSection /> },
   { id: "sending", label: "Sending", icon: MailSend01Icon, tint: "#2b6fff", render: () => <SendingSection /> },
   { id: "converting", label: "Converting", icon: ArrowDataTransferHorizontalIcon, tint: "#a23bff", render: () => <ConvertingSection /> },
+  { id: "hardcover", label: "Hardcover", icon: BookBookmark01Icon, tint: "#6d4c2f", render: () => <HardcoverSection /> },
   { id: "about", label: "About Shelfed", icon: InformationCircleIcon, tint: "#8c857c", render: () => <AboutSection /> },
 ];
 

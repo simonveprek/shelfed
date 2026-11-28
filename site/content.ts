@@ -60,6 +60,7 @@ export const GROUPS: Array<[string, string[]]> = [
       "Brings your Kindle highlights back from My Clippings",
       "PDFs laid out to fit a Kindle's screen",
       "Kobo and PocketBook too, by cable",
+      "CrossPoint readers over Wi-Fi",
     ],
   ],
   [
@@ -106,10 +107,12 @@ export const QUESTIONS: Array<[string, string]> = [
     "Every Kindle, by email. By cable too, on Mac and Windows, with nothing else to install: the ones that show up as a drive, and newer ones like the 2024 Paperwhite and the Colorsoft, which connect the way phones do.",
   ],
   ["Does it work with Kobo or PocketBook?", "Yes. Plugged in by cable, they show up next to your library: Shelfed copies books to them as EPUBs, shows which of yours are on them, and brings theirs over."],
+  ["Does it work with Xteink and CrossPoint?", "Yes, over Wi-Fi. Turn on looking for CrossPoint readers in Settings and open File Transfer on the reader: it shows up next to your library and takes books like any other e-reader."],
+  ["Can it keep my reading in step with Hardcover?", "Yes, if you connect your own Hardcover account in Settings. What you're reading, what you've finished, your ratings and how far in you are stay the same in both places. It's off until you connect."],
   ["Can it open books I bought on Amazon?", "Not if they have DRM, as most do, and Shelfed doesn't remove it. Books without DRM, from anywhere, open fine."],
   ["I use Calibre. Can I bring my library?", "Drop its library folder on Shelfed. Each book comes in once, with all its formats, its cover, and the title, authors, series, tags and rating you gave it in Calibre. Only Calibre's custom columns stay behind."],
   ["Where are my books kept?", "In a Shelf Library folder in your Documents, a folder for each author, as ordinary files. Move it anywhere from Settings."],
-  ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, a word you look up while reading, catalogues you add, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
+  ["What does it go online for?", "Only when you ask: book details from Open Library and Google Books, free classics, a word you look up while reading, catalogues you add, Hardcover once you connect it, sending to your Kindle through your mail server, and checking GitHub for updates, which you can turn off."],
   ["Will my computer warn me the first time?", "Not on a Mac: Shelfed is signed and notarized by Apple, so it opens like any other app from the internet. On Windows it isn't signed yet, so if SmartScreen appears, choose More info, then Run anyway."],
   ["What does it run on?", "macOS on Apple silicon or Intel, and Windows 10 or 11 on x64 or ARM. On Linux it runs built from the source."],
 ];

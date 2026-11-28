@@ -23,6 +23,7 @@ import { findCalibre } from "./calibre";
 import { watchDownloads } from "./downloads";
 import { getSettings, setSettings, setSmtpPassword } from "./settings";
 import { checkForUpdates, installUpdate, updateState, watchUpdates } from "./updates";
+import { bookChanged, cancelConnecting, connectHardcover, disconnectHardcover, hardcoverState, said, syncNow, watchHardcover } from "./hardcover-app";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const isMac = process.platform === "darwin";
@@ -355,7 +356,14 @@ const api = {
   importFile: (path: string) => library.importFile(path),
   joinFile: (id: string, path: string) => library.joinFile(id, path),
   sidecar: (path: string) => library.sidecar(path),
-  update: (id: string, patch: Partial<Book>, relocate = false) => library.update(id, patch, relocate),
+  async update(id: string, patch: Partial<Book>, relocate = false) {
+    const before = { ...library.get(id) };
+    // How it stands with Hardcover is Hardcover's business, never the page's.
+    const { hardcover: _, ...rest } = patch ?? {};
+    const book = await library.update(id, rest, relocate);
+    bookChanged(before, rest);
+    return book;
+  },
   setCover: (id: string, cover: Uint8Array, thumb: Uint8Array, tint?: string) => library.setCover(id, cover, thumb, tint),
   addFormat: (id: string, ext: string, data: Uint8Array) => library.addFormat(id, ext, data),
   removeFormat: (id: string, ext: string) => library.removeFormat(id, ext),
@@ -377,9 +385,9 @@ const api = {
   },
 
   settings: (patch: Partial<Settings>) => {
-    // Catalogues are added and removed only below, once they've answered as one.
-    const { catalogues: _, ...rest } = patch ?? {};
-    const settings = setSettings(rest);
+    // Catalogues are added and removed only below, once they've answered as one. Of Hardcover, the page only turns keeping in step on and off.
+    const { catalogues: _, hardcover, ...rest } = patch ?? {};
+    const settings = setSettings(hardcover && getSettings().hardcover ? { ...rest, hardcover: { ...getSettings().hardcover, sync: hardcover.sync !== false } } : rest);
     if ("downloads" in patch) followDownloads();
     if ("language" in patch) {
       speak();
@@ -398,6 +406,16 @@ const api = {
   },
 
   setPassword: (password: string) => setSmtpPassword(password),
+
+  hardcover: () => hardcoverState(),
+  // Tests stand in for Hardcover, and follow its page themselves rather than open a browser on someone's screen.
+  hardcoverConnect: () => connectHardcover((url) => (!app.isPackaged && process.env.SHELF_HARDCOVER_API ? void fetch(url).catch(() => undefined) : shell.openExternal(url))),
+  hardcoverCancel: () => cancelConnecting(),
+  hardcoverDisconnect: () => disconnectHardcover(),
+  async hardcoverSync() {
+    const outcome = await syncNow();
+    return outcome ? { line: said(outcome), notFound: outcome.notFound } : null;
+  },
   verifyMail: () => verifyMail(getSettings().kindle),
   smtpPreset: (email: string) => SMTP_PRESETS[email.split("@")[1]?.toLowerCase() ?? ""] ?? null,
 
@@ -729,6 +747,10 @@ app.whenReady().then(async () => {
   createWindow();
   showIcon();
   watchUpdates((state) => send("update", state), () => getSettings().updates !== false);
+  watchHardcover(
+    () => ({ books: () => library.list(), update: (id, patch) => library.update(id, patch) }),
+    (books, settings) => send("hardcover", books, settings),
+  );
   if (!isMac) win?.setMenuBarVisibility(false);
   // Windows shuts down and logs off without before-quit, so the library is saved here too.
   win?.on("session-end", () => library?.flushNow());

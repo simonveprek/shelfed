@@ -2,10 +2,14 @@ Shelfed is a quiet home for your books, on Mac and Windows. Free and open source
 
 ## New in 0.4.0
 
+- **Newer Kindles by cable.** The 2024 Paperwhite, the Colorsoft and the 2024 Kindle connect the way phones do, not as a drive. Shelfed now talks to them itself, with nothing else to install: drag a book onto one to copy it, see what's on it, bring its books over, and take the finished ones off. Tried on a real Paperwhite on a Mac; on Windows it's new, so please open an issue if yours doesn't connect.
+- **Look up a word while reading.** Select a word and choose Look up: what it means, from Wiktionary, and for a name or a place, what Wikipedia says, in the book's language. Only the word goes online, and only when you ask.
 - **Kobo and PocketBook.** Plug one in and Shelfed knows it: it shows in the side panel with what's on it, and the books of yours on it get a badge and a place of their own. Drag a book onto it to copy it across as an EPUB, bring its books into your library, and take the finished ones off.
 - **Your own catalogues.** Add any OPDS catalogue next to the free classics: a Calibre content server at home, a library's, or one a reading app told you about. Browse its shelves, search it, and add a book in one click. Shelfed only ever follows the catalogue's own links.
+- **CrossPoint readers over Wi-Fi.** Turn on looking for them in Settings, open File Transfer on your Xteink, and it shows up like any other e-reader: drop a book on it to send it as an EPUB, see which of yours are on it, bring its books and highlights over, and take finished ones off.
+- **Hardcover, kept in step.** Connect your own Hardcover account in Settings and what you're reading, what you've finished, your ratings and how far in you are stay the same in both places. It goes through Hardcover's own page, so Shelfed never sees your password, and it's off until you connect.
 
-## In 0.2.1 and 0.2.2
+## Since 0.2.0
 
 - **Signed and notarized on Mac.** A Mac opens Shelfed like any other app from the internet: no Open Anyway in Privacy & Security, and no Terminal.
 - **Menus show in full.** The book panel's More menu, and the Collection and Mark menus for several books, are no longer cut off by the panel.
@@ -42,7 +46,9 @@ Shelfed is a quiet home for your books, on Mac and Windows. Free and open source
 
 What's coming next is in the [roadmap](https://github.com/simonveprek/shelfed/blob/main/ROADMAP.md).
 
-- **Kindles from 2024 on** (the 2024 Paperwhite, Colorsoft and Kindle) connect the way phones do, not as a drive. Shelfed reaches them by cable by itself. On a Mac only one app can have one open at a time, so quit Calibre or OpenMTP first.
+- **Kindles from 2024 on** (the 2024 Paperwhite, Colorsoft and Kindle) connect the way phones do, not as a drive. Shelfed reaches them by cable by itself. Only one app can have one open at a time, so quit Calibre, OpenMTP or Amazon's USB File Manager first.
+- **CrossPoint readers** are found while their File Transfer screen is open, on the same network as your computer. If yours doesn't show up, type the address its screen shows in Settings, Kindle.
+- **Hardcover** keeps pages read, not your place in a book, so a book still opens where you stopped in Shelfed.
 - **Books with DRM**, as most bought from Amazon are, won't open. Shelfed doesn't remove DRM.
 - **Coming from Calibre:** drop its library folder on Shelfed. Each book comes in once, with all its formats, its cover, and the title, authors, series, tags and rating you gave it in Calibre, even one Calibre kept twice in two formats. A series written into a title, like “The King of the West (Path of the Ranger Book 7)”, becomes the book's series. Calibre's custom columns don't come across.
 - **Kindle files made by Shelfed** (AZW3): if one doesn't look right on your Kindle, please open an issue.

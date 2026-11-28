@@ -14,19 +14,14 @@ export type Release = {
 export const RELEASES_MADE: Release[] = [
   {
     version: "0.4.0",
-    date: "2026-11-05",
-    summary: "Kobo and PocketBook, and catalogues of your own.",
+    date: "2026-11-28",
+    summary: "Newer Kindles by cable, Kobo, PocketBook and CrossPoint readers, Hardcover kept in step, and words looked up.",
     changes: [
+      "Kindles from 2024 on, like the Paperwhite and the Colorsoft, take books by cable too, with nothing else to install. They connect the way phones do, and Shelfed talks to them itself.",
       "Kobo and PocketBook e-readers are recognised when plugged in. Shelfed shows what's on them, copies books across as EPUBs, brings theirs into your library, and takes the finished ones off.",
+      "Xteink readers running CrossPoint take books over Wi-Fi, found while their File Transfer screen is open, and show what's on them like any other e-reader.",
+      "Connect your own Hardcover account, and what you're reading, what you've finished, your ratings and how far in you are stay in step both ways.",
       "Add any OPDS catalogue next to the free classics, such as a Calibre content server or a library's. Browse it, search it, and add a book in one click.",
-    ],
-  },
-  {
-    version: "0.3.0",
-    date: "2026-11-05",
-    summary: "Newer Kindles by cable, and words looked up while reading.",
-    changes: [
-      "Kindles from 2024 on, like the Paperwhite and the Colorsoft, take books by cable too, on Mac and Windows, with nothing else to install. They connect the way phones do, and Shelfed talks to them itself.",
       "Select a word while reading to look it up: what it means, from Wiktionary, and who or what a name is, from Wikipedia in the book's language.",
     ],
   },

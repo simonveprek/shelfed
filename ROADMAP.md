@@ -4,9 +4,9 @@ Where Shelfed is going, roughly in order. These are plans, not promises: the ord
 
 ## Now: 0.4
 
-A library kept as plain files; a reader for every common format; converting with nothing else to install; Kindles, Kobos and PocketBooks recognised over USB and sent books by cable, and Kindles by email; free classics and catalogues of your own; suggestions worked out on your computer. Mac and Windows.
+A library kept as plain files; a reader for every common format; converting with nothing else to install; Kindles, Kobos and PocketBooks recognised over USB and sent books by cable, Kindles by email, and CrossPoint readers over Wi-Fi; free classics and catalogues of your own; your reading kept in step with Hardcover if you want; suggestions worked out on your computer. Mac and Windows.
 
-0.2 added a commonplace book of every line you've marked, a moment for finishing a book, and a bookcase that knows what you're reading. 0.3 copied books by cable to Kindles from 2024 on, which connect over MTP the way phones do, and looked up words while you read. 0.4 knows Kobo and PocketBook, and lets you add any OPDS catalogue, such as a Calibre content server.
+0.2 added a commonplace book of every line you've marked, a moment for finishing a book, and a bookcase that knows what you're reading. 0.4 copies books by cable to Kindles from 2024 on, which connect over MTP the way phones do, looks up words while you read, knows Kobo and PocketBook, sends books to CrossPoint readers over Wi-Fi, keeps your reading in step with your own Hardcover account if you connect it, and lets you add any OPDS catalogue, such as a Calibre content server.
 
 ## 0.5: alongside Calibre
 
@@ -22,13 +22,13 @@ A library kept as plain files; a reader for every common format; converting with
 
 ## Would like, but needs money
 
-- **Signed builds.** No more warnings on first launch, and updates that install themselves on a Mac too. This needs paid certificates from Apple and for Windows, every year. If Shelfed finds enough people, it'll happen.
+- **Signed on Windows.** The Mac app is signed and notarized since 0.2.2. Windows still asks through SmartScreen the first time, until there's a Windows certificate, which costs every year.
 
 ## Not planned
 
 These keep Shelfed what it is:
 
 - **Removing DRM.** Shelfed opens books you can open; it won't break locks on the ones you can't.
-- **An account or a cloud service.** Your books and your reading stay on your computer.
+- **An account or a cloud service of Shelfed's own.** Your books and your reading stay on your computer. Connecting your own Hardcover account is up to you, and off until you do.
 - **A store.** Shelfed points to free classics and that's it.
 - **Everything Calibre does.** Calibre's news fetching and plugin system are its own. Shelfed aims to do the everyday things well, not all of them.

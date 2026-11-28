@@ -3,6 +3,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { strToU8, zipSync } from "fflate";
+import { pretendCrossPoint, type PretendCrossPoint } from "../test/pretend-crosspoint";
+import { pretendHardcover, type PretendHardcover } from "../test/pretend-hardcover";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -69,6 +71,10 @@ export type Shelf = {
   opds: string;
   /** The demo Kindle's storage. */
   kindle: string;
+  /** The pretend CrossPoint reader on Wi-Fi, when the test asked for one. */
+  crosspoint: PretendCrossPoint | null;
+  /** The pretend Hardcover, when the test asked for one. */
+  hardcover: PretendHardcover | null;
 };
 
 /** Each test gets its own Shelfed, on its own empty library, never yours. */
@@ -85,6 +91,10 @@ type Options = {
   calibre: { fill: (folder: string) => void } | undefined;
   /** The language Shelfed speaks. English unless a test asks, whatever the computer's own. */
   language: "en" | "cs";
+  /** A pretend CrossPoint reader on Wi-Fi with these files on its card, by path like "/Books/Emma.epub", and Shelfed looking for it. */
+  wifiReader: Record<string, string> | undefined;
+  /** A pretend Hardcover for Shelfed to connect to, instead of the real one. */
+  hardcover: boolean;
 };
 
 export const test = base.extend<{ shelf: Shelf } & Options>({
@@ -94,7 +104,9 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
   library: [undefined, { option: true }],
   calibre: [undefined, { option: true }],
   language: ["en", { option: true }],
-  shelf: async ({ kindle, onKindle, kindleQuirks, library, calibre, language }, use) => {
+  wifiReader: [undefined, { option: true }],
+  hardcover: [false, { option: true }],
+  shelf: async ({ kindle, onKindle, kindleQuirks, library, calibre, language, wifiReader, hardcover: wantsHardcover }, use) => {
     const dir = mkdtempSync(join(tmpdir(), "shelf-e2e-"));
     const data = join(dir, "data");
     mkdirSync(data);
@@ -111,9 +123,19 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       calibre.fill(books);
       writeFileSync(join(dir, "calibre-config", "global.py.json"), JSON.stringify({ library_path: books }));
     }
+    const crosspoint = wifiReader ? await pretendCrossPoint(wifiReader) : null;
+    const hardcover = wantsHardcover ? await pretendHardcover() : null;
     writeFileSync(
       join(data, "settings.json"),
-      JSON.stringify({ libraryPath: join(dir, "Library"), onboarded: true, inspector: true, sidebar: true, updates: false, language }),
+      JSON.stringify({
+        libraryPath: join(dir, "Library"),
+        onboarded: true,
+        inspector: true,
+        sidebar: true,
+        updates: false,
+        language,
+        ...(crosspoint ? { wifiReaders: { look: true, address: crosspoint.host } } : {}),
+      }),
     );
     if (library) {
       mkdirSync(join(dir, "Library"), { recursive: true });
@@ -152,6 +174,18 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
         SHELF_FREE_DIR: join(dir, "free"),
         SHELF_LOOKUP_DIR: join(dir, "lookup"),
         SHELF_OPDS_DIR: join(dir, "opds"),
+        // Wi-Fi readers are only ever the pretend one at the address given; the network isn't asked.
+        SHELF_NO_HELLO: "1",
+        ...(hardcover
+          ? {
+              SHELF_HARDCOVER_API: hardcover.url,
+              SHELF_HARDCOVER_AUTHORIZE: `${hardcover.url}/oauth2/authorize`,
+              SHELF_HARDCOVER_ISSUER: hardcover.url,
+              SHELF_HARDCOVER_CLIENT_ID: "shelfed-test",
+              SHELF_HARDCOVER_GAP: "0",
+              SHELF_HARDCOVER_DELAY: "300",
+            }
+          : {}),
         ...(demo ? { SHELF_DEMO_KINDLE: demo, SHELF_DEMO_QUIRKS: JSON.stringify(kindleQuirks) } : {}),
         // On someone's own computer the test books are deleted, not put in their Trash.
         ...(process.env.CI ? {} : { SHELF_NO_TRASH: "1" }),
@@ -183,6 +217,8 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
       lookup: join(dir, "lookup"),
       opds: join(dir, "opds"),
       kindle: join(dir, "Kindle"),
+      crosspoint,
+      hardcover,
       async add(books = BOOKS) {
         const paths = books.map((book) => {
           const path = join(dir, `in-${made++}.epub`);
@@ -202,6 +238,8 @@ export const test = base.extend<{ shelf: Shelf } & Options>({
     });
 
     await app.close().catch(() => {});
+    await crosspoint?.close();
+    await hardcover?.close();
     rmSync(dir, { recursive: true, force: true });
     expect(errors, "errors on the page").toEqual([]);
   },

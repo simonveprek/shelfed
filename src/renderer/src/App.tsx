@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { Button, EASE, ThemeProvider, Toaster, toast } from "@/components/ui";
 import { importPaths } from "@/lib/actions";
-import type { UpdateState } from "../../shared/types";
+import type { Book, Settings, UpdateState } from "../../shared/types";
 import { api, isMac, isWin, on } from "@/lib/api";
 import { runCommand } from "@/lib/commands";
 import { hydrate, persist, setSetting, useStore } from "@/lib/store";
@@ -202,6 +202,11 @@ export function App() {
       on("downloaded", (paths: string[]) => importPaths(paths, false, t("your Downloads"))),
       on("save-failed", () => toast.error(t("Shelfed could not save your library"), { description: t("Your changes are kept and it will try again. Check the disk has room.") })),
       on("update", announce),
+      // Hardcover brought books into step: those books as they are now, and how it stands.
+      on("hardcover", (books: Book[], hardcover: Settings["hardcover"]) => {
+        const changed = new Map(books.map((b) => [b.id, b]));
+        useStore.setState((s) => ({ books: s.books.map((b) => changed.get(b.id) ?? b), settings: { ...s.settings, hardcover } }));
+      }),
     ];
     api.updateState().then((update) => useStore.setState({ update }));
     const key = (e: KeyboardEvent) => {

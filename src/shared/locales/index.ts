@@ -8,6 +8,7 @@ import library from "./cs-library";
 import main from "./cs-main";
 import reader from "./cs-reader";
 import settings from "./cs-settings";
+import sync from "./cs-sync";
 
 /** Every translation, loaded once by whichever side of the app starts first. */
-addWords("cs", { ...kit, ...common, ...library, ...settings, ...dialogs, ...details, ...reader, ...main, ...agreed });
+addWords("cs", { ...kit, ...common, ...library, ...settings, ...dialogs, ...details, ...reader, ...main, ...agreed, ...sync });

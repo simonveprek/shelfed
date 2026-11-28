@@ -90,7 +90,7 @@ type State = {
   update: UpdateState;
 };
 
-export type SettingsSection = "library" | "appearance" | "reading" | "kindle" | "sending" | "converting" | "about";
+export type SettingsSection = "library" | "appearance" | "reading" | "kindle" | "sending" | "converting" | "hardcover" | "about";
 
 export type KindlePort = { usb: KindleOnUsb[]; drives: KindleDevice[] };
 

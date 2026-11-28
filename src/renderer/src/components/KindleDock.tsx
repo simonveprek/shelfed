@@ -92,7 +92,7 @@ export function KindleDock() {
             book={shown}
             activity={activity}
             height={model.size[1] > 200 ? 200 : 186}
-            cable={onBus ? "plugged" : "unplugged"}
+            cable={reader?.wifi ? undefined : onBus ? "plugged" : "unplugged"}
             glow={over}
             className="pt-2"
           />
@@ -109,14 +109,14 @@ export function KindleDock() {
             </motion.div>
           </Portal>
         )}
-        <p className="mt-1 text-label font-medium">{model.name}</p>
+        <p className="mt-1 text-label font-medium">{reader?.wifi && drive ? drive.name : model.name}</p>
         <p className="mt-0.5 max-w-[26ch] text-center text-caption text-muted" style={{ textWrap: "balance" }}>
           {over
             ? drive
               ? t("Let go to copy it on")
               : t("Let go to send it by email")
             : drive
-              ? `${t("Plugged in, {free} free.", { free: bytes(drive.free) })} ${copied ? `${tn(copied, "{n} of your books is on it.", "{n} of your books are on it.")} ` : ""}${t("Drop a book on it to copy it.")}`
+              ? `${reader?.wifi ? t("On Wi-Fi.") : t("Plugged in, {free} free.", { free: bytes(drive.free) })} ${copied ? `${tn(copied, "{n} of your books is on it.", "{n} of your books are on it.")} ` : ""}${t("Drop a book on it to copy it.")}`
               : cable === "phone"
                 ? t("Shelfed couldn't open it by cable. Drop a book on it to email it.")
                 : cable === "busy"

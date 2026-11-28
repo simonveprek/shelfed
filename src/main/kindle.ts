@@ -7,9 +7,10 @@ import nodemailer from "nodemailer";
 import { kindleFromSerial } from "../shared/kindles";
 import { isReaderBook, READERS, type ReaderKind } from "../shared/ereaders";
 import type { KindleDevice, KindleFile, KindleOnUsb, KindleSettings } from "../shared/types";
-import { getSmtpPassword } from "./settings";
 import { isBookFile, lockedBy } from "./kindle-files";
 import { isMtpPath, look, mtpClippings, mtpCopy, mtpFetch, mtpFiles, mtpRemove, readyDevices } from "./mtp";
+import { crossPointClippings, crossPointCopy, crossPointFetch, crossPointFiles, crossPointRemove, forgetReaders, isCrossPointPath, isFound, lookForReaders, wifiReaders } from "./crosspoint";
+import { getSettings, getSmtpPassword } from "./settings";
 import { t } from "../shared/i18n";
 
 /** Common mail services, so most people only type their address. */
@@ -190,11 +191,25 @@ const safeBus = () => readBus().catch((): Bus => ({ serials: [] }));
 /** The drives last seen, so checking one doesn't mean asking the system all over again. */
 let lastDrives: KindleDevice[] = [];
 
-/** Kindles that take books by cable: ones that open as a drive, and ones open over MTP. */
+/**
+ * CrossPoint readers on Wi-Fi, when looking for them is turned on. Asking the
+ * network goes on in the background, so what it finds shows the next time.
+ */
+function onWifi(): KindleDevice[] {
+  const wanted = getSettings().wifiReaders;
+  if (!wanted?.look) {
+    forgetReaders();
+    return [];
+  }
+  void lookForReaders(wanted.address);
+  return wifiReaders();
+}
+
+/** E-readers that take books: Kindles that open as a drive or over MTP, other e-readers plugged in, and ones on Wi-Fi. */
 export async function findDevices(): Promise<KindleDevice[]> {
   const drives = await drivesOn(await safeBus());
   lastDrives = drives;
-  return drives.some((d) => !d.kind) ? drives : [...readyDevices(), ...drives];
+  return [...(drives.some((d) => !d.kind) ? drives : [...readyDevices(), ...drives]), ...onWifi()];
 }
 
 /**
@@ -220,7 +235,8 @@ export function kindlePort() {
     // A Kindle open as a drive needs nothing more. Any other gets its MTP looked at.
     const asDrive = drives.some((d) => !d.kind);
     const linked = look(asDrive ? [] : usb);
-    return asDrive ? { usb, drives } : { usb: linked.usb, drives: [...linked.devices, ...drives] };
+    const wifi = onWifi();
+    return asDrive ? { usb, drives: [...drives, ...wifi] } : { usb: linked.usb, drives: [...linked.devices, ...drives, ...wifi] };
   })().finally(() => (looking = null));
   return looking;
 }
@@ -233,7 +249,7 @@ export async function readClippings(): Promise<Array<{ device: string; text: str
     if (isMtpPath(device.path) || device.kind) continue;
     if (existsSync(file)) out.push({ device: device.name, text: await readFile(file, "utf8") });
   }
-  out.push(...(await mtpClippings()));
+  out.push(...(await mtpClippings()), ...(await crossPointClippings()));
   return out;
 }
 
@@ -289,6 +305,7 @@ const lockedCache = new Map<string, boolean>();
  */
 export async function deviceFiles(device: string): Promise<KindleFile[]> {
   if (isMtpPath(device)) return mtpFiles(device);
+  if (isCrossPointPath(device)) return crossPointFiles(device);
   const found: KindleFile[] = [];
   const books = booksIn(device);
   const kind = kindOf(device);
@@ -321,6 +338,7 @@ export async function deviceFiles(device: string): Promise<KindleFile[]> {
  */
 export async function removeFromDevice(device: string, files: string[]): Promise<number> {
   if (isMtpPath(device)) return mtpRemove(device, files);
+  if (isCrossPointPath(device)) return crossPointRemove(device, files);
   let freed = 0;
   for (const file of files) {
     const path = bookPath(device, file);
@@ -335,6 +353,7 @@ export async function removeFromDevice(device: string, files: string[]): Promise
 
 export async function copyToDevice(device: string, file: string, name: string, progress?: (fraction: number) => void) {
   if (isMtpPath(device)) return mtpCopy(device, file, name, (await stat(file)).size, progress);
+  if (isCrossPointPath(device)) return crossPointCopy(device, file, name, progress);
   const books = booksIn(device);
   await mkdir(books, { recursive: true });
   const target = join(books, name);
@@ -349,6 +368,7 @@ export async function copyToDevice(device: string, file: string, name: string, p
  */
 export async function filesFromDevice(device: string, files: string[], progress?: (fraction: number) => void) {
   if (isMtpPath(device)) return { paths: await mtpFetch(device, files, progress), temporary: true };
+  if (isCrossPointPath(device)) return { paths: await crossPointFetch(device, files, progress), temporary: true };
   const paths = files.map((file) => {
     const path = bookPath(device, file);
     if (!path) throw new Error(kindOf(device) ? t("That file isn't on your e-reader.") : t("That file isn't on your Kindle."));
@@ -364,6 +384,7 @@ export async function filesFromDevice(device: string, files: string[], progress?
  */
 export async function isPluggedIn(device: string) {
   if (isMtpPath(device)) return readyDevices().some((d) => d.path === device);
+  if (isCrossPointPath(device)) return isFound(device);
   const known = (list: KindleDevice[]) => list.some((d) => d.path === device);
   return known(lastDrives) || known(await findDevices());
 }

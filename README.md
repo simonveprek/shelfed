@@ -39,6 +39,8 @@
 - **Converts.** To EPUB, AZW3 for Kindle, PDF, Word, FB2, text or a web page, all built in. A PDF comes out as a book that reflows, with its chapters, headings and pictures, and without the running heads and page numbers, and you can look it over before it's made.
 - **Sends to your Kindle.** By cable, or by email from your own mail account. It shows which of your books are already on a Kindle, and takes the finished ones off.
 - **Knows Kobo and PocketBook too.** Plugged in, they get books by dragging, as EPUBs, and show what's on them.
+- **Sends to CrossPoint readers over Wi-Fi.** Xteink readers running CrossPoint show up while their File Transfer screen is open, and take books like any other e-reader.
+- **Keeps your reading in step with Hardcover,** if you connect your account: what you're reading, what you've finished, your ratings and how far in you are, both ways.
 - **Brings your Calibre library over.** It finds it by itself; each book comes once, with its formats, cover, series and tags.
 - **Picks up what you download.** New ebooks in your Downloads folder come in by themselves.
 - **Speaks English and Czech,** following your system or your choice.
@@ -129,6 +131,10 @@ The tests import hundreds of books at once against it.
 
 **Kindles are found without drivers.** Shelfed looks for Amazon's USB vendor ID (`0x1949`): via `ioreg` on macOS, one PowerShell call on Windows, and sysfs on Linux. The serial number gives the model. A drive counts as a Kindle by its `documents` and `system` folders, a Kobo by its hidden `.kobo` folder and a PocketBook by its `system/config`, and its book files are matched against the library to show what's already on it. Kobos and PocketBooks take EPUBs as they are, at the top of the drive, and Shelfed stays out of their own folders. Kindles from 2024 on open no drive, so those are reached over MTP.
 
+**CrossPoint readers are found on Wi-Fi.** While its File Transfer screen is open, a reader running [CrossPoint](https://github.com/crosspoint-reader/crosspoint-reader) answers `hello` on UDP port 8134 and runs a small web server. With looking turned on in Settings, Shelfed asks the networks this computer is on, or an address you give, and treats what answers as an e-reader like any other ([`crosspoint.ts`](src/main/crosspoint.ts)). Tests run it against a pretend reader that answers as the real one's server does.
+
+**Hardcover is connected the way Hardcover asks.** [`hardcover.ts`](src/main/hardcover.ts) signs in through Hardcover's own page with OAuth and PKCE, caught on a port of this computer, so Shelfed never sees a password or a pasted key. The keys are kept encrypted with the system's keychain. Each book here is matched to one there by an earlier link, its ISBN, or its title and author, and what changed on either side since last time goes to the other. Tests run it against a pretend Hardcover.
+
 ## Security model
 
 A book is untrusted input, often from somewhere unknown, so the window treats it that way:
@@ -150,8 +156,11 @@ No account, no analytics, no telemetry. Shelfed goes online only:
 - for free classics, from Standard Ebooks and Project Gutenberg;
 - to look up a word you've selected, at Wiktionary and Wikipedia;
 - for the catalogues you add, at the addresses you give them;
+- to keep your reading in step with Hardcover, once you connect your own account there;
 - to send to your Kindle, through your mail server;
 - to check GitHub for a new version (which you can turn off).
+
+Looking for CrossPoint readers, when you turn it on, stays on your own network.
 
 ## Testing
 
@@ -161,12 +170,14 @@ No account, no analytics, no telemetry. Shelfed goes online only:
   - Kindle model recognition from serials, and matching books already on a Kindle;
   - telling Kindles, Kobos and PocketBooks apart, and keeping out of their own folders;
   - reading OPDS catalogues, from real Project Gutenberg and OPDS 2 feeds, and going only where they link;
+  - a pretend CrossPoint reader on Wi-Fi, and a pretend Hardcover that signs in, refreshes keys and keeps a library;
   - parsing `My Clippings.txt`, recommendations, and author name handling.
 - **App tests** ([Playwright](e2e)) build Shelfed and drive the real Electron app on an empty library of made-up books:
   - adding books, every view and place, search, the right-click menu;
   - reading and turning pages, removing and undoing, settings, restarting;
   - converting to AZW3, Word and FB2, pretend Kindles plugged in as a drive or speaking real MTP, and a pretend Kobo;
-  - looking up a word, and a pretend OPDS catalogue to browse, search and add from.
+  - looking up a word, and a pretend OPDS catalogue to browse, search and add from;
+  - a CrossPoint reader on Wi-Fi taking books, and connecting to Hardcover and keeping in step both ways.
   
   Any error the page throws fails the run.
 - **CI** runs both on macOS, Windows and Linux on every push, then packs the app on macOS and Windows to catch packaging problems.

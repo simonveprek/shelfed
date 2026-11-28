@@ -146,6 +146,23 @@ export type Book = {
   spine?: string;
   /** Its ribbon: a colour shows one always, "none" never, unset follows the bookcase. */
   ribbon?: string;
+  /** How it stood with Hardcover when last in step: its entry there, and what each side said then. */
+  hardcover?: HardcoverLink;
+};
+
+export type HardcoverLink = {
+  /** The entry in your library at Hardcover, and the book it's for. */
+  id: number;
+  book: number;
+  /** What Hardcover said: its status, and its rating in half stars. */
+  status: number;
+  rating: number | null;
+  /** What Shelfed said at the same moment. */
+  local: { status: ReadStatus; rating: number };
+  /** The pages of the edition there, to tell it how far in you are. */
+  pages?: number;
+  /** How far in Shelfed last told it. */
+  progress?: number;
 };
 
 export type Collection = {
@@ -247,6 +264,24 @@ export type Settings = {
   language?: "auto" | "en" | "cs";
   /** Catalogues you added, next to the free ones. */
   catalogues?: Catalogue[];
+  /** Looking for CrossPoint readers on Wi-Fi, off unless turned on, and an address to try when the network hides them. */
+  wifiReaders?: { look: boolean; address?: string };
+  /** Reading kept in step with your own Hardcover account, once you connect it. */
+  hardcover?: HardcoverSettings;
+};
+
+/** Hardcover, once connected. The keys it gave are kept apart, encrypted. */
+export type HardcoverSettings = {
+  /** Who Shelfed is connected as. */
+  user?: { id: number; username: string };
+  /** Keeping in step, on once connected unless turned off. */
+  sync?: boolean;
+  /** When reading was last brought into step. */
+  lastSync?: number;
+  /** What went wrong last time, in plain words, until it goes right. */
+  lastError?: string;
+  /** Books marked here since connecting that may need adding there, by id. */
+  pending?: string[];
 };
 
 /** Where finding and getting a new version of Shelfed has got to. */
